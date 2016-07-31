@@ -8,12 +8,12 @@ createTargetingMatrix(substitutionModel, mutabilityModel)
 }
 \arguments{
 \item{substitutionModel}{matrix of 5-mers substitution rates built by 
-\code{\link{createSubstitutionMatrix}} or 
-\code{\link{extendSubstitutionMatrix}}.}
+\link{createSubstitutionMatrix} or 
+\link{extendSubstitutionMatrix}.}
 
 \item{mutabilityModel}{vector of 5-mers mutability rates built by 
-\code{\link{createMutabilityMatrix}} or 
-\code{\link{extendMutabilityMatrix}}.}
+\link{createMutabilityMatrix} or 
+\link{extendMutabilityMatrix}.}
 }
 \value{
 A matrix with the same dimensions as the input \code{substitutionModel} 
@@ -31,17 +31,18 @@ normalized substitution rates for each individual 5-mer.
 }
 \examples{
 # Subset example data to one isotype and sample as a demo
-db <- subset(InfluenzaDb, CPRIMER == "IGHA" & BARCODE == "RL014")
+data(ExampleDb, package="alakazam")
+db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
 
-# Create 4x1024 model using only silent mutations and ignore multiple mutations
-sub_model <- createSubstitutionMatrix(db, model="S", multipleMutation="ignore")
-mut_model <- createMutabilityMatrix(db, sub_model, model="S", multipleMutation="ignore",
-                                    minNumSeqMutations=10)
-tar_model <- createTargetingMatrix(sub_model, mut_model)
+# Create 4x1024 models using only silent mutations
+sub_model <- createSubstitutionMatrix(db, model="S")
+mut_model <- createMutabilityMatrix(db, sub_model, model="S")
 
-# Create 5x3125 model including Ns
+# Extend substitution and mutability to including Ns (5x3125 model)
 sub_model <- extendSubstitutionMatrix(sub_model)
 mut_model <- extendMutabilityMatrix(mut_model)
+
+# Create targeting model from substitution and mutability
 tar_model <- createTargetingMatrix(sub_model, mut_model)
 
 }
@@ -53,13 +54,8 @@ tar_model <- createTargetingMatrix(sub_model, mut_model)
  }
 }
 \seealso{
-Other targeting model functions: \code{\link{calcTargetingDistance}},
-  \code{\link{createMutabilityMatrix}},
-  \code{\link{createSubstitutionMatrix}},
-  \code{\link{createTargetingModel}},
-  \code{\link{extendMutabilityMatrix}},
-  \code{\link{extendSubstitutionMatrix}},
-  \code{\link{plotMutability}},
-  \code{\link{writeTargetingDistance}}
+\link{createSubstitutionMatrix}, \link{extendSubstitutionMatrix}, 
+          \link{createMutabilityMatrix}, \link{extendMutabilityMatrix}, 
+          \link{createTargetingModel}
 }
 

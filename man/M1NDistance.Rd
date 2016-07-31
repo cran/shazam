@@ -21,7 +21,7 @@ Mus musculus Ig sequence data.
 }
 }
 \seealso{
-See \code{\link{HS1FDistance}} for the human 1-mer distance matrix.
+See \link{HS1FDistance} for the human 1-mer distance matrix.
 }
 \keyword{datasets}
 

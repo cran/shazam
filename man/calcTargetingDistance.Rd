@@ -34,15 +34,7 @@ dist <- calcTargetingDistance(HS5FModel)
 
 }
 \seealso{
-Takes as input a \link{TargetingModel} object.
-
-Other targeting model functions: \code{\link{createMutabilityMatrix}},
-  \code{\link{createSubstitutionMatrix}},
-  \code{\link{createTargetingMatrix}},
-  \code{\link{createTargetingModel}},
-  \code{\link{extendMutabilityMatrix}},
-  \code{\link{extendSubstitutionMatrix}},
-  \code{\link{plotMutability}},
-  \code{\link{writeTargetingDistance}}
+Takes as input a \link{TargetingModel} object. See \link{createTargetingModel}
+          for building a model.
 }
 

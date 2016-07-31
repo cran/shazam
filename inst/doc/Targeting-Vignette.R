@@ -1,22 +1,13 @@
 ## ---- eval=TRUE, warning=FALSE, message=FALSE----------------------------
-# Set example data
+# Load example data
 library(shazam)
-db <- InfluenzaDb
+data(ExampleDb, package="alakazam")
 
 ## ---- eval=FALSE---------------------------------------------------------
-#  
-#  # Create a consensus sequence for each clone to avoid over-counting mutations
-#  # Adds the CLONAL_CONSENSUS_SEQUENCE column
-#  db_cons <- collapseByClone(db)
-#  
 #  # Create substitution model using silent mutations
-#  sub_matrix <- createSubstitutionMatrix(db_cons,
-#                                         sequenceColumn="CLONAL_SEQUENCE",
-#                                         model="S")
+#  sub_matrix <- createSubstitutionMatrix(ExampleDb, model="S")
 #  # Create mutability model using silent mutations
-#  mut_matrix <- createMutabilityMatrix(db_cons, sub_matrix,
-#                                       sequenceColumn="CLONAL_SEQUENCE",
-#                                       model="S")
+#  mut_matrix <- createMutabilityMatrix(ExampleDb, sub_matrix, model="S")
 #  
 #  # Extend models to include ambiguous 5-mers
 #  sub_matrix <- extendSubstitutionMatrix(sub_matrix)
@@ -26,8 +17,12 @@ db <- InfluenzaDb
 #  tar_matrix <- createTargetingMatrix(sub_matrix, mut_matrix)
 
 ## ---- eval=TRUE, warning=FALSE-------------------------------------------
+# Collapse sequences into clonal consensus
+clone_db <- collapseClones(ExampleDb, nproc=1)
 # Create targeting model in one step using only silent mutations
-model <- createTargetingModel(db, model="S")
+# Use consensus sequence input and germline columns
+model <- createTargetingModel(clone_db, model="S", sequenceColumn="CLONAL_SEQUENCE", 
+                              germlineColumn="CLONAL_GERMLINE")
 
 ## ---- eval=TRUE, warning=FALSE, fig.width=7, fig.height=7.5--------------
 # Generate hedgehog plot of mutability model

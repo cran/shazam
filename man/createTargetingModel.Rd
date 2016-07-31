@@ -53,14 +53,15 @@ inferred. Default is 500.}
 will be used.}
 }
 \value{
-A \code{\link{TargetingModel}} object.
+A \link{TargetingModel} object.
 }
 \description{
 \code{createTargetingModel} creates a 5-mer \code{TargetingModel}.
 }
 \examples{
 # Subset example data to one isotype and sample as a demo
-db <- subset(InfluenzaDb, CPRIMER == "IGHA" & BARCODE == "RL014")
+data(ExampleDb, package="alakazam")
+db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
 
 # Create model using only silent mutations and ignore multiple mutations
 model <- createTargetingModel(db, model="S", multipleMutation="ignore")
@@ -74,15 +75,10 @@ model <- createTargetingModel(db, model="S", multipleMutation="ignore")
  }
 }
 \seealso{
-See \link{TargetingModel} for the return object.
-
-Other targeting model functions: \code{\link{calcTargetingDistance}},
-  \code{\link{createMutabilityMatrix}},
-  \code{\link{createSubstitutionMatrix}},
-  \code{\link{createTargetingMatrix}},
-  \code{\link{extendMutabilityMatrix}},
-  \code{\link{extendSubstitutionMatrix}},
-  \code{\link{plotMutability}},
-  \code{\link{writeTargetingDistance}}
+See \link{TargetingModel} for the return object. 
+          See \link{plotMutability} plotting a mutability model.
+          See \link{createSubstitutionMatrix}, \link{extendSubstitutionMatrix}, 
+          \link{createMutabilityMatrix}, \link{extendMutabilityMatrix} and 
+          \link{createTargetingMatrix} for component steps in building a model.
 }
 

@@ -1,17 +1,15 @@
 # Mutation profiling
 
-#' @include shazam.R
+#' @include Shazam.R
 NULL
 
 #### Clonal Consensus building functions ####
 
-#' Identifies clonal consensus sequences
+#' Constructs clonal consensus sequences
 #'
-#' Identifies effective/consensus sequences collapsed by clone
-#'
-#' \code{collapseByClone} identifies the consensus sequence of each clonal 
-#' group and appends a column to the input \code{data.frame} containing the clonal 
-#' consensus for each sequence.
+#' \code{collapseClones} identifies the consensus sequence of each clonal 
+#' group and appends columns to the input \code{data.frame} containing the clonal 
+#' consensus and germline for each sequence.
 #'
 #' @param   db                  \code{data.frame} containing sequence data.
 #' @param   cloneColumn         \code{character} name of the column containing clonal 
@@ -23,7 +21,7 @@ NULL
 #' @param   expandedDb          \code{logical} indicating whether or not to return the 
 #'                              expanded \code{db}, containing all the sequences (as opposed
 #'                              to returning just one sequence per clone collapsed by )
-#' @param   regionDefinition    \code{\link{RegionDefinition}} object defining the regions
+#' @param   regionDefinition    \link{RegionDefinition} object defining the regions
 #'                              and boundaries of the Ig sequences.
 #' @param   nonTerminalOnly     \code{logical} indicating whether to include mutations
 #'                              at the leaves.
@@ -32,22 +30,27 @@ NULL
 #'                              \code{cluster}. This will ensure that it is not reset.
 #'                              
 #' 
-#' @return   A modified \code{db} data.frame with clonal consensus sequences in the
-#'           CLONAL_SEQUENCE column.
+#' @return   A modified \code{db} with clonal consensus sequences added 
+#'           in the following columns:
+#'           \itemize{
+#'             \item \code{CLONAL_SEQUENCE}:  consensus input sequence for the clone.
+#'             \item \code{CLONAL_GERMLINE}:  consensus germline sequence for the clone.
+#'                                            Generally, this will be unchanged from
+#'                                            the data in \code{germlineColumn}, but
+#'                                            may be truncated when the input sequence
+#'                                            is truncaated due to inconsistencies 
+#'                                            in the lengths of the input sequences or
+#'                                            \code{regionDefinition} limits.
+#'           }
 #'
 #' @details
 #' For sequences identified to be part of the same clone, this function defines an 
 #' effective sequence that will be representative for all mutations in the clone. Each 
 #' position in this consensus (or effective) sequence is created by a weighted sampling 
 #' of each mutated base (and non "N", "." or "-" characters) from all the sequences in 
-#' the clone. 
-#' 
-#' For example, in a clone with 5 sequences that have a C at position 1, and 5 sequences
-#' with a T at this same position, the consensus sequence will have a C 50\%  and T 50\% 
-#' of the time it is called.
-#' 
-#' The function returns an updated \code{db} that collpases all the sequences by clones 
-#' defined in the \code{cloneColumn} column argument.
+#' the clone. For example, in a clone with 5 sequences that have a C at position 1, and 
+#' 5 sequences with a T at this same position, the consensus sequence will have a C 50\%  
+#' and T 50\% of the time it is called.
 #' 
 #' Non-terminal branch mutations are defined as the set of mutations that occur on 
 #' branches of the lineage tree that are not connected to a leaf. For computational 
@@ -55,40 +58,44 @@ NULL
 #' shared between more than one sequence in a clone. In this case the terminal branch 
 #' mutations are filtered out.
 #' 
-#' This function can be parallelized if \code{db} contains thousands of sequences. 
-#' Specify the number of cores available using the \code{nproc} parameter.
-#' 
 #' @seealso
 #' See \link{IMGT_SCHEMES} for a set of predefined \link{RegionDefinition} objects.
 #' 
 #' @examples
 #' # Subset example data
-#' db <- subset(InfluenzaDb, CPRIMER %in% c("IGHA","IGHM") & 
-#'                           BARCODE %in% c("RL016","RL018","RL019","RL021"))
+#' data(ExampleDb, package="alakazam")
+#' db <- subset(ExampleDb, ISOTYPE %in% c("IgA", "IgG") & SAMPLE == "+7d")
 #' 
-#' # Run collapseByClone
-#' db_new <- collapseByClone(db, cloneColumn="CLONE", 
-#'                           sequenceColumn="SEQUENCE_IMGT",
-#'                           germlineColumn="GERMLINE_IMGT_D_MASK",
-#'                           expandedDb=FALSE,
-#'                           regionDefinition=IMGT_V_NO_CDR3,
-#'                           nproc=1)
+#' # Build clonal consensus for the full sequence
+#' clones <- collapseClones(db, nproc=1)
+#'                          
+#' # Build clonal consensus for V-region only 
+#' # Return the same number of rows as the input
+#' clones <- collapseClones(db, regionDefinition=IMGT_V_NO_CDR3, 
+#'                          expandedDb=TRUE, nproc=1)
 #' 
 #' @export
-collapseByClone <- function(db, 
-                            cloneColumn="CLONE", 
-                            sequenceColumn="SEQUENCE_IMGT",
-                            germlineColumn="GERMLINE_IMGT_D_MASK",
-                            expandedDb=FALSE,
-                            regionDefinition=NULL,
-                            nonTerminalOnly=FALSE,
-                            nproc=1) {
+collapseClones <- function(db, 
+                           cloneColumn="CLONE", 
+                           sequenceColumn="SEQUENCE_IMGT",
+                           germlineColumn="GERMLINE_IMGT_D_MASK",
+                           expandedDb=FALSE,
+                           regionDefinition=NULL,
+                           nonTerminalOnly=FALSE,
+                           nproc=1) {
+    ## DEBUG
+    # cloneColumn="CLONE"; sequenceColumn="SEQUENCE_IMGT"; germlineColumn="GERMLINE_IMGT_D_MASK"
+    # expandedDb=FALSE; regionDefinition=NULL; nonTerminalOnly=FALSE; nproc=1
+    
     # Hack for visibility of data.table and foreach index variables
     idx <- yidx <- .I <- NULL
 
     # Check for valid columns
     check <- checkColumns(db, c(cloneColumn, sequenceColumn, germlineColumn))
     if (check != TRUE) { stop(check) }
+    
+    # Convert sequence columns to uppercase
+    db <- toupperColumns(db, c(sequenceColumn, germlineColumn))
     
     # If the user has previously set the cluster and does not wish to reset it
     if(!is.numeric(nproc)){ 
@@ -104,8 +111,8 @@ collapseByClone <- function(db,
         stop ("nonTerminalOnly must be TRUE or FALSE.")
     }
     
-    # TODO: Why is this converted to numeric?  Won't that break?
-    db[[cloneColumn]] <- as.numeric(db[[cloneColumn]])
+    # Convert clone identiers to strings
+    db[[cloneColumn]] <- as.character(db[[cloneColumn]])
     
     # Ensure that the nproc does not exceed the number of cores/CPUs available
     nproc <- min(nproc, getnproc())
@@ -132,10 +139,10 @@ collapseByClone <- function(db,
             #cluster <- makeCluster(nproc, type="SOCK") 
             cluster <- parallel::makeCluster(nproc, type= "PSOCK")
         }
-        parallel::clusterExport(cluster, list('db', 
-                                              'sequenceColumn', 'germlineColumn', 'cloneColumn',
-                                              'regionDefinition', 'calcClonalConsensus',
-                                              'groups', 'c2s', 's2c', 'words', 'translate'), 
+        parallel::clusterExport(cluster, 
+                                list('db', 'sequenceColumn', 'germlineColumn', 'cloneColumn',
+                                     'regionDefinition', 'calcClonalConsensus',
+                                     'groups', 'c2s', 's2c', 'words', 'translate'), 
                                 envir=environment() )
         registerDoParallel(cluster)
     }
@@ -143,42 +150,54 @@ collapseByClone <- function(db,
     # Printing status to console
     cat("Collapsing clonal sequences...\n")
     
-    list_ClonalConsensus <-
-        foreach(idx=iterators::icount(lenGroups), .combine=c, .verbose=FALSE, .errorhandling='pass') %dopar% {
-            calcClonalConsensus(inputSeq = db[[sequenceColumn]][groups[[idx]]],
-                                germlineSeq = db[[germlineColumn]][groups[[idx]]],
-                                regionDefinition = regionDefinition, 
-                                nonTerminalOnly = nonTerminalOnly)
-        }
+    #cons_list <- foreach(idx=iterators::icount(lenGroups), .combine=c, .verbose=FALSE, 
+    cons_mat <- foreach(idx=iterators::icount(lenGroups), .combine="cbind", 
+                        .verbose=FALSE, .errorhandling='pass') %dopar% {
+        calcClonalConsensus(inputSeq=db[[sequenceColumn]][groups[[idx]]],
+                            germlineSeq=db[[germlineColumn]][groups[[idx]]],
+                            regionDefinition=regionDefinition, 
+                            nonTerminalOnly=nonTerminalOnly)
+    }
     
     # Stop cluster
-    if(nproc > 1) { #
-        parallel::stopCluster(cluster) 
+    if(nproc > 1) { parallel::stopCluster(cluster) }
+    
+    # Build return data.frame
+    if (expandedDb) { 
+        # Fill all rows with the consensus sequence
+        clone_id <-  unique(db[[cloneColumn]])
+        clone_index <- match(db[[cloneColumn]], clone_id)
+        cons_db <- db
+        cons_db$CLONAL_SEQUENCE <- cons_mat[1, clone_index]
+        cons_db$CLONAL_GERMLINE <- cons_mat[2, clone_index]
+    } else {
+        # Return only the first low of each clone
+        clone_id <-  unique(db[[cloneColumn]])
+        clone_index <- match(clone_id, db[[cloneColumn]])
+        cons_db <- db[clone_index, ]
+        cons_db$CLONAL_SEQUENCE <- cons_mat[1, ]
+        cons_db$CLONAL_GERMLINE <- cons_mat[2, ]
     }
     
-    # If expandedDb is FALSE then collapse the db by clones
-    if(expandedDb==FALSE){ 
-        uniqueCloneIDs <-  unique(db[[cloneColumn]])
-        indexOfFirstOccurenceOfClone <- match(uniqueCloneIDs, db[[cloneColumn]])
-        db_ClonalConsensus <- db[indexOfFirstOccurenceOfClone, ]
-        db_ClonalConsensus$CLONAL_SEQUENCE <- unlist(list_ClonalConsensus)
-    }else{
-        # Match the ClonalConsensus to all the sequences in the clone
-        vec_ClonalConsensus <- unlist(list_ClonalConsensus)
-        expanded_ClonalConsensus <- tapply(db[[cloneColumn]], 1:nrow(db),function(x){return(vec_ClonalConsensus[x])})
-        db_ClonalConsensus <- db
-        db_ClonalConsensus$CLONAL_SEQUENCE <- unlist(expanded_ClonalConsensus)
-    }
-    
-    return(db_ClonalConsensus)
+    return(cons_db)
 }
 
 
 
 # Helper function for calcDBClonalConsensus
-calcClonalConsensus <- function(inputSeq, germlineSeq, 
-                                regionDefinition=NULL, 
+# 
+# @param   inputSeq         character vector of observed sequences
+# @param   germlineSeq         character vector of germline sequences
+# @param   regionDefinition    \link{RegionDefinition} object defining the regions
+#                              and boundaries of the Ig sequences.
+# @param   nonTerminalOnly     \code{logical} indicating whether to include mutations
+#                              at the leaves.
+# @return  A named vector length two with "input" and "germline" consensus sequences
+calcClonalConsensus <- function(inputSeq, germlineSeq, regionDefinition=NULL, 
                                 nonTerminalOnly=FALSE) {
+    ## DEBUG
+    # inputSeq=db$SEQUENCE_IMGT[4:6]; germlineSeq=db$GERMLINE_IMGT_D_MASK[4:6]; regionDefinition=NULL; nonTerminalOnly=FALSE
+    
     # If only one sequence in clone, return it
     if(length(inputSeq) == 1) {
         return(inputSeq)
@@ -187,7 +206,7 @@ calcClonalConsensus <- function(inputSeq, germlineSeq,
     # Find length of shortest input sequence
     # This is used to trim all the sequences to that length
     # or, if a regionDefinition is passed, then only analyze till the end of the defined length
-    len_inputSeq <- sapply(inputSeq, function(x){nchar(x)})
+    len_inputSeq <- stri_length(inputSeq)
     len_shortest <- min(len_inputSeq, na.rm=TRUE)
     if(!is.null(regionDefinition)) {
         len_shortest <- min(len_shortest, regionDefinition@seqLength, na.rm=TRUE)
@@ -198,16 +217,14 @@ calcClonalConsensus <- function(inputSeq, germlineSeq,
     }
     
     #Find the length of the longest germline sequence
-    len_germlineSeq <- sapply(germlineSeq, function(x){nchar(x)})
-    len_longest <- max(len_germlineSeq, na.rm=TRUE)
-    germlineSeq <- germlineSeq[(which(len_longest==len_germlineSeq))[1]]    
+    len_germlineSeq <- stri_length(germlineSeq)
+    germlineSeq <- germlineSeq[(which.max(len_germlineSeq))]
     
     # Identify the consensus sequence
     inputSeq <- unique(inputSeq)
-    charInputSeqs <- sapply(inputSeq, function(x){ s2c(x)[1:len_shortest]})
+    charInputSeqs <- sapply(inputSeq, function(x) { s2c(x)[1:len_shortest] })
     charGLSeq <- s2c(germlineSeq)
-    matClone <- sapply(1:len_shortest, function(i){
-        
+    matClone <- sapply(1:len_shortest, function(i) {
         # Identify the nucleotides (in seqs and germline) at the current position
         posNucs = unique(charInputSeqs[i,])
         posGL = charGLSeq[i]
@@ -221,16 +238,14 @@ calcClonalConsensus <- function(inputSeq, germlineSeq,
         
         # If all the sequences in the clone have the same nucleotide at the current
         # position, return the value at the current positions
-        if(length(posNucs)==1)
-            return(c(posNucs[1],error))
-        else{         
-            if("N"%in%posNucs){
-                error=TRUE
-            }
+        if(length(posNucs)==1) {
+            return(c(posNucs[1], error))
+        } else {         
+            if("N"%in%posNucs) { error=TRUE }
             
             # If the current nucleotide matches germline, return germline 
-            if(sum(!posNucs[!posNucs%in%c("N", "n")]%in%posGL)==0){
-                return( c(posGL,error) )
+            if(sum(!posNucs[!posNucs%in%c("N", "n")] %in% posGL) == 0) {
+                return(c(posGL, error))
             }else{
                 #return( c(sample(posNucs[posNucs!="N"],1),error) )
                 
@@ -253,10 +268,13 @@ calcClonalConsensus <- function(inputSeq, germlineSeq,
                 
             }
         }
-        if(error==TRUE){warning("Error while attempting to collapse by clone!")}
+        if (error==TRUE) { warning("Error while attempting to collapse by clone!") }
     })
     
-    return( c2s(matClone[1,]) )
+    returnSeq <- c("input"=stri_join(matClone[1,], collapse=""), 
+                   "germline"=stri_join(charGLSeq[1:len_shortest], collapse=""))
+    
+    return (returnSeq)
 }
 
 
@@ -265,7 +283,7 @@ calcClonalConsensus <- function(inputSeq, germlineSeq,
 
 #' Calculate observed numbers of mutations
 #'
-#' \code{calcDBObservedMutations} calculates the observed number of mutations for each 
+#' \code{observedMutations} calculates the observed number of mutations for each 
 #' sequence in the input \code{data.frame}.
 #'
 #' @param    db                  \code{data.frame} containing sequence data.
@@ -318,35 +336,45 @@ calcClonalConsensus <- function(inputSeq, germlineSeq,
 #' \link{calcObservedMutations} is called by this function to get the list of mutations 
 #' in each sequence grouped by the \link{RegionDefinition}. 
 #' See \link{IMGT_SCHEMES} for a set of predefined \link{RegionDefinition} objects.
-#' See \link{calcDBExpectedMutations} for calculating expected mutation frequencies.
+#' See \link{expectedMutations} for calculating expected mutation frequencies.
 #'           
 #' 
 #' @examples
 #' # Subset example data
-#' db <- subset(InfluenzaDb, CPRIMER %in% c("IGHA","IGHM") & 
-#'                           BARCODE %in% c("RL016","RL018","RL019","RL021"))
+#' data(ExampleDb, package="alakazam")
+#' db <- subset(ExampleDb, ISOTYPE %in% c("IgA", "IgG") & SAMPLE == "+7d")
 #'
-#' # Run calcDBObservedMutations()
-#' db_new <- calcDBObservedMutations(db, sequenceColumn="SEQUENCE_IMGT",
-#'                                   germlineColumn="GERMLINE_IMGT_D_MASK",
-#'                                   frequency=TRUE,
-#'                                   regionDefinition=IMGT_V_NO_CDR3,
-#'                                   nproc=1)
+#' # Calculate mutation frequency over the entire sequence
+#' db_obs <- observedMutations(db, sequenceColumn="SEQUENCE_IMGT",
+#'                             germlineColumn="GERMLINE_IMGT_D_MASK",
+#'                             frequency=TRUE,
+#'                             nproc=1)
+#'
+#' # Count of V-region mutations split by FWR and CDR
+#' # With mutations only considered replacement if charge changes
+#' db_obs <- observedMutations(db, sequenceColumn="SEQUENCE_IMGT",
+#'                             germlineColumn="GERMLINE_IMGT_D_MASK",
+#'                             regionDefinition=IMGT_V_NO_CDR3,
+#'                             mutationDefinition=CHARGE_MUTATIONS,
+#'                             nproc=1)
 #'                      
 #' @export
-calcDBObservedMutations <- function(db, 
-                                    sequenceColumn="SEQUENCE_IMGT",
-                                    germlineColumn="GERMLINE_IMGT_D_MASK",
-                                    frequency=FALSE,
-                                    regionDefinition=NULL,
-                                    mutationDefinition=NULL,
-                                    nproc=1) {
+observedMutations <- function(db, 
+                              sequenceColumn="SEQUENCE_IMGT",
+                              germlineColumn="GERMLINE_IMGT_D_MASK",
+                              frequency=FALSE,
+                              regionDefinition=NULL,
+                              mutationDefinition=NULL,
+                              nproc=1) {
     # Hack for visibility of data.table and foreach index variables
     idx <- NULL
     
     # Check for valid columns
     check <- checkColumns(db, c(sequenceColumn, germlineColumn))
     if (check != TRUE) { stop(check) }
+    
+    # Convert sequence columns to uppercase
+    db <- toupperColumns(db, c(sequenceColumn, germlineColumn))
     
     # If the user has previously set the cluster and does not wish to reset it
     if(!is.numeric(nproc)){ 
@@ -359,7 +387,7 @@ calcDBObservedMutations <- function(db,
     # If user wants to paralellize this function and specifies nproc > 1, then
     # initialize and register slave R processes/clusters & 
     # export all nesseary environment variables, functions and packages.  
-    if(nproc>1){        
+    if (nproc > 1) {        
         cluster <- parallel::makeCluster(nproc, type = "PSOCK")
         parallel::clusterExport(cluster, list('db', 'sequenceColumn', 'germlineColumn', 
                                               'regionDefinition', 'frequency',
@@ -369,7 +397,7 @@ calcDBObservedMutations <- function(db,
                                               'collapseMatrixToVector'), 
                                 envir=environment())
         registerDoParallel(cluster)
-    } else if (nproc==1) {
+    } else if (nproc == 1) {
         # If needed to run on a single core/cpu then, regsiter DoSEQ 
         # (needed for 'foreach' in non-parallel mode)
         registerDoSEQ()
@@ -450,21 +478,22 @@ calcDBObservedMutations <- function(db,
 #' the default \link{IMGT_V_NO_CDR3} definition, then mutations in positions beyond 
 #' 312 will be ignored.
 #' 
-#' @seealso  See \link{calcDBObservedMutations} for counting the number of observed mutations.
+#' @seealso  See \link{observedMutations} for counting the number of observed mutations.
 #' 
 #' @examples
-#' # Extracting the first entry in the example data to use for input and germline sequences.
-#' inputSeq <- InfluenzaDb[1, "SEQUENCE_IMGT"]
-#' germlineSeq <-  InfluenzaDb[1, "GERMLINE_IMGT_D_MASK"]
+#' # Use first entry in the exampled data for input and germline sequence
+#' data(ExampleDb, package="alakazam")
+#' in_seq <- ExampleDb[1, "SEQUENCE_IMGT"]
+#' germ_seq <-  ExampleDb[1, "GERMLINE_IMGT_D_MASK"]
 #' 
 #' # Identify all mutations in the sequence
-#' calcObservedMutations(inputSeq, germlineSeq)
+#' calcObservedMutations(in_seq, germ_seq)
 #' 
 #' # Identify only mutations the V segment minus CDR3
-#' calcObservedMutations(inputSeq, germlineSeq, regionDefinition=IMGT_V_NO_CDR3)
+#' calcObservedMutations(in_seq, germ_seq, regionDefinition=IMGT_V_NO_CDR3)
 #'  
 #' # Identify mutations by change in hydropathy class
-#' calcObservedMutations(inputSeq, germlineSeq, regionDefinition=IMGT_V_NO_CDR3,
+#' calcObservedMutations(in_seq, germ_seq, regionDefinition=IMGT_V_NO_CDR3,
 #'                       mutationDefinition=HYDROPATHY_MUTATIONS, frequency=TRUE)
 #' 
 #' @export
@@ -560,12 +589,12 @@ calcObservedMutations <- function(inputSeq, germlineSeq, frequency=FALSE,
 # Aggregate mutations by region
 #
 # \code{binMutationsByRegion} takes an array of observed mutations (e.g. from 
-# \code{\link{calcObservedMutations}}) and bins them by the different regions defined in the 
+# \code{calcObservedMutations}) and bins them by the different regions defined in the 
 # \code{regionDefinition}.
 #
 # @param   mutationsArray     \code{array} containing the mutations (R/S) with the names
 #                             indicating the nucleotide positions of the mutations.                             
-# @param   regionDefinition   \code{\link{RegionDefinition}} object defining the regions
+# @param   regionDefinition   \link{RegionDefinition} object defining the regions
 #                             and boundaries of the Ig sequences.
 # 
 # @return An \code{array} of R/S mutations binned across all the unique regions defined
@@ -577,9 +606,9 @@ calcObservedMutations <- function(inputSeq, germlineSeq, frequency=FALSE,
 # in positions beyond 312 will be ignored.
 # 
 # @seealso  
-# See \code{\link{calcDBObservedMutations}} for identifying and counting the 
+# See \link{observedMutations} for identifying and counting the 
 # number of observed mutations.
-# This function is also used in \code{\link{calcObservedMutations}}.
+# This function is also used in \link{calcObservedMutations}.
 # 
 # @examples
 # # Generate a random mutation array
@@ -618,7 +647,7 @@ binMutationsByRegion <- function(mutationsArray,
 
 #' Calculate expected mutation frequencies
 #'
-#' \code{calcDBExpectedMutations} calculates the expected mutation frequencies for each 
+#' \code{expectedMutations} calculates the expected mutation frequencies for each 
 #' sequence in the input \code{data.frame}.
 #'
 #' @param    db                  \code{data.frame} containing sequence data.
@@ -663,44 +692,47 @@ binMutationsByRegion <- function(mutationsArray,
 #' 
 #' @seealso  
 #' \link{calcExpectedMutations} is called by this function to calculate the expected 
-#' mutation frequencies. See \link{calcDBObservedMutations} for getting observed 
+#' mutation frequencies. See \link{observedMutations} for getting observed 
 #' mutation counts. See \link{IMGT_SCHEMES} for a set of predefined 
 #' \link{RegionDefinition} objects.
 #' 
 #' @examples
 #' # Subset example data
-#' db <- subset(InfluenzaDb, CPRIMER %in% c("IGHA","IGHM") & 
-#'                           BARCODE %in% c("RL016","RL018","RL019","RL021"))
+#' data(ExampleDb, package="alakazam")
+#' db <- subset(ExampleDb, ISOTYPE %in% c("IgA", "IgG") & SAMPLE == "+7d")
 #'
 #' # Calculate expected mutations over V region
-#' db <- calcDBExpectedMutations(db,
-#'                               sequenceColumn="SEQUENCE_IMGT",
-#'                               germlineColumn="GERMLINE_IMGT_D_MASK",
-#'                               regionDefinition=IMGT_V_NO_CDR3,
-#'                               nproc=1)
+#' db_exp <- expectedMutations(db,
+#'                             sequenceColumn="SEQUENCE_IMGT",
+#'                             germlineColumn="GERMLINE_IMGT_D_MASK",
+#'                             regionDefinition=IMGT_V_NO_CDR3,
+#'                             nproc=1)
 #' 
 #' # Calculate hydropathy expected mutations over V region
-#' db <- calcDBExpectedMutations(db,
-#'                               sequenceColumn="SEQUENCE_IMGT",
-#'                               germlineColumn="GERMLINE_IMGT_D_MASK",
-#'                               regionDefinition=IMGT_V_NO_CDR3,
-#'                               mutationDefinition=HYDROPATHY_MUTATIONS,
-#'                               nproc=1)
+#' db_exp <- expectedMutations(db,
+#'                            sequenceColumn="SEQUENCE_IMGT",
+#'                            germlineColumn="GERMLINE_IMGT_D_MASK",
+#'                            regionDefinition=IMGT_V_NO_CDR3,
+#'                            mutationDefinition=HYDROPATHY_MUTATIONS,
+#'                            nproc=1)
 #'
 #' @export
-calcDBExpectedMutations <- function(db, 
-                                    sequenceColumn="SEQUENCE_IMGT",
-                                    germlineColumn="GERMLINE_IMGT_D_MASK",
-                                    targetingModel=HS5FModel,
-                                    regionDefinition=NULL,
-                                    mutationDefinition=NULL,
-                                    nproc=1) {
+expectedMutations <- function(db, 
+                              sequenceColumn="SEQUENCE_IMGT",
+                              germlineColumn="GERMLINE_IMGT_D_MASK",
+                              targetingModel=HS5FModel,
+                              regionDefinition=NULL,
+                              mutationDefinition=NULL,
+                              nproc=1) {
     # Hack for visibility of data.table and foreach index variables
     idx <- NULL
     
     # Check for valid columns
     check <- checkColumns(db, c(sequenceColumn, germlineColumn))
     if (check != TRUE) { stop(check) }
+    
+    # Convert sequence columns to uppercase
+    db <- toupperColumns(db, c(sequenceColumn, germlineColumn))
     
     # If the user has previously set the cluster and does not wish to reset it
     if(!is.numeric(nproc)){ 
@@ -774,7 +806,7 @@ calcDBExpectedMutations <- function(db,
 #'
 #' \code{calcExpectedMutations} calculates the expected mutation
 #' frequencies of a given sequence. This is primarily a helper function for
-#' \link{calcDBExpectedMutations}. 
+#' \link{expectedMutations}. 
 #'
 #' @param    germlineSeq         germline (reference) sequence.
 #' @param    inputSeq            input (observed) sequence. If this is not \code{NULL}, 
@@ -813,23 +845,26 @@ calcDBExpectedMutations <- function(db,
 #' For example, when using the default \link{IMGT_V_NO_CDR3} definition, mutations in
 #' positions beyond 312 will be ignored.
 #' 
-#' @seealso  \link{calcDBExpectedMutations} calls this function.
+#' @seealso  \link{expectedMutations} calls this function.
 #' To create a custom \code{targetingModel} see \link{createTargetingModel}.
 #' See \link{calcObservedMutations} for getting observed mutation counts.
 #' 
 #' @examples
-#' # Extracting the first entry in the exampled data to use for input and germline sequences.
-#' inputSeq <- InfluenzaDb[1, "SEQUENCE_IMGT"]
-#' germlineSeq <-  InfluenzaDb[1, "GERMLINE_IMGT_D_MASK"]
+#' # Load example data
+#' data(ExampleDb, package="alakazam")
+#' 
+#' # Use first entry in the exampled data for input and germline sequence
+#' in_seq <- ExampleDb[1, "SEQUENCE_IMGT"]
+#' germ_seq <-  ExampleDb[1, "GERMLINE_IMGT_D_MASK"]
 #' 
 #' # Identify all mutations in the sequence
-#' calcExpectedMutations(inputSeq, germlineSeq)
+#' calcExpectedMutations(in_seq, germ_seq)
 #' 
 #' # Identify only mutations the V segment minus CDR3
-#' calcExpectedMutations(inputSeq, germlineSeq, regionDefinition=IMGT_V_NO_CDR3)
+#' calcExpectedMutations(in_seq, germ_seq, regionDefinition=IMGT_V_NO_CDR3)
 #' 
 #' # Define mutations based on hydropathy
-#' calcExpectedMutations(inputSeq, germlineSeq, regionDefinition=IMGT_V_NO_CDR3,
+#' calcExpectedMutations(in_seq, germ_seq, regionDefinition=IMGT_V_NO_CDR3,
 #'                       mutationDefinition=HYDROPATHY_MUTATIONS)
 #' 
 #' @export

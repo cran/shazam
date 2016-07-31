@@ -4,7 +4,7 @@
 \name{HS5FModel}
 \alias{HS5FModel}
 \title{Human 5-mer targeting model.}
-\format{\code{\link{TargetingModel}} object.}
+\format{\link{TargetingModel} object.}
 \usage{
 HS5FModel
 }
@@ -20,8 +20,9 @@ in functional Ig sequences from Homo sapiens.
  }
 }
 \seealso{
-See \code{\link{HS1FDistance}} for the 1-mer distance matrix from the same 
-          publication.
+See \link{HS1FDistance} for the 1-mer distance matrix from the same 
+          publication, \link{MRS5NFModel} for the mouse 5-mer model, and 
+          \link{U5NModel} for the uniform 5-mer model.
 }
 \keyword{datasets}
 

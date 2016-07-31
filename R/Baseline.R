@@ -1,7 +1,7 @@
 # Selection analysis using BASELINe
 
 #' @include RegionDefinitions.R
-#' @include shazam.R
+#' @include Shazam.R
 NULL
 
 #### Classes ####
@@ -66,7 +66,7 @@ setClass("Baseline",
                  stats="data.frame"))
 
 
-#### Baseline object methods #####
+#### Methods #####
 
 #' Creates a Baseline object
 #' 
@@ -156,40 +156,40 @@ createBaseline <- function(description="",
                            binomP=matrix(),
                            pdfs=list(),
                            stats=data.frame()) {
-  
-  if (is.null(regionDefinition)) {
-      regionDefinition <- makeNullRegionDefinition()
-  }
-  # Get regions if not passing in               
-  if (is.null(regions)) {
-    regions <- regionDefinition@regions
-  }
-  # Define empty stats data.frame if not passed in
-  if (nrow(stats) == 0) {
-    stats <- data.frame(GROUP=character(),
-                        REGION=character(),
-                        BASELINE_SIGMA=character(),
-                        BASELINE_CI_LOWER=character(),
-                        BASELINE_CI_UPPER=character(),
-                        BASELINE_CI_PVALUE=character(),
-                        stringsAsFactors=FALSE) 
-  }
-  
-  # Define RegionDefinition object
-  baseline <- new("Baseline",
-                  description=description,
-                  db=as.data.frame(db),
-                  regionDefinition=regionDefinition,
-                  testStatistic=testStatistic,
-                  regions=regionDefinition@regions,
-                  numbOfSeqs=numbOfSeqs,
-                  binomK=binomK,
-                  binomN=binomN,
-                  binomP=binomP,
-                  pdfs=pdfs,
-                  stats=as.data.frame(stats))
-  
-  return(baseline)
+    
+    if (is.null(regionDefinition)) {
+        regionDefinition <- makeNullRegionDefinition()
+    }
+    # Get regions if not passing in               
+    if (is.null(regions)) {
+        regions <- regionDefinition@regions
+    }
+    # Define empty stats data.frame if not passed in
+    if (nrow(stats) == 0) {
+        stats <- data.frame(GROUP=character(),
+                            REGION=character(),
+                            BASELINE_SIGMA=character(),
+                            BASELINE_CI_LOWER=character(),
+                            BASELINE_CI_UPPER=character(),
+                            BASELINE_CI_PVALUE=character(),
+                            stringsAsFactors=FALSE) 
+    }
+    
+    # Define RegionDefinition object
+    baseline <- new("Baseline",
+                    description=description,
+                    db=as.data.frame(db),
+                    regionDefinition=regionDefinition,
+                    testStatistic=testStatistic,
+                    regions=regionDefinition@regions,
+                    numbOfSeqs=numbOfSeqs,
+                    binomK=binomK,
+                    binomN=binomN,
+                    binomP=binomP,
+                    pdfs=pdfs,
+                    stats=as.data.frame(stats))
+    
+    return(baseline)
 }
 
 
@@ -203,14 +203,14 @@ createBaseline <- function(description="",
 # 
 # @return   A \code{Baseline} object.
 # 
-# @seealso  See \code{\link{Baseline}} for the return object.
+# @seealso  See \link{Baseline} for the return object.
 editBaseline <- function(baseline, field_name, value) {
-  if (!match(field_name, slotNames(baseline))) { 
-    stop("field_name not part of BASELINe object!")
-  }
-  slot(baseline, field_name) <- value
-  
-  return(baseline)
+    if (!match(field_name, slotNames(baseline))) { 
+        stop("field_name not part of BASELINe object!")
+    }
+    slot(baseline, field_name) <- value
+    
+    return(baseline)
 }
 
 
@@ -230,37 +230,31 @@ editBaseline <- function(baseline, field_name, value) {
 #' 
 #' @examples
 #' # Subset example data
-#' db <- subset(InfluenzaDb, CPRIMER %in% c("IGHA","IGHM") & 
-#'                           BARCODE %in% c("RL016","RL018","RL019","RL021"))
+#' data(ExampleDb, package="alakazam")
+#' db <- subset(ExampleDb, ISOTYPE %in% c("IgA", "IgG") & SAMPLE == "+7d")
 #' 
 #' # Calculate BASELINe
-#' # By default, calcBaseline collapses the sequences in the db by the column "CLONE",
-#' # calculates the numbers of observed mutations and expected frequencies of mutations,
-#' # as defined in the IMGT_V_NO_CDR3 and using the HS5FModel targeting model.
-#' # Then, it calculates  the BASELINe posterior probability density functions (PDFs) for
-#' # sequences in the updated db files; using the focused test statistic
-#' db_baseline <- calcBaseline(db, 
-#'                             sequenceColumn="SEQUENCE_IMGT",
-#'                             germlineColumn="GERMLINE_IMGT_D_MASK", 
-#'                             testStatistic="focused",
-#'                             regionDefinition=IMGT_V_NO_CDR3,
-#'                             targetingModel = HS5FModel,
-#'                             nproc = 1)
+#' baseline <- calcBaseline(db, 
+#'                          sequenceColumn="SEQUENCE_IMGT",
+#'                          germlineColumn="GERMLINE_IMGT_D_MASK", 
+#'                          testStatistic="focused",
+#'                          regionDefinition=IMGT_V_NO_CDR3,
+#'                          targetingModel = HS5FModel,
+#'                          nproc = 1)
 #' 
-#' # Grouping the PDFs by the BARCODE and CPRIMER columns in the db, corresponding 
-#' # respectively to sample barcodes and the constant region isotype primers.
-#' baseline_group <- groupBaseline(db_baseline, groupBy=c("BARCODE", "CPRIMER"))
+#' # Grouping the PDFs by the isotype and sample annotations.
+#' grouped <- groupBaseline(baseline, groupBy=c("SAMPLE", "ISOTYPE"))
 #' 
 #' # Get a data.frame of the summary statistics
-#' getBaselineStats(baseline_group)
+#' getBaselineStats(grouped)
 #' 
 #' @export
 getBaselineStats <- function(baseline) {
-  return(baseline@stats)
+    return(baseline@stats)
 }
 
 
-#### Baseline selection calculating functions ####
+#### Calculation functions ####
 
 #' Calculate the BASELINe PDFs
 #' 
@@ -277,11 +271,18 @@ getBaselineStats <- function(baseline) {
 #' @param   regionDefinition    \link{RegionDefinition} object defining the regions
 #'                              and boundaries of the Ig sequences.
 #' @param   targetingModel      \link{TargetingModel} object. Default is  \link{HS5FModel}.
+#' @param   mutationDefinition  \link{MutationDefinition} object defining replacement
+#'                              and silent mutation criteria. If \code{NULL} then 
+#'                              replacement and silent are determined by exact 
+#'                              amino acid identity. Note, if the input data.frame 
+#'                              already contains observed and expected mutation frequency 
+#'                              columns then mutations will not be recalculated and this
+#'                              argument will be ignored.
 #' @param   calcStats           \code{logical} indicating whether or not to calculate the 
 #'                              summary statistics \code{data.frame} stored in the 
 #'                              \code{stats} slot of a \link{Baseline} object.
 #' @param   nproc               number of cores to distribute the operation over. If 
-#'                              \code{nproc} = 0 then the \code{cluster} has already been
+#'                              \code{nproc=0} then the \code{cluster} has already been
 #'                              set and will not be reset.
 #' 
 #' @return  A \code{Baseline} object containing the modified \code{db} and BASELINe 
@@ -299,12 +300,9 @@ getBaselineStats <- function(baseline) {
 #'   \item  Calculate the numbers of observed mutations.
 #'   \item  Calculate the expected frequencies of mutations and modify the provided 
 #'          \code{db}. The modified \code{db} will be included as part of the 
-#'          returned \code{Baseline} object).
+#'          returned \code{Baseline} object.
 #' }
 #'          
-#' @family  selection analysis functions
-#' 
-#' @details
 #' The \code{testStatistic} indicates the statistical framework used to test for selection. 
 #' E.g.
 #' \itemize{
@@ -328,24 +326,24 @@ getBaselineStats <- function(baseline) {
 #'            Front Immunol. 2013 4(November):358.
 #'  }
 #' 
+#' @seealso See \link{Baseline} for the return object.
+#'          See \link{groupBaseline} and \link{summarizeBaseline} for further processing.
+#'          See \link{plotBaselineSummary} and \link{plotBaselineDensity} for plotting results.
+#' 
 #' @examples
 #' # Subset example data
-#' db <- subset(InfluenzaDb, CPRIMER %in% c("IGHA","IGHM") & 
-#'                           BARCODE %in% c("RL016","RL018","RL019","RL021"))
-#' 
+#' data(ExampleDb, package="alakazam")
+#' db <- subset(ExampleDb, ISOTYPE %in% c("IgA", "IgG") & SAMPLE == "+7d")
+#'  
 #' # Calculate BASELINe
-#' # By default, calcBaseline collapses the sequences in the db by the column "CLONE",
-#' # calculates the numbers of observed mutations and expected frequencies of mutations,
-#' # as defined in the IMGT_V_NO_CDR3 and using the HS5FModel targeting model.
-#' # Then, it calculates  the BASELINe posterior probability density functions (PDFs) for
-#' # sequences in the updated db files; using the focused test statistic
-#' db_baseline <- calcBaseline(db, 
-#'                             sequenceColumn="SEQUENCE_IMGT",
-#'                             germlineColumn="GERMLINE_IMGT_D_MASK", 
-#'                             testStatistic="focused",
-#'                             regionDefinition=IMGT_V_NO_CDR3,
-#'                             targetingModel = HS5FModel,
-#'                             nproc=1)
+#' baseline <- calcBaseline(db, 
+#'                          sequenceColumn="SEQUENCE_IMGT",
+#'                          germlineColumn="GERMLINE_IMGT_D_MASK", 
+#'                          testStatistic="focused",
+#'                          regionDefinition=IMGT_V_NO_CDR3,
+#'                          targetingModel = HS5FModel,
+#'                          nproc=1)
+#'                          
 #' @export
 calcBaseline <- function(db,
                          sequenceColumn="SEQUENCE_IMGT",
@@ -353,6 +351,7 @@ calcBaseline <- function(db,
                          testStatistic=c("local", "focused","imbalance"),
                          regionDefinition=NULL,
                          targetingModel=HS5FModel,
+                         mutationDefinition=NULL,
                          calcStats=FALSE,
                          nproc=1) {
     # Hack for visibility of data.table and foreach index variables
@@ -365,6 +364,8 @@ calcBaseline <- function(db,
     check <- checkColumns(db, c(sequenceColumn, germlineColumn))
     if (check != TRUE) { stop(check) }
     
+    # Convert sequence columns to uppercase
+    db <- toupperColumns(db, c(sequenceColumn, germlineColumn))
     
     # Ensure that the nproc does not exceed the number of cores/CPUs available
     nproc <- min(nproc, getnproc())
@@ -424,38 +425,40 @@ calcBaseline <- function(db,
         expectedColumns <- paste0("EXPECTED_", regionDefinition@labels)
     }
     
-    if ( !all( c(observedColumns,expectedColumns) %in% colnames(db) ) ) {
-        
+    if (!all(c(observedColumns, expectedColumns) %in% colnames(db))) {
         # If the germlineColumn & sequenceColumn are not found in the db error and quit
-        if( !all( c(sequenceColumn, germlineColumn) %in% colnames(db) ) ) {
-            stop( paste0("Both ", sequenceColumn, " & ", germlineColumn, 
-                         " columns need to be present in the db") )
+        if (!all(c(sequenceColumn, germlineColumn) %in% colnames(db))) {
+            stop(paste0("Both ", sequenceColumn, " & ", germlineColumn, 
+                         " columns need to be present in the db"))
         }
         
         # Collapse the sequences by the CLONE column (if present)
-        if ( "CLONE" %in% colnames(db) ) {                       
-            db <- collapseByClone(db, 
+        if ("CLONE" %in% colnames(db)) {                       
+            db <- collapseClones(db, 
                                   cloneColumn="CLONE", 
                                   sequenceColumn=sequenceColumn,
                                   germlineColumn=germlineColumn,
-                                  expandedDb=FALSE, nproc=nproc_arg)            
+                                  expandedDb=FALSE, 
+                                  nproc=nproc_arg)
             sequenceColumn="CLONAL_SEQUENCE"
         }
         
         # Calculate the numbers of observed mutations
-        db <- calcDBObservedMutations(db,
-                                      sequenceColumn=sequenceColumn,
-                                      germlineColumn="GERMLINE_IMGT_D_MASK",
-                                      regionDefinition=regionDefinition,
-                                      nproc=0)
+        db <- observedMutations(db,
+                                sequenceColumn=sequenceColumn,
+                                germlineColumn="GERMLINE_IMGT_D_MASK",
+                                regionDefinition=regionDefinition,
+                                mutationDefinition=mutationDefinition,
+                                nproc=0)
         
         # Calculate the expected frequencies of mutations
-        db <- calcDBExpectedMutations( db,
-                                       sequenceColumn=sequenceColumn,
-                                       germlineColumn="GERMLINE_IMGT_D_MASK",
-                                       regionDefinition=regionDefinition,
-                                       targetingModel=targetingModel,
-                                       nproc=0 )
+        db <- expectedMutations(db,
+                                sequenceColumn=sequenceColumn,
+                                germlineColumn="GERMLINE_IMGT_D_MASK",
+                                regionDefinition=regionDefinition,
+                                targetingModel=targetingModel,
+                                mutationDefinition=mutationDefinition,
+                                nproc=0)
     }
     
     # Calculate PDFs for each sequence
@@ -521,10 +524,10 @@ calcBaseline <- function(db,
                      )
             )
         
-        list_pdfs[[region]] <- mat_pdfs_binom[,1:4001]
-        list_k[[region]] <- mat_pdfs_binom[,4002]
-        list_n[[region]] <- mat_pdfs_binom[,4003]
-        list_p[[region]] <- mat_pdfs_binom[,4004]
+        list_pdfs[[region]] <- mat_pdfs_binom[, 1:4001]
+        list_k[[region]] <- mat_pdfs_binom[, 4002]
+        list_n[[region]] <- mat_pdfs_binom[, 4003]
+        list_p[[region]] <- mat_pdfs_binom[, 4004]
         list_numbOfSeqs[[region]][is.na(list_k[[region]])] <- 0
     }
     
@@ -533,7 +536,7 @@ calcBaseline <- function(db,
     mat_template <- matrix( NA, 
                             ncol=length(regions), 
                             nrow=totalNumbOfSequences,
-                            dimnames=list( 1:totalNumbOfSequences, regions )
+                            dimnames=list(1:totalNumbOfSequences, regions)
     )
     
     # numbOfSeqs
@@ -599,7 +602,7 @@ calcBaseline <- function(db,
 # @param   testStatistic
 # @param   regionDefinition
 # 
-# @return  A modified \code{\link{Baseline}} object with the BASELINe probability 
+# @return  A modified \link{Baseline} object with the BASELINe probability 
 #          density function calculated for the regions defined in the \code{regionDefinition}.
 calcBaselineHelper  <- function(observed,
                                 expected,
@@ -607,97 +610,97 @@ calcBaselineHelper  <- function(observed,
                                 testStatistic="local",
                                 regionDefinition=NULL) {
     
-  if (is.null(regionDefinition)) {
-      regions <- makeNullRegionDefinition()@regions
-  } else {
-      regions <- regionDefinition@regions
-  }
-  
-  # Evaluate argument choices
-  testStatistic <- match.arg(testStatistic, c("local", "focused","imbalance"))
-  
-  #If there are more than two regions (e.g. CDR and FWR then you cannot perform the focused test)
-  if (testStatistic=="focused" & length(regions)!=2) {
-    testStatistic="local"    
-  }    
-  
-  # local test statistic
-  if (testStatistic == "local") { 
-    obsX_Index <- grep( paste0("OBSERVED_", region,"_R"),  names(observed) )
-    obsN_Index <- grep( paste0("OBSERVED_", region),  names(observed) )
+    if (is.null(regionDefinition)) {
+        regions <- makeNullRegionDefinition()@regions
+    } else {
+        regions <- regionDefinition@regions
+    }
     
-    expX_Index <- grep( paste0("EXPECTED_", region,"_R"),  names(expected) )
-    expN_Index <- grep( paste0("EXPECTED_", region),  names(expected) )       
-  }
-  
-  # focused test statistic
-  if (testStatistic == "focused") { 
-    obsX_Index <- grep( paste0("OBSERVED_", region,"_R"),  names(observed) )
-    obsN_Index <- 
-      grep( 
-        paste0( 
-          "OBSERVED_", region, "|", 
-          "OBSERVED_", regions[regions!=region], "_S"
-        ),
-        names(observed) 
-      )
+    # Evaluate argument choices
+    testStatistic <- match.arg(testStatistic, c("local", "focused","imbalance"))
     
-    expX_Index <- grep( paste0("EXPECTED_", region,"_R"),  names(expected) )
-    expN_Index <- 
-      grep( 
-        paste0( 
-          "EXPECTED_", region, "|", 
-          "EXPECTED_",  regions[regions!=region], "_S"
-        ),
-        names(expected) 
-      )        
-  }     
-  
-  # imbalance test statistic
-  if (testStatistic == "imbalance") { 
-    obsX_Index <- grep( paste0("OBSERVED_", region),  names(observed) )
-    obsN_Index <- grep( "OBSERVED_",names(observed))  
+    #If there are more than two regions (e.g. CDR and FWR then you cannot perform the focused test)
+    if (testStatistic=="focused" & length(regions)!=2) {
+        testStatistic="local"    
+    }    
     
-    expX_Index <- grep( paste0("EXPECTED_", region),  names(expected) )
-    expN_Index <-   grep( "EXPECTED_",names(expected)) 
+    # local test statistic
+    if (testStatistic == "local") { 
+        obsX_Index <- grep( paste0("OBSERVED_", region,"_R"),  names(observed) )
+        obsN_Index <- grep( paste0("OBSERVED_", region),  names(observed) )
+        
+        expX_Index <- grep( paste0("EXPECTED_", region,"_R"),  names(expected) )
+        expN_Index <- grep( paste0("EXPECTED_", region),  names(expected) )       
+    }
     
-  }
-  
-  
-  obsX <- sum(as.numeric( observed[obsX_Index] ))
-  obsN <- sum(as.numeric(observed[obsN_Index]), na.rm=T )
-  
-  expP <-
-    as.numeric( 
-      sum(expected[expX_Index]) / 
-        sum( expected[expN_Index], na.rm=T )
-    )
-  
-  
-  return( c( calcBaselineBinomialPdf( x=obsX, n=obsN, p=expP ), obsX, obsN, expP ) )
+    # focused test statistic
+    if (testStatistic == "focused") { 
+        obsX_Index <- grep( paste0("OBSERVED_", region,"_R"),  names(observed) )
+        obsN_Index <- 
+            grep( 
+                paste0( 
+                    "OBSERVED_", region, "|", 
+                    "OBSERVED_", regions[regions!=region], "_S"
+                ),
+                names(observed) 
+            )
+        
+        expX_Index <- grep( paste0("EXPECTED_", region,"_R"),  names(expected) )
+        expN_Index <- 
+            grep( 
+                paste0( 
+                    "EXPECTED_", region, "|", 
+                    "EXPECTED_",  regions[regions!=region], "_S"
+                ),
+                names(expected) 
+            )        
+    }     
+    
+    # imbalance test statistic
+    if (testStatistic == "imbalance") { 
+        obsX_Index <- grep( paste0("OBSERVED_", region),  names(observed) )
+        obsN_Index <- grep( "OBSERVED_",names(observed))  
+        
+        expX_Index <- grep( paste0("EXPECTED_", region),  names(expected) )
+        expN_Index <-   grep( "EXPECTED_",names(expected)) 
+        
+    }
+    
+    
+    obsX <- sum(as.numeric( observed[obsX_Index] ))
+    obsN <- sum(as.numeric(observed[obsN_Index]), na.rm=T )
+    
+    expP <-
+        as.numeric( 
+            sum(expected[expX_Index]) / 
+                sum( expected[expN_Index], na.rm=T )
+        )
+    
+    
+    return( c( calcBaselineBinomialPdf( x=obsX, n=obsN, p=expP ), obsX, obsN, expP ) )
 }
 
 # Calculate the BASELINe probability function in a binomial framework.
-calcBaselineBinomialPdf <- function ( x=3, 
-                                      n=10, 
-                                      p=0.33,
-                                      CONST_i=CONST_I,
-                                      max_sigma=20,
-                                      length_sigma=4001 ) {
-  if(n!=0){
-    sigma_s<-seq(-max_sigma,max_sigma,length.out=length_sigma)
-    sigma_1<-log({CONST_i/{1-CONST_i}}/{p/{1-p}})
-    index<-min(n,60)
-    y<- dbeta(CONST_i,x+BAYESIAN_FITTED[index],n+BAYESIAN_FITTED[index]-x)*(1-p)*p*exp(sigma_1)/({1-p}^2+2*p*{1-p}*exp(sigma_1)+{p^2}*exp(2*sigma_1))
-    if(!sum(is.na(y))){
-      tmp<-approx(sigma_1,y,sigma_s)$y
-      tmp/sum(tmp)/{2*max_sigma/{length_sigma-1}}
-    }else{
-      return(NA)
+calcBaselineBinomialPdf <- function (x=3, 
+                                     n=10, 
+                                     p=0.33,
+                                     CONST_i=CONST_I,
+                                     max_sigma=20,
+                                     length_sigma=4001) {
+    if(n!=0){
+        sigma_s<-seq(-max_sigma,max_sigma,length.out=length_sigma)
+        sigma_1<-log({CONST_i/{1-CONST_i}}/{p/{1-p}})
+        index<-min(n,60)
+        y <- dbeta(CONST_i, x+BAYESIAN_FITTED[index], n+BAYESIAN_FITTED[index]-x)*(1-p)*p*exp(sigma_1)/({1-p}^2+2*p*{1-p}*exp(sigma_1)+{p^2}*exp(2*sigma_1))
+        if (!sum(is.na(y))) {
+            tmp <- approx(sigma_1, y, sigma_s)$y
+            return(tmp / sum(tmp) / (2 * max_sigma / (length_sigma - 1)))
+        } else {
+            return(NA)
+        }
+    } else {
+        return(NA)
     }
-  }else{
-    return(NA)
-  }
 }
 
 
@@ -729,9 +732,9 @@ calcBaselineBinomialPdf <- function ( x=3,
 #' from each sample may be combined together, allowing you to compare selection  across 
 #' samples. This is accomplished through a fast numerical convolution technique.
 #'               
-#' @seealso  To calculate BASELINe statistics, such as the mean selection strength
+#' @seealso  To generate the baseline object see \link{calcBaseline}.
+#'           To calculate BASELINe statistics, such as the mean selection strength
 #'           and the 95\% confidence interval, see \link{summarizeBaseline}.
-#' @family   selection analysis functions
 #' 
 #' @references
 #' \enumerate{
@@ -740,38 +743,42 @@ calcBaselineBinomialPdf <- function ( x=3,
 #'            Nucleic Acids Res. 2012 40(17):e134.
 #'  }
 #' 
-#' @examples
-#' # Subset example data
-#' db <- subset(InfluenzaDb, CPRIMER %in% c("IGHA","IGHM") & 
-#'                           BARCODE %in% c("RL016","RL018","RL019","RL021"))
-#' 
+#' @examples  
+#' \donttest{
+#' # Subset example data from alakazam
+#' library(alakazam)
+#' db <- subset(ExampleDb, ISOTYPE %in% c("IgA", "IgG"))
+#'                  
 #' # Calculate BASELINe
-#' # By default, calcBaseline collapses the sequences in the db by the column "CLONE",
-#' # calculates the numbers of observed mutations and expected frequencies of mutations,
-#' # as defined in the IMGT_V_NO_CDR3 and using the HS5FModel targeting model.
-#' # Then, it calculates  the BASELINe posterior probability density functions (PDFs) for
-#' # sequences in the updated db files; using the focused test statistic
-#' db_baseline <- calcBaseline(db, 
-#'                             sequenceColumn="SEQUENCE_IMGT",
-#'                             germlineColumn="GERMLINE_IMGT_D_MASK", 
-#'                             testStatistic="focused",
-#'                             regionDefinition=IMGT_V_NO_CDR3,
-#'                             targetingModel = HS5FModel,
-#'                             nproc = 1)
-#' 
-#' # Grouping the PDFs by the BARCODE column in the db, corresponding 
-#' # to sample barcodes.
-#' baseline_one <- groupBaseline(db_baseline, groupBy="BARCODE")
+#' baseline <- calcBaseline(db, 
+#'                          sequenceColumn="SEQUENCE_IMGT",
+#'                          germlineColumn="GERMLINE_IMGT_D_MASK", 
+#'                          testStatistic="focused",
+#'                          regionDefinition=IMGT_V_NO_CDR3,
+#'                          targetingModel=HS5FModel,
+#'                          nproc=1)
+#'                          
+#' # Group PDFs by sample
+#' grouped1 <- groupBaseline(baseline, groupBy="SAMPLE")
+#' plotBaselineDensity(grouped1, idColumn="SAMPLE", colorElement="group", 
+#'                     sigmaLimits=c(-1, 1))
 #'  
-#' # Grouping the PDFs by the BARCODE and CPRIMER columns in the db, corresponding 
-#' # respectively to sample barcodes and the constant region isotype primers.
-#' baseline_two <- groupBaseline(db_baseline, groupBy=c("BARCODE", "CPRIMER"))
-#'                   
+#' # Group PDFs by both sample (between variable) and isotype (within variable)
+#' grouped2 <- groupBaseline(baseline, groupBy=c("SAMPLE", "ISOTYPE"))
+#' plotBaselineDensity(grouped2, idColumn="SAMPLE", groupColumn="ISOTYPE",
+#'                     colorElement="group", colorValues=IG_COLORS,
+#'                     sigmaLimits=c(-1, 1))
+#' 
+#' # Collapse previous isotype (within variable) grouped PDFs into sample PDFs
+#' grouped3 <- groupBaseline(grouped2, groupBy="SAMPLE")
+#' plotBaselineDensity(grouped3, idColumn="SAMPLE", colorElement="group",
+#'                     sigmaLimits=c(-1, 1))
+#' }
 #' @export
 groupBaseline <- function(baseline, groupBy, nproc=1) {
     # Hack for visibility of data.table and foreach index variables
     idx <- yidx <- .I <- NULL
-
+    
     # Ensure that the nproc does not exceed the number of cores/CPUs available
     nproc <- min(nproc, getnproc())
     
@@ -815,12 +822,10 @@ groupBaseline <- function(baseline, groupBy, nproc=1) {
     
     # Initialize numbOfSeqs
     # This holds the number of non NA sequences
-    numbOfSeqs <- matrix( NA, 
-                          ncol=length(baseline@regions), 
-                          nrow=numbOfTotalGroups,
-                          dimnames=list( 1:numbOfTotalGroups, regions )
-    )    
-    
+    numbOfSeqs <- matrix(NA, 
+                         ncol=length(baseline@regions), 
+                         nrow=numbOfTotalGroups,
+                         dimnames=list(1:numbOfTotalGroups, regions))
     templateBinom <- numbOfSeqs
     
     # For every region (e.g. CDR, FWR etc.)
@@ -829,45 +834,44 @@ groupBaseline <- function(baseline, groupBy, nproc=1) {
         # Group (convolute) all the PDFS and get one single PDF
         list_region_pdfs  <-
             foreach(idx=iterators::icount(numbOfTotalGroups)) %dopar% {
-                
                 # Get a matrix (r=numb of sequences/groups * c=4001(i,e. the length of the PDFS))
-                matrix_GroupPdfs <- (baseline@pdfs[[region]])[groups[[idx]],]
+                matrix_GroupPdfs <- (baseline@pdfs[[region]])[groups[[idx]], , drop=FALSE]
                 
                 # A list version of 
                 list_GroupPdfs <- 
                     lapply( 1:nrow(matrix_GroupPdfs), 
                             function(rowIndex) {
-                                rowVals <- matrix_GroupPdfs[rowIndex,]
-                                if( !all(is.na(rowVals)) ) { matrix_GroupPdfs[rowIndex,] }
+                                rowVals <- matrix_GroupPdfs[rowIndex, ]
+                                if( !all(is.na(rowVals)) ) { matrix_GroupPdfs[rowIndex, ] }
                             })
                 # Determine the number of sequences that went into creating each of the PDFs
                 # If running groupBaseline for the first time after calcBaseline, then
                 # each PDF should have a numbOfSeqs=1. 
-                numbOfSeqs_region <- baseline@numbOfSeqs[groups[[idx]],region]
-                numbOfSeqs_region <- numbOfSeqs_region[numbOfSeqs_region>0]
+                numbOfSeqs_region <- baseline@numbOfSeqs[groups[[idx]], region]
+                numbOfSeqs_region <- numbOfSeqs_region[numbOfSeqs_region > 0]
                 if(any(numbOfSeqs_region>0)) { 
                     names(numbOfSeqs_region) <- 1:length(numbOfSeqs_region) 
                 }
                 
-                list_GroupPdfs <- list_GroupPdfs[!unlist(lapply(list_GroupPdfs,function(x){any(is.na(x))}))]
+                list_GroupPdfs <- list_GroupPdfs[!unlist(lapply(list_GroupPdfs, function(x) { any(is.na(x)) }))]
                 list_GroupPdfs <- Filter(Negate(is.null), list_GroupPdfs)
                 numbOfNonNASeqs <- length(list_GroupPdfs)
                 
                 # If all the PDFs in the group are NAs, return a PDF of NAs
-                if( length(list_GroupPdfs) == 0 ) { 
-                    return( c( rep(NA,4001), 0 ) )
+                if (length(list_GroupPdfs) == 0) { 
+                    return(c(rep(NA, 4001), 0))
                 }
                 
                 # If all the PDFs in the group have a numbOfSeqs=1 then
                 # call groupPosteriors, which groups PDFs with equal weight
-                if( sum(numbOfSeqs_region) == length(numbOfSeqs_region) ) { 
-                    return( c( groupPosteriors(list_GroupPdfs), numbOfNonNASeqs ) )
+                if (sum(numbOfSeqs_region) == length(numbOfSeqs_region)) { 
+                    return(c(groupPosteriors(list_GroupPdfs), numbOfNonNASeqs ) )
                 }
                 
                 # If all the PDFs in the group different numbOfSeqs then call 
-                # combineWeigthedPosteriors, which groups PDFs weighted by the number of seqs/PDFs
+                # combineWeightedPosteriors, which groups PDFs weighted by the number of seqs/PDFs
                 # that went into creating those PDFs
-                if( sum(numbOfSeqs_region) > length(numbOfSeqs_region) ) {
+                if (sum(numbOfSeqs_region) > length(numbOfSeqs_region)) {
                     
                     # sort by number of items
                     len_numbOfSeqs_region <- length(numbOfSeqs_region)
@@ -926,11 +930,11 @@ groupBaseline <- function(baseline, groupBy, nproc=1) {
                     # Do pairwise grouping of PDFs based on weight
                     # 1. sort by weights
                     # 2. group the lowest two weighted PDFs
-                    # 3. resort, and repete till you get one PDFs
+                    # 3. resort, and repeat till you get one PDFs
                     if(length(list_GroupPdfs)>1){
                         repeat{
                             
-                            updatedPdf <- combineWeigthedPosteriors(list_GroupPdfs[[1]], 
+                            updatedPdf <- combineWeightedPosteriors(list_GroupPdfs[[1]], 
                                                                     sorted_numbOfSeqs_region[1], 
                                                                     list_GroupPdfs[[2]], 
                                                                     sorted_numbOfSeqs_region[2])
@@ -967,19 +971,19 @@ groupBaseline <- function(baseline, groupBy, nproc=1) {
         
         # Convert the list of the region's PDFs into a matrix                
         matrix_region_pdfs <- 
-            do.call( rbind,
-                     lapply( 
-                         list_region_pdfs, 
-                         function(x) { 
-                             length(x) <- 4002 
-                             return(x)
-                         }
-                     )
-            )
+            do.call(rbind, lapply(list_region_pdfs, 
+                                  function(x) { 
+                                      length(x) <- 4002 
+                                      return(x)
+                                  }))
         
-        
-        list_pdfs[[region]] <- matrix_region_pdfs[,1:4001]
-        numbOfSeqs[,region] <- matrix_region_pdfs[,4002]        
+        # Normalize and save PDF matrix
+        # Hardcode normalization to max_sigma=20 and sigma_length=4001
+        pdf_norm <- 2*20 / 4000
+        pdf_mat <- matrix_region_pdfs[, 1:4001, drop=FALSE]
+        list_pdfs[[region]] <- pdf_mat / rowSums(pdf_mat, na.rm=TRUE) / pdf_norm
+        # Save regions
+        numbOfSeqs[, region] <- matrix_region_pdfs[, 4002]
     }
     
     #colnames(numbOfSeqs) <- paste0("NUMB_SEQUENCES_", colnames(numbOfSeqs))
@@ -992,7 +996,6 @@ groupBaseline <- function(baseline, groupBy, nproc=1) {
         colnames(db)[1] <- groupBy
     }
     
-    
     # Create a Baseline object with the above results to return
     baseline <- createBaseline(description="",
                                db=as.data.frame(db),
@@ -1003,7 +1006,7 @@ groupBaseline <- function(baseline, groupBy, nproc=1) {
                                binomK=templateBinom,
                                binomN=templateBinom,
                                binomP=templateBinom,
-                               pdfs=list_pdfs )
+                               pdfs=list_pdfs)
     
     # Calculate BASELINe stats and update slot
     baseline <- summarizeBaseline(baseline)
@@ -1012,7 +1015,6 @@ groupBaseline <- function(baseline, groupBy, nproc=1) {
     if(nproc > 1) { parallel::stopCluster(cluster) }
     
     return(baseline)
-    
 }
 
 
@@ -1034,33 +1036,29 @@ groupBaseline <- function(baseline, groupBy, nproc=1) {
 #' @return   Either a modified \code{Baseline} object or data.frame containing the 
 #'           BASELINe selection strength, 95\% confidence intervals and P-value.  
 #'           
-#' @family   selection analysis functions
+#' @seealso  See \link{calcBaseline} for generating \code{Baseline} objects and
+#'           \link{groupBaseline} for convolving groups of BASELINe PDFs.
+#'           
 #' 
 #' @examples
 #' # Subset example data
-#' db <- subset(InfluenzaDb, CPRIMER %in% c("IGHA","IGHM") & 
-#'                           BARCODE %in% c("RL016","RL018","RL019","RL021"))
+#' data(ExampleDb, package="alakazam")
+#' db <- subset(ExampleDb, ISOTYPE %in% c("IgA", "IgG") & SAMPLE == "+7d")
 #' 
 #' # Calculate BASELINe
-#' # By default, calcBaseline collapses the sequences in the db by the column "CLONE",
-#' # calculates the numbers of observed mutations and expected frequencies of mutations,
-#' # as defined in the IMGT_V_NO_CDR3 and using the HS5FModel targeting model.
-#' # Then, it calculates  the BASELINe posterior probability density functions (PDFs) for
-#' # sequences in the updated db files; using the focused test statistic
-#' db_baseline <- calcBaseline(db, 
-#'                             sequenceColumn="SEQUENCE_IMGT",
-#'                             germlineColumn="GERMLINE_IMGT_D_MASK", 
-#'                             testStatistic="focused",
-#'                             regionDefinition=IMGT_V_NO_CDR3,
-#'                             targetingModel = HS5FModel,
-#'                             nproc = 1)
+#' baseline <- calcBaseline(db, 
+#'                          sequenceColumn="SEQUENCE_IMGT",
+#'                          germlineColumn="GERMLINE_IMGT_D_MASK", 
+#'                          testStatistic="focused",
+#'                          regionDefinition=IMGT_V_NO_CDR3,
+#'                          targetingModel = HS5FModel,
+#'                          nproc = 1)
 #' 
-#' # Grouping the PDFs by the BARCODE and CPRIMER columns in the db, corresponding 
-#' # respectively to sample barcodes and the constant region isotype primers.
-#' baseline_group <- groupBaseline(db_baseline, groupBy=c("BARCODE", "CPRIMER"))
+#' # Grouping the PDFs by the sample and isotype annotations
+#' grouped <- groupBaseline(baseline, groupBy=c("SAMPLE", "ISOTYPE"))
 #' 
 #' # Get a data.frame of the summary statistics
-#' baseline_stats <- summarizeBaseline(baseline_group, returnType="df")
+#' stats <- summarizeBaseline(grouped, returnType="df")
 #'                      
 #' @export
 summarizeBaseline <- function(baseline, returnType=c("baseline", "df"), nproc=1) {
@@ -1079,9 +1077,9 @@ summarizeBaseline <- function(baseline, returnType=c("baseline", "df"), nproc=1)
     if (nproc > 1){        
         cluster <- parallel::makeCluster(nproc, type="PSOCK")
         parallel::clusterExport(cluster, list('baseline',
-                                              'calcBaselineSigma',
-                                              'calcBaselineCI',
-                                              'calcBaselinePvalue'), 
+                                              'baselineSigma',
+                                              'baselineCI',
+                                              'baselinePValue'), 
                                 envir=environment())
         registerDoParallel(cluster, cores=nproc)
     } else if (nproc == 1) {
@@ -1105,15 +1103,14 @@ summarizeBaseline <- function(baseline, returnType=c("baseline", "df"), nproc=1)
             names(db_seq) <- names(db)
             for (region in regions) {
                 baseline_pdf <- baseline@pdfs[[region]][idx, ]
-                baseline_ci <- calcBaselineCI(baseline_pdf)
+                baseline_ci <- baselineCI(baseline_pdf)
                 df_baseline_seq_region <- 
                     data.frame(db_seq,
-                               REGION=factor(region,levels=regions),
-                               BASELINE_SIGMA=calcBaselineSigma(baseline_pdf),
+                               REGION=factor(region, levels=regions),
+                               BASELINE_SIGMA=baselineSigma(baseline_pdf),
                                BASELINE_CI_LOWER=baseline_ci[1],
                                BASELINE_CI_UPPER=baseline_ci[2],
-                               BASELINE_CI_PVALUE=calcBaselinePvalue(baseline_pdf)
-                    )
+                               BASELINE_CI_PVALUE=baselinePValue(baseline_pdf))
                 df_baseline_seq <- dplyr::bind_rows(df_baseline_seq, df_baseline_seq_region)
             }
             df_baseline_seq[,1] <- as.vector(unlist(df_baseline_seq[,1]))
@@ -1138,55 +1135,182 @@ summarizeBaseline <- function(baseline, returnType=c("baseline", "df"), nproc=1)
 }
 
 
-# Given a BASELIne PDF calculate mean sigma
-calcBaselineSigma <- function(baseline_pdf,
-                              max_sigma=20,
-                              length_sigma=4001 ) {
-  
-  if (any(is.na(baseline_pdf))) { return(NA) }
-  
-  sigma_s <- seq(-max_sigma, max_sigma, length.out=length_sigma)
-  norm = {length_sigma - 1} / 2 / max_sigma
-  return(baseline_pdf %*% sigma_s / norm)
-}
-
-
-# Given a BASELIne PDF calculate Confidence Interval
-calcBaselineCI <- function ( baseline_pdf,
-                             low=0.025,
-                             up=0.975,
-                             max_sigma=20,
-                             length_sigma=4001 ){
-  
-  if ( any(is.na(baseline_pdf)) ) { return( c(NA,NA) ) }
-  
-  sigma_s <- seq(-max_sigma, max_sigma, length.out=length_sigma)
-  cdf <- cumsum(baseline_pdf)
-  cdf <- cdf/cdf[length(cdf)]
-  intervalLow <- findInterval(low,cdf)
-  fractionLow <- (low - cdf[intervalLow])/(cdf[intervalLow+1]-cdf[intervalLow])
-  intervalUp <- findInterval(up,cdf)
-  fractionUp <- (up - cdf[intervalUp])/(cdf[intervalUp]-cdf[intervalUp-1])
-  sigmaLow <- sigma_s[intervalLow]+fractionLow*(sigma_s[intervalLow+1]-sigma_s[intervalLow])
-  sigmaUp <- sigma_s[intervalUp]+fractionUp*(sigma_s[intervalUp+1]-sigma_s[intervalUp])
-  return( c(sigmaLow,sigmaUp) )
-}
-
-# Given a BASELIne PDF calculate P value
-calcBaselinePvalue <- function ( baseline_pdf, 
-                                 length_sigma=4001, 
-                                 max_sigma=20 ){
-  if ( !any(is.na(baseline_pdf)) ) {
-    norm = {length_sigma-1}/2/max_sigma
-    pVal = {sum(baseline_pdf[1:{{length_sigma-1}/2}]) + baseline_pdf[{{length_sigma+1}/2}]/2}/norm
-    if(pVal>0.5){
-      pVal = pVal-1
+#' Two-sided test of BASELINe PDFs
+#' 
+#' \code{testBaseline} performs a two-sample signifance test of BASELINe 
+#' posterior probability density functions (PDFs).
+#'
+#' @param    baseline   \code{Baseline} object containing the \code{db} and grouped 
+#'                      BASELINe PDFs returned by \link{groupBaseline}.
+#' @param    groupBy    string defining the column in the \code{db} slot of the 
+#'                      \code{Baseline} containing sequence or group identifiers.
+#' 
+#' @return   A data.frame with test results containing the following columns:
+#'           \itemize{
+#'             \item  \code{REGION}:  sequence region, such as "CDR" and "FWR".
+#'             \item  \code{TEST}:    string defining the two group values compared.
+#'             \item  \code{PVALUE}:  two-sided p-value for the comparison.
+#'             \item  \code{FDR}:     FDR corrected \code{PVALUE}.
+#'           }
+#'           
+#' @seealso  To generate the \link{Baseline} input object see \link{groupBaseline}.
+#' 
+#' @references
+#' \enumerate{
+#'   \item  Yaari G, et al. Quantifying selection in high-throughput immunoglobulin 
+#'            sequencing data sets. 
+#'            Nucleic Acids Res. 2012 40(17):e134.
+#'  }
+#' 
+#' @examples
+#' # Subset example data
+#' data(ExampleDb, package="alakazam")
+#' db <- subset(ExampleDb, ISOTYPE == "IgG")
+#' 
+#' # Calculate BASELINe
+#' baseline <- calcBaseline(db, 
+#'                          sequenceColumn="SEQUENCE_IMGT",
+#'                          germlineColumn="GERMLINE_IMGT_D_MASK", 
+#'                          testStatistic="focused",
+#'                          regionDefinition=IMGT_V_NO_CDR3,
+#'                          targetingModel=HS5FModel,
+#'                          nproc=1)
+#' 
+#' # Group PDFs by the sample identifier
+#' grouped <- groupBaseline(baseline, groupBy="SAMPLE")
+#' 
+#' # Perform test on sample PDFs
+#' testBaseline(grouped, groupBy="SAMPLE")
+#' 
+#' @export
+testBaseline <- function(baseline, groupBy) {
+    ## DEBUG
+    # baseline=grouped; groupBy="SAMPLE"
+    
+    # Get test groups
+    groups <- as.character(baseline@db[[groupBy]])
+    if (length(groups) < 2) {
+        stop('The ', groupBy, ' column does not contain at least two groups.')
     }
-    return(pVal)
-  }else{
-    return(NA)
-  }
+    pair_indices <- combn(1:length(groups), 2, simplify=F)
+    pair_names <- combn(groups, 2, simplify=F)
+    test_names <- sapply(pair_names, paste, collapse=" != ")
+    
+    # Run tests
+    test_list <- list()
+    for (n in baseline@regions) {
+        d <- baseline@pdfs[[n]]
+        p <- sapply(pair_indices, function(x) { baseline2DistPValue(d[x[1], ], d[x[2], ])})
+        test_list[[n]] <- data.frame(TEST=test_names, PVALUE=p)
+    }
+    test_df <- bind_rows(test_list, .id="REGION")
+    test_df$FDR <- p.adjust(test_df$PVALUE, method="fdr")
+    
+    return(test_df)
 }
+    
+
+# Calculate mean sigma of a BASELINe PDF
+#
+# @param   base          BASLINe PDF vector.
+# @param   max_sigma     maximum sigma score.
+# @param   length_sigma  length of the PDF vector.
+# @return  Mean sigma.
+baselineSigma <- function(base, max_sigma=20, length_sigma=4001) {
+    # Return NA on bad input
+    if (any(is.na(base))) { 
+        return(NA) 
+    }
+    
+    sigma_s <- seq(-max_sigma, max_sigma, length.out=length_sigma)
+    norm <- sum(base, na.rm=TRUE)
+    sigma_mean <- base %*% sigma_s / norm
+    
+    return(sigma_mean)
+}
+
+
+# Calculate confidence interval for BASELINe PDF
+#
+# @param   base          BASLINe PDF vector.
+# @param   low           lower CI percentile.
+# @param   up            upper CI percentile.
+# @param   max_sigma     maximum sigma score.
+# @param   length_sigma  length of the PDF vector.
+# @return  A vector of \code{c(lower, upper)} confidence bounds.
+baselineCI <- function (base, low=0.025, up=0.975, max_sigma=20, length_sigma=4001){
+    # Return NA on bad input
+    if (any(is.na(base))) { 
+        return(c(NA, NA)) 
+    }
+    
+    sigma_s <- seq(-max_sigma, max_sigma, length.out=length_sigma)
+    cdf <- cumsum(base)
+    cdf <- cdf / cdf[length(cdf)]
+    intervalLow <- findInterval(low, cdf)
+    fractionLow <- (low - cdf[intervalLow])/(cdf[intervalLow + 1] - cdf[intervalLow])
+    intervalUp <- findInterval(up,cdf)
+    fractionUp <- (up - cdf[intervalUp]) / (cdf[intervalUp] - cdf[intervalUp - 1])
+    sigmaLow <- sigma_s[intervalLow] + fractionLow*(sigma_s[intervalLow + 1] - sigma_s[intervalLow])
+    sigmaUp <- sigma_s[intervalUp] + fractionUp*(sigma_s[intervalUp + 1] - sigma_s[intervalUp])
+    
+    return(c(sigmaLow, sigmaUp))
+}
+
+
+# Calculate a p-value that the given BASELINe PDF differs from zero
+#
+# @param   base          BASLINe PDF vector.
+# @param   max_sigma     maximum sigma score.
+# @param   length_sigma  length of the PDF vector.
+# @return  A vector of \code{c(lower, upper)} confidence bounds.
+baselinePValue <- function (base, length_sigma=4001, max_sigma=20){
+    if (!any(is.na(base))) {
+        #norm <- (length_sigma - 1) / 2 / max_sigma
+        norm <- sum(base, na.rm=TRUE)
+        pvalue <- sum(base[1:((length_sigma - 1)/2)] + base[((length_sigma + 1) / 2)] / 2) / norm
+        if (pvalue > 0.5) { pvalue <- 1 - pvalue }
+    } else {
+        pvalue <- NA
+    }
+    
+    return(pvalue)
+}
+
+
+# Compute p-value of two BASELINe PDFs
+#
+# @param   base1  first selection PDF
+# @param   base2  second selection PDF
+# @return  Two-sided p-value that base1 and base2 differ.
+baseline2DistPValue <-function(base1, base2) {
+    ## Debug
+    # base1=grouped@pdfs[["CDR"]][1, ]; base2=grouped@pdfs[["FWR"]][1, ]
+    
+    # Get lengths
+    len1 <- length(base1)
+    len2 <- length(base2)
+    
+    # Check input
+    if (len1 != len2) {
+        stop("base1 and base2 must be the same length.")
+    }
+
+    # Determine p-value
+    if (len1 > 1) {
+        # Normalize
+        base1 <- base1 / sum(base1, na.rm=TRUE)
+        base2 <- base2 / sum(base2, na.rm=TRUE)
+        # Calculate p-value
+        cum2 <- cumsum(base2) - base2/2
+        pvalue <- sum(base1*cum2)
+        if (pvalue > 0.5) { pvalue <- 1 - pvalue }
+    } else {
+        pvalue <- NA
+    }
+    
+    return(pvalue)
+}  
 
 
 #### Plotting functions ####
@@ -1203,28 +1327,32 @@ calcBaselinePvalue <- function ( baseline_pdf,
 #' @param    groupColumn    name of the column in the \code{db} slot of \code{baseline} 
 #'                          containing secondary grouping identifiers. If \code{NULL}, 
 #'                          organize the plot only on values in \code{idColumn}.
-#' @param    groupColors    named vector of colors for entries in \code{groupColumn}, with 
-#'                          names defining unique values in the \code{groupColumn} and values
-#'                          being colors. Also controls the order in which groups appear on the
+#' @param    colorElement   one of \code{c("id", "group")} specifying whether the 
+#'                          \code{idColumn} or \code{groupColumn} will be used for color coding. 
+#'                          The other entry, if present, will be coded by line style.
+#' @param    colorValues    named vector of colors for entries in \code{colorElement}, with 
+#'                          names defining unique values in the \code{colorElement} column and values
+#'                          being colors. Also controls the order in which values appear on the
 #'                          plot. If \code{NULL} alphabetical ordering and a default color palette 
-#'                          will be used. Has no effect if \code{facetBy="group"}.
+#'                          will be used.
+#' @param    facetBy        one of \code{c("region", "group")} specifying which category to facet the
+#'                          plot by, either values in \code{groupColumn} ("group") or regions
+#'                          defined in the \code{regions} slot of the \code{baseline} object ("region").
+#'                          If this is set to "group", then the region will behave as the \code{groupColumn}
+#'                          for purposes of the \code{colorElement} argument.
+#' @param    title          string defining the plot title.
 #' @param    subsetRegions  character vector defining a subset of regions to plot, correspoding 
 #'                          to the regions for which the \code{baseline} data was calculated. If
 #'                          \code{NULL} all regions in \code{baseline} are plotted.
 #' @param    sigmaLimits    numeric vector containing two values defining the \code{c(lower, upper)}
 #'                          bounds of the selection scores to plot.
-#' @param    facetBy        one of c("group", "region") specifying which category to facet the
-#'                          plot by, either values in \code{groupColumn} ("group") or regions
-#'                          defined in \code{baseline} ("region"). The data that is not used
-#'                          for faceting will be color coded.
 #' @param    style          type of plot to draw. One of:
 #'                          \itemize{
 #'                            \item \code{"density"}:  plots a set of curves for each probability 
 #'                                                     density function in \code{baseline}, 
-#'                                                     with the line type determined by \code{idColumn}.
-#'                                                     Faceting and coloring are determine by values in 
-#'                                                     \code{groupColumn} and regions defined in 
-#'                                                     \code{baseline}, depending upon the 
+#'                                                     with colors determined by values in the
+#'                                                     \code{colorElement} column.
+#'                                                     Faceting is determined by the 
 #'                                                     \code{facetBy} argument.
 #'                          }
 #' @param    size           numeric scaling factor for lines, points and text in the plot.
@@ -1235,137 +1363,162 @@ calcBaselinePvalue <- function ( baseline_pdf,
 #' @return   A ggplot object defining the plot.
 #'
 #' @seealso  Takes as input a \link{Baseline} object returned from \link{groupBaseline}.
-#' @family   selection analysis functions
 #' 
 #' @examples
 #' # Subset example data
-#' db <- subset(InfluenzaDb, CPRIMER %in% c("IGHA","IGHM") & 
-#'                           BARCODE %in% c("RL016","RL018","RL019","RL021"))
+#' data(ExampleDb, package="alakazam")
+#' db <- subset(ExampleDb, ISOTYPE %in% c("IgA", "IgG") & SAMPLE == "-1h")
 #' 
 #' # Calculate BASELINe
-#' # By default, calcBaseline collapses the sequences in the db by the column "CLONE",
-#' # calculates the numbers of observed mutations and expected frequencies of mutations,
-#' # as defined in the IMGT_V_NO_CDR3 and using the HS5FModel targeting model.
-#' # Then, it calculates  the BASELINe posterior probability density functions (PDFs) for
-#' # sequences in the updated db files; using the focused test statistic
-#' db_baseline <- calcBaseline(db, 
-#'                             sequenceColumn="SEQUENCE_IMGT",
-#'                             germlineColumn="GERMLINE_IMGT_D_MASK", 
-#'                             testStatistic="focused",
-#'                             regionDefinition=IMGT_V_NO_CDR3,
-#'                             targetingModel = HS5FModel,
-#'                             nproc = 1)
+#' baseline <- calcBaseline(db, 
+#'                          sequenceColumn="SEQUENCE_IMGT",
+#'                          germlineColumn="GERMLINE_IMGT_D_MASK", 
+#'                          testStatistic="focused",
+#'                          regionDefinition=IMGT_V_NO_CDR3,
+#'                          targetingModel=HS5FModel,
+#'                          nproc=1)
 #'  
-#' # Grouping the PDFs by the BARCODE and CPRIMER columns in the db, corresponding 
-#' # respectively to sample barcodes and the constant region isotype primers.
-#' baseline <- groupBaseline(db_baseline, groupBy=c("BARCODE", "CPRIMER"))
+#' # Grouping the PDFs by the sample and isotype annotations
+#' grouped <- groupBaseline(baseline, groupBy=c("SAMPLE", "ISOTYPE"))
 #' 
-#' # Plot mean and confidence interval
-#' plotBaselineDensity(baseline, "BARCODE", "CPRIMER", style="density")
-#' plotBaselineDensity(baseline, "BARCODE", "CPRIMER", subsetRegions="CDR", style="density")
-#' plotBaselineDensity(baseline, "BARCODE", "CPRIMER", facetBy="group", style="density")
+#' # Plot density faceted by region with custom isotype colors
+#' isotype_colors <- c("IgM"="darkorchid", "IgD"="firebrick", 
+#'                   "IgG"="seagreen", "IgA"="steelblue")
+#' plotBaselineDensity(grouped, "SAMPLE", "ISOTYPE", colorValues=isotype_colors, 
+#'                     colorElement="group", sigmaLimits=c(-1, 1))
 #'
-#' # Reorder and recolor groups
-#' group_colors <- c("IGHM"="darkorchid", "IGHD"="firebrick", "IGHG"="seagreen", "IGHA"="steelblue")
-#' plotBaselineDensity(baseline, "BARCODE", "CPRIMER", groupColors=group_colors, style="density")
+#' # Facet by isotype instead of region
+#' plotBaselineDensity(grouped, "SAMPLE", "ISOTYPE", facetBy="group",
+#'                     sigmaLimits=c(-1, 1))
 #' 
 #' @export
-plotBaselineDensity <- function(baseline, idColumn, groupColumn=NULL, groupColors=NULL, 
-                                subsetRegions=NULL, sigmaLimits=c(-5, 5), 
+plotBaselineDensity <- function(baseline, idColumn, groupColumn=NULL, colorElement=c("id", "group"), 
+                                colorValues=NULL, title=NULL, subsetRegions=NULL, sigmaLimits=c(-5, 5), 
                                 facetBy=c("region", "group"), style=c("density"), size=1, 
                                 silent=FALSE, ...) {
-  # Test variable settings
-  # baseline=baseline_two
-  # idColumn="BARCODE"; groupColumn="CPRIMER"; subsetRegions=NULL; sigmaLimits=c(-5, 5)
-  # facetBy="region"; style="density"; size=1; silent=FALSE
+    # Test variable settings
+    # baseline=baseline_two
+    # idColumn="BARCODE"; groupColumn="CPRIMER"; subsetRegions=NULL; sigmaLimits=c(-5, 5)
+    # facetBy="region"; style="density"; size=1; silent=FALSE
     
-  # Check input
-  style <- match.arg(style)
-  facetBy <- match.arg(facetBy)
-  
-  # Set base plot settings
-  base_theme <- theme_bw() +
-    theme(panel.background=element_blank(),
-          panel.grid.major=element_blank(),
-          panel.grid.minor=element_blank(),
-          panel.border=element_rect(color="black", size=0.5)) +
-    theme(strip.background=element_rect(fill="white", color="black", size=0.5))
-  
-  if (style == "density") {
-    # Check for proper grouping
-    if (any(duplicated(baseline@db[, c(idColumn, groupColumn)]))) {
-      stop("More than one unique annotation set per summary statistic. Rerun groupBaseline to combine data.")
+    # Check input
+    colorElement <- match.arg(colorElement)
+    style <- match.arg(style)
+    facetBy <- match.arg(facetBy)
+    
+    
+    # Set base plot settings
+    base_theme <- theme_bw() +
+        theme(panel.background=element_blank(),
+              panel.grid.major=element_blank(),
+              panel.grid.minor=element_blank(),
+              panel.border=element_rect(color="black", size=0.5)) +
+        theme(strip.background=element_rect(fill="white", color="black", size=0.5))
+    
+    if (style == "density") {
+        # Check for proper grouping
+        if (any(duplicated(baseline@db[, c(idColumn, groupColumn)]))) {
+            stop("More than one unique annotation set per summary statistic. Rerun groupBaseline to combine data.")
+        }
+        
+        # Subset to regions of interest
+        dens_names <- baseline@regions        
+        if (!is.null(subsetRegions)) {
+            dens_names <- dens_names[dens_names %in% subsetRegions]        
+        }
+        dens_list <- baseline@pdfs[dens_names]
+        
+        # Get row and column names for PDF matrices
+        group_df <- subset(baseline@db, select=c(idColumn, groupColumn))
+        group_df$GROUP_COLLAPSE <- apply(subset(group_df, select=c(idColumn, groupColumn)), 
+                                         1, paste, collapse=",")
+        col_names <- seq(-20, 20, length.out=ncol(dens_list[[1]]))
+        
+        # Update column and rownames for PDF matrices and subset to Sigma in -5:5
+        for (i in 1:length(dens_list)) {
+            rownames(dens_list[[i]]) <- group_df$GROUP_COLLAPSE
+            colnames(dens_list[[i]]) <- col_names
+            dens_list[[i]] <- dens_list[[i]][, col_names >= sigmaLimits[1] & 
+                                                 col_names <= sigmaLimits[2]]
+        }
+        
+        # Melt density matrices
+        melt_list <- list()
+        for (n in dens_names) {
+            tmp_df <- as.data.frame(dens_list[[n]])
+            tmp_df$GROUP_COLLAPSE <- rownames(dens_list[[n]])
+            gather_cols <- names(tmp_df)[names(tmp_df) != "GROUP_COLLAPSE"]
+            melt_list[[n]] <- tidyr::gather_(tmp_df, "SIGMA", "DENSITY", gather_cols, convert=TRUE)
+        }
+        dens_df <- dplyr::bind_rows(melt_list, .id="REGION")
+        
+        # Assign id and group columns to density data.frame
+        dens_df[, idColumn] <- group_df[match(dens_df$GROUP_COLLAPSE, group_df$GROUP_COLLAPSE), 
+                                        idColumn]
+        if (!is.null(groupColumn)) {
+            dens_df[, groupColumn] <- group_df[match(dens_df$GROUP_COLLAPSE, group_df$GROUP_COLLAPSE), 
+                                               groupColumn]
+        }    
+        
+        # Set secondary grouping and faceting columns
+        if (facetBy == "group") { 
+            secondaryColumn <- "REGION"
+            facetColumn <- groupColumn
+        } else if (facetBy == "region") {
+            secondaryColumn <- groupColumn
+            facetColumn <- "REGION" 
+        }
+        
+        # Apply color order
+        if (!is.null(colorValues)) {
+            if (colorElement == "id") {
+                dens_df[,idColumn] <- factor(dens_df[,idColumn], levels=names(colorValues))
+            } else {
+                dens_df[,groupColumn] <- factor(dens_df[,groupColumn], levels=names(colorValues))
+            }
+        }
+        
+        # Plot probability density curve
+        p1 <- ggplot(dens_df, aes_string(x="SIGMA", y="DENSITY")) +
+            base_theme + 
+            xlab(expression(Sigma)) +
+            ylab("Density") +
+            geom_line(size=1*size)
+        # Add line
+        if (colorElement == "id" & is.null(secondaryColumn)) {
+            p1 <- p1 + aes_string(color=idColumn)
+        } else if (colorElement == "id" & !is.null(secondaryColumn)) {
+            p1 <- p1 + aes_string(color=idColumn, linetype=secondaryColumn)
+        } else if (colorElement == "group") {
+            p1 <- p1 + aes_string(color=secondaryColumn, linetype=idColumn)
+        } else {
+            stop("Incompatible arguments for groupColumn, colorElement and facetBy")
+        }
+        # Add colors
+        if (!is.null(colorValues)) {
+            p1 <- p1 + scale_color_manual(values=colorValues)
+        }   
+        # Add title
+        if (!is.null(title)) {
+            p1 <- p1 + ggtitle(title)
+        }
+        # Add facet
+        if (is.null(facetColumn)) {
+            stop("Cannot facet by group if groupColumn=NULL")
+        } else {
+            p1 <- p1 + facet_grid(paste(facetColumn, "~ ."))
+        }
     }
     
-    # Subset to regions of interest
-    dens_names <- baseline@regions        
-    if (!is.null(subsetRegions)) {
-      dens_names <- dens_names[dens_names %in% subsetRegions]        
-    }
-    dens_list <- baseline@pdfs[dens_names]
+    # Add additional theme elements
+    p1 <- p1 + do.call(theme, list(...))
     
-    # Get row and column names for PDF matrices
-    group_df <- subset(baseline@db, select=c(idColumn, groupColumn))
-    group_df$GROUP_COLLAPSE <- apply(subset(group_df, select=c(idColumn, groupColumn)), 
-                                     1, paste, collapse=",")
-    col_names <- seq(-20, 20, length.out=ncol(dens_list[[1]]))
-    
-    # Update column and rownames for PDF matrices and subset to Sigma in -5:5
-    for (i in 1:length(dens_list)) {
-      rownames(dens_list[[i]]) <- group_df$GROUP_COLLAPSE
-      colnames(dens_list[[i]]) <- col_names
-      dens_list[[i]] <- dens_list[[i]][, col_names >= sigmaLimits[1] & 
-                                         col_names <= sigmaLimits[2]]
+    # Plot
+    if (!silent) { 
+        plot(p1)
     }
     
-    # Melt density matrices
-    melt_list <- list()
-    for (n in dens_names) {
-        tmp_df <- as.data.frame(dens_list[[n]])
-        tmp_df$GROUP_COLLAPSE <- rownames(dens_list[[n]])
-        gather_cols <- names(tmp_df)[names(tmp_df) != "GROUP_COLLAPSE"]
-        melt_list[[n]] <- tidyr::gather_(tmp_df, "SIGMA", "DENSITY", gather_cols, convert=TRUE)
-    }
-    dens_df <- dplyr::bind_rows(melt_list, .id="REGION")
-    
-    # Assign id and group columns to density data.frame
-    dens_df[, idColumn] <- group_df[match(dens_df$GROUP_COLLAPSE, group_df$GROUP_COLLAPSE), 
-                                    idColumn]
-    if (!is.null(groupColumn)) {
-        dens_df[, groupColumn] <- group_df[match(dens_df$GROUP_COLLAPSE, group_df$GROUP_COLLAPSE), 
-                                           groupColumn]
-    }    
-    
-    # Plot probability density curve
-    p1 <- ggplot(dens_df, aes_string(x="SIGMA", y="DENSITY")) +
-        base_theme + 
-        xlab(expression(Sigma)) +
-        ylab("Density") +
-        geom_line(aes_string(linetype=idColumn), size=1*size)
-    if (is.null(groupColumn) & facetBy == "region") {
-        p1 <- p1 + facet_grid("REGION ~ .")
-    } else if (!is.null(groupColumn) & is.null(groupColors) & facetBy == "region") {
-        p1 <- p1 + aes_string(color=groupColumn) + facet_grid(REGION ~ .)
-    } else if (!is.null(groupColumn) & !is.null(groupColors) & facetBy == "region") {
-        p1 <- p1 + scale_color_manual(name=groupColumn, values=groupColors) +
-            aes_string(color=groupColumn) + facet_grid(REGION ~ .)
-    } else if (!is.null(groupColumn) & facetBy == "group") {
-        p1 <- p1 + scale_color_manual(name="Region", values=REGION_PALETTE) +
-            aes_string(color="REGION") + facet_grid(paste(groupColumn, "~ ."))
-    } else {
-        stop("Cannot facet by group if groupColumn=NULL")
-    }
-  }
-  
-  # Add additional theme elements
-  p1 <- p1 + do.call(theme, list(...))
-  
-  # Plot
-  if (!silent) { 
-      plot(p1)
-  }
-  
-  invisible(p1)
+    invisible(p1)
 }
 
 
@@ -1396,6 +1549,7 @@ plotBaselineDensity <- function(baseline, idColumn, groupColumn=NULL, groupColor
 #'                          plot by, either values in \code{groupColumn} ("group") or regions
 #'                          defined in \code{baseline} ("region"). The data that is not used
 #'                          for faceting will be color coded.
+#' @param    title          string defining the plot title.
 #' @param    style          type of plot to draw. One of:
 #'                          \itemize{
 #'                            \item \code{"mean"}:     plots the mean and confidence interval for
@@ -1414,132 +1568,127 @@ plotBaselineDensity <- function(baseline, idColumn, groupColumn=NULL, groupColor
 #'
 #' @seealso  Takes as input either a \link{Baseline} object returned by \link{groupBaseline} 
 #'           or a data.frame returned from \link{summarizeBaseline}.
-#' @family   selection analysis functions
 #' 
 #' @examples
 #' # Subset example data
-#' db <- subset(InfluenzaDb, CPRIMER %in% c("IGHA","IGHM") & 
-#'                           BARCODE %in% c("RL016","RL018","RL019","RL021"))
+#' data(ExampleDb, package="alakazam")
+#' db <- subset(ExampleDb, ISOTYPE %in% c("IgA", "IgG") & SAMPLE == "+7d")
 #' 
 #' # Calculate BASELINe
-#' # By default, calcBaseline collapses the sequences in the db by the column "CLONE",
-#' # calculates the numbers of observed mutations and expected frequencies of mutations,
-#' # as defined in the IMGT_V_NO_CDR3 and using the HS5FModel targeting model.
-#' # Then, it calculates  the BASELINe posterior probability density functions (PDFs) for
-#' # sequences in the updated db files; using the focused test statistic
-#' db_baseline <- calcBaseline(db, 
-#'                             sequenceColumn="SEQUENCE_IMGT",
-#'                             germlineColumn="GERMLINE_IMGT_D_MASK", 
-#'                             testStatistic="focused",
-#'                             regionDefinition=IMGT_V_NO_CDR3,
-#'                             targetingModel = HS5FModel,
-#'                             nproc = 1)
+#' baseline <- calcBaseline(db, 
+#'                          sequenceColumn="SEQUENCE_IMGT",
+#'                          germlineColumn="GERMLINE_IMGT_D_MASK", 
+#'                          testStatistic="focused",
+#'                          regionDefinition=IMGT_V_NO_CDR3,
+#'                          targetingModel=HS5FModel,
+#'                          nproc=1)
 #'  
-#' # Grouping the PDFs by the BARCODE and CPRIMER columns in the db, corresponding 
-#' # respectively to sample barcodes and the constant region isotype primers.
-#' baseline <- groupBaseline(db_baseline, groupBy=c("BARCODE", "CPRIMER"))
+#' # Grouping the PDFs by sample and isotype annotations
+#' grouped <- groupBaseline(baseline, groupBy=c("SAMPLE", "ISOTYPE"))
 #' 
-#' # Plot mean and confidence interval
-#' plotBaselineSummary(baseline, "BARCODE", "CPRIMER", style="mean")
-#' plotBaselineSummary(baseline, "BARCODE", "CPRIMER", subsetRegions="CDR", style="mean")
-#' plotBaselineSummary(baseline, "BARCODE", "CPRIMER", facetBy="group", style="mean")
+#' # Plot mean and confidence interval by region with custom group colors
+#' isotype_colors <- c("IgM"="darkorchid", "IgD"="firebrick", 
+#'                     "IgG"="seagreen", "IgA"="steelblue")
+#' plotBaselineSummary(grouped, "SAMPLE", "ISOTYPE", 
+#'                     groupColors=isotype_colors)
 #' 
-#' # Reorder and recolor groups
-#' group_colors <- c("IGHM"="darkorchid", "IGHA"="steelblue")
-#' plotBaselineSummary(baseline, "BARCODE", "CPRIMER", groupColors=group_colors, style="mean")
-#' 
-#' # Plot subset of data
-#' stats <- subset(getBaselineStats(baseline), BARCODE %in% c("RL018", "RL019"))
-#' plotBaselineSummary(stats, "BARCODE", "CPRIMER", groupColors=group_colors, style="mean")
+#' # Facet by group instead of region
+#' plotBaselineSummary(grouped, "SAMPLE", "ISOTYPE", facetBy="group")
 #' 
 #' @export
 plotBaselineSummary <- function(baseline, idColumn, groupColumn=NULL, groupColors=NULL, 
                                 subsetRegions=NULL, facetBy=c("region", "group"), 
-                                style=c("mean"), size=1, silent=FALSE, ...) {
-  # Check arguments
-  style <- match.arg(style)
-  facetBy <- match.arg(facetBy)
-  
-  # Check input object
-  if (is(baseline, "Baseline")) {
-    stats_df <- baseline@stats
-  } else if (is(baseline, "data.frame")) {
-    stats_df <- baseline
-  } else {
-    stop("Input must be either a data.frame or Baseline object.")
-  }
-  
-  # Check for required columns
-  baseline_cols <- c("REGION", 
-                     "BASELINE_SIGMA", 
-                     "BASELINE_CI_LOWER", 
-                     "BASELINE_CI_LOWER", 
-                     "BASELINE_CI_LOWER", 
-                     "BASELINE_CI_PVALUE")
-  if (!(all(baseline_cols %in% names(stats_df)))) {
-    stop("Input must contain columns defined by summarizeBaseline.")
-  }
-  
-  # Check for proper grouping
-  if (any(duplicated(stats_df[, c(idColumn, groupColumn, "REGION")]))) {
-    stop("More than one unique annotation set per summary statistic. Rerun groupBaseline to combine data.")
-  }
-  
-  # Subset to regions of interest
-  if (!is.null(subsetRegions)) {
-      stats_df <- stats_df[stats_df$REGION %in% subsetRegions, ]
-  }
-  
-  # Set base plot settings
-  base_theme <- theme_bw() +
-    theme(panel.background=element_blank(),
-          panel.grid.major=element_blank(),
-          panel.grid.minor=element_blank(),
-          panel.border=element_rect(color="black", size=0.5)) +
-    theme(strip.background=element_rect(fill="white", color="black", size=0.5)) +
-    theme(axis.title.x=element_blank(),
-       axis.text.x=element_blank(), 
-       axis.ticks.x=element_blank()) +
-    theme(legend.position="top") +
-    theme(axis.text.x=element_text(angle=90, vjust=0.5, hjust=1))
-  
-  if (style == "mean") { 
-    # Plot mean and confidence intervals
-    stats_df <- stats_df[!is.na(stats_df$BASELINE_SIGMA), ]
-    p1 <- ggplot(stats_df, aes_string(x=idColumn, y="BASELINE_SIGMA", ymax=max("BASELINE_SIGMA"))) +
-      base_theme + 
-      xlab("") +
-      ylab(expression(Sigma)) +
-      geom_hline(yintercept=0, size=1*size, linetype=2, color="grey") +
-      geom_point(size=3*size, position=position_dodge(0.6)) +
-      geom_errorbar(aes_string(ymin="BASELINE_CI_LOWER", ymax="BASELINE_CI_UPPER"), 
-                    width=0.2, size=0.5*size, alpha=0.8, position=position_dodge(0.6))
-    if (is.null(groupColumn) & facetBy == "region") {
-      p1 <- p1 + facet_grid(REGION ~ .)
-    } else if (!is.null(groupColumn) & !is.null(groupColors) & facetBy == "region") {
-      #groupColors <- factor(groupColors, levels=groupColors)
-      p1 <- p1 + scale_color_manual(name=groupColumn, values=groupColors) +
-        aes_string(color=groupColumn) + facet_grid(REGION ~ .)
-    } else if (!is.null(groupColumn) & is.null(groupColors) & facetBy == "region") {
-      p1 <- p1 + aes_string(color=groupColumn) + facet_grid(REGION ~ .)
-    } else if (!is.null(groupColumn) & facetBy == "group") {
-      p1 <- p1 + scale_color_manual(name="Region", values=REGION_PALETTE) +
-        aes_string(color="REGION") + facet_grid(paste(groupColumn, "~ ."))
+                                title=NULL, style=c("mean"), size=1, silent=FALSE, ...) {
+    # Check arguments
+    style <- match.arg(style)
+    facetBy <- match.arg(facetBy)
+    
+    # Check input object
+    if (is(baseline, "Baseline")) {
+        stats_df <- baseline@stats
+    } else if (is(baseline, "data.frame")) {
+        stats_df <- baseline
     } else {
-      stop("Cannot facet by group if groupColumn=NULL")
+        stop("Input must be either a data.frame or Baseline object.")
     }
-  }
-  
-  # Add additional theme elements
-  p1 <- p1 + do.call(theme, list(...))
-  
-#   # Plot
-#   if (!silent) { 
-       p1
-#   } else {
-#       invisible(p1)
-#   }
-  
+    
+    # Check for required columns
+    baseline_cols <- c("REGION", 
+                       "BASELINE_SIGMA", 
+                       "BASELINE_CI_LOWER", 
+                       "BASELINE_CI_LOWER", 
+                       "BASELINE_CI_LOWER", 
+                       "BASELINE_CI_PVALUE")
+    if (!(all(baseline_cols %in% names(stats_df)))) {
+        stop("Input must contain columns defined by summarizeBaseline.")
+    }
+    
+    # Check for proper grouping
+    if (any(duplicated(stats_df[, c(idColumn, groupColumn, "REGION")]))) {
+        stop("More than one unique annotation set per summary statistic. Rerun groupBaseline to combine data.")
+    }
+    
+    # Subset to regions of interest
+    if (!is.null(subsetRegions)) {
+        stats_df <- stats_df[stats_df$REGION %in% subsetRegions, ]
+    }
+    
+    # Set base plot settings
+    base_theme <- theme_bw() +
+        theme(panel.background=element_blank(),
+              panel.grid.major=element_blank(),
+              panel.grid.minor=element_blank(),
+              panel.border=element_rect(color="black", size=0.5)) +
+        theme(strip.background=element_rect(fill="white", color="black", size=0.5)) +
+        theme(axis.title.x=element_blank(),
+              axis.text.x=element_blank(), 
+              axis.ticks.x=element_blank()) +
+        theme(legend.position="top") +
+        theme(axis.text.x=element_text(angle=90, vjust=0.5, hjust=1))
+    
+    if (style == "mean") { 
+        # Plot mean and confidence intervals
+        stats_df <- stats_df[!is.na(stats_df$BASELINE_SIGMA), ]
+        if (!is.null(groupColumn) & !is.null(groupColors)) {
+            stats_df[,groupColumn] <- factor(stats_df[,groupColumn], levels=names(groupColors))
+        }
+        p1 <- ggplot(stats_df, aes_string(x=idColumn, y="BASELINE_SIGMA", ymax=max("BASELINE_SIGMA"))) +
+            base_theme + 
+            xlab("") +
+            ylab(expression(Sigma)) +
+            geom_hline(yintercept=0, size=1*size, linetype=2, color="grey") +
+            geom_point(size=3*size, position=position_dodge(0.6)) +
+            geom_errorbar(aes_string(ymin="BASELINE_CI_LOWER", ymax="BASELINE_CI_UPPER"), 
+                          width=0.2, size=0.5*size, alpha=0.8, position=position_dodge(0.6))
+        if (!is.null(title)) {
+            p1 <- p1 + ggtitle(title)
+        }    
+        if (is.null(groupColumn) & facetBy == "region") {
+            p1 <- p1 + facet_grid(REGION ~ .)
+        } else if (!is.null(groupColumn) & !is.null(groupColors) & facetBy == "region") {
+            #groupColors <- factor(groupColors, levels=groupColors)
+            p1 <- p1 + scale_color_manual(name=groupColumn, values=groupColors) +
+                aes_string(color=groupColumn) + facet_grid(REGION ~ .)
+        } else if (!is.null(groupColumn) & is.null(groupColors) & facetBy == "region") {
+            p1 <- p1 + aes_string(color=groupColumn) + facet_grid(REGION ~ .)
+        } else if (!is.null(groupColumn) & facetBy == "group") {
+            p1 <- p1 + scale_color_manual(name="Region", values=REGION_PALETTE) +
+                aes_string(color="REGION") + facet_grid(paste(groupColumn, "~ ."))
+        } else {
+            stop("Cannot facet by group if groupColumn=NULL")
+        }
+    }
+    
+    # Add additional theme elements
+    p1 <- p1 + do.call(theme, list(...))
+    
+    #   # Plot
+    #   if (!silent) { 
+    p1
+    #   } else {
+    #       invisible(p1)
+    #   }
+    
 }
 
 
@@ -1547,155 +1696,155 @@ plotBaselineSummary <- function(baseline, idColumn, groupColumn=NULL, groupColor
 
 ##Covolution
 break2chunks<-function(G=1000){
-  base<-2^round(log(sqrt(G),2),0)
-  return(c(rep(base,floor(G/base)-1),base+G-(floor(G/base)*base)))
+    base<-2^round(log(sqrt(G),2),0)
+    return(c(rep(base,floor(G/base)-1),base+G-(floor(G/base)*base)))
 }
 
 PowersOfTwo <- function(G=100){
-  exponents <- array()
-  i = 0
-  while(G > 0){
-    i=i+1
-    exponents[i] <- floor( log2(G) )
-    G <- G-2^exponents[i]
-  }
-  return(exponents)
+    exponents <- array()
+    i = 0
+    while(G > 0){
+        i=i+1
+        exponents[i] <- floor( log2(G) )
+        G <- G-2^exponents[i]
+    }
+    return(exponents)
 }
 
 convolutionPowersOfTwo <- function( cons, length_sigma=4001 ){
-  G = ncol(cons)
-  if(G>1){
-    for(gen in log(G,2):1){
-      ll<-seq(from=2,to=2^gen,by=2)
-      sapply(ll,function(l){cons[,l/2]<<-weighted_conv(cons[,l],cons[,l-1],length_sigma=length_sigma)})
+    G = ncol(cons)
+    if(G>1){
+        for(gen in log(G,2):1){
+            ll<-seq(from=2,to=2^gen,by=2)
+            sapply(ll,function(l){cons[,l/2]<<-weighted_conv(cons[,l],cons[,l-1],length_sigma=length_sigma)})
+        }
     }
-  }
-  return( cons[,1] )
+    return( cons[,1] )
 }
 
 convolutionPowersOfTwoByTwos <- function( cons, length_sigma=4001,G=1 ){
-  if(length(ncol(cons))) G<-ncol(cons)
-  groups <- PowersOfTwo(G)
-  matG <- matrix(NA, ncol=length(groups), nrow=length(cons)/G )
-  startIndex = 1
-  for( i in 1:length(groups) ){
-    stopIndex <- 2^groups[i] + startIndex - 1
-    if(stopIndex!=startIndex){
-      matG[,i] <- convolutionPowersOfTwo( cons[,startIndex:stopIndex], length_sigma=length_sigma )
-      startIndex = stopIndex + 1
+    if(length(ncol(cons))) G<-ncol(cons)
+    groups <- PowersOfTwo(G)
+    matG <- matrix(NA, ncol=length(groups), nrow=length(cons)/G )
+    startIndex = 1
+    for( i in 1:length(groups) ){
+        stopIndex <- 2^groups[i] + startIndex - 1
+        if(stopIndex!=startIndex){
+            matG[,i] <- convolutionPowersOfTwo( cons[,startIndex:stopIndex], length_sigma=length_sigma )
+            startIndex = stopIndex + 1
+        }
+        else {
+            if(G>1) matG[,i] <- cons[,startIndex:stopIndex]
+            else matG[,i] <- cons
+            #startIndex = stopIndex + 1
+        }
     }
-    else {
-      if(G>1) matG[,i] <- cons[,startIndex:stopIndex]
-      else matG[,i] <- cons
-      #startIndex = stopIndex + 1
-    }
-  }
-  return( list( matG, groups ) )
+    return( list( matG, groups ) )
 }
 
-weighted_conv<-function(x,y,w=1,m=100,length_sigma=4001){
-  lx<-length(x)
-  ly<-length(y)
-  if({lx<m}| {{lx*w}<m}| {{ly}<m}| {{ly*w}<m}){
-    if(w<1){
-      y1<-approx(1:ly,y,seq(1,ly,length.out=m))$y
-      x1<-approx(1:lx,x,seq(1,lx,length.out=m/w))$y
-      lx<-length(x1)
-      ly<-length(y1)
+weighted_conv <- function(x, y, w=1, m=100, length_sigma=4001){
+    lx<-length(x)
+    ly<-length(y)
+    if({lx<m}| {{lx*w}<m}| {{ly}<m}| {{ly*w}<m}){
+        if(w<1){
+            y1<-approx(1:ly,y,seq(1,ly,length.out=m))$y
+            x1<-approx(1:lx,x,seq(1,lx,length.out=m/w))$y
+            lx<-length(x1)
+            ly<-length(y1)
+        }
+        else {
+            y1<-approx(1:ly,y,seq(1,ly,length.out=m*w))$y
+            x1<-approx(1:lx,x,seq(1,lx,length.out=m))$y
+            lx<-length(x1)
+            ly<-length(y1)
+        }
     }
-    else {
-      y1<-approx(1:ly,y,seq(1,ly,length.out=m*w))$y
-      x1<-approx(1:lx,x,seq(1,lx,length.out=m))$y
-      lx<-length(x1)
-      ly<-length(y1)
+    else{
+        x1<-x
+        y1<-approx(1:ly,y,seq(1,ly,length.out=floor(lx*w)))$y
+        ly<-length(y1)
     }
-  }
-  else{
-    x1<-x
-    y1<-approx(1:ly,y,seq(1,ly,length.out=floor(lx*w)))$y
-    ly<-length(y1)
-  }
-  tmp<-approx(x=1:(lx+ly-1),y=convolve(x1,rev(y1),type="open"),xout=seq(1,lx+ly-1,length.out=length_sigma))$y
-  tmp[tmp<=0] = 0
-  return(tmp/sum(tmp))
+    tmp<-approx(x=1:(lx+ly-1),y=convolve(x1,rev(y1),type="open"),xout=seq(1,lx+ly-1,length.out=length_sigma))$y
+    tmp[tmp<=0] = 0
+    return(tmp/sum(tmp))
 }
 
 
-combineWeigthedPosteriors<-function(PDF1,NumberOfSeq1,PDF2,NumberOfSeq2,length_sigma=4001){
-  #return(list(calculate_bayesGHelper(list(cbind(PDF1,PDF2),c(log(NumberOfSeq1,2),log(NumberOfSeq2,2))),
-  #                                   length_sigma=length_sigma),NumberOfSeq1+NumberOfSeq2))
-  return( calculate_bayesGHelper( list( cbind(PDF1,PDF2),
-                                        c(log(NumberOfSeq1,2),
-                                          log(NumberOfSeq2,2))
-                                        ),
-                                  length_sigma=length_sigma
-                                  ))
+combineWeightedPosteriors <- function(PDF1, NumberOfSeq1, PDF2, NumberOfSeq2, length_sigma=4001){
+    #return(list(calculate_bayesGHelper(list(cbind(PDF1,PDF2),c(log(NumberOfSeq1,2),log(NumberOfSeq2,2))),
+    #                                   length_sigma=length_sigma),NumberOfSeq1+NumberOfSeq2))
+    return( calculate_bayesGHelper( list( cbind(PDF1,PDF2),
+                                          c(log(NumberOfSeq1,2),
+                                            log(NumberOfSeq2,2))
+    ),
+    length_sigma=length_sigma
+    ))
 }
 
 calculate_bayesGHelper <- function( listMatG,length_sigma=4001 ){
-  matG <- listMatG[[1]]
-  groups <- listMatG[[2]]
-  i = 1
-  resConv <- matG[,i]
-  denom <- 2^groups[i]
-  if(length(groups)>1){
-    while( i<length(groups) ){
-      i = i + 1
-      resConv <- weighted_conv(resConv, matG[,i], w= {{2^groups[i]}/denom} ,length_sigma=length_sigma)
-      #cat({{2^groups[i]}/denom},"\n")
-      denom <- denom + 2^groups[i]
+    matG <- listMatG[[1]]
+    groups <- listMatG[[2]]
+    i = 1
+    resConv <- matG[,i]
+    denom <- 2^groups[i]
+    if(length(groups)>1){
+        while( i<length(groups) ){
+            i = i + 1
+            resConv <- weighted_conv(resConv, matG[,i], w= {{2^groups[i]}/denom} ,length_sigma=length_sigma)
+            #cat({{2^groups[i]}/denom},"\n")
+            denom <- denom + 2^groups[i]
+        }
     }
-  }
-  return(resConv)
+    return(resConv)
 }
 
 # Given a list of PDFs, returns a convoluted PDF
 groupPosteriors <- function( listPosteriors, max_sigma=20, length_sigma=4001 ,Threshold=2 ){
-  listPosteriors = listPosteriors[ !is.na(listPosteriors) ]
-  Length_Postrior<-length(listPosteriors)
-  if(Length_Postrior>1 & Length_Postrior<=Threshold){
-    cons = matrix(unlist(listPosteriors),length(listPosteriors[[1]]),length(listPosteriors))
-    listMatG <- convolutionPowersOfTwoByTwos(cons,length_sigma=length_sigma)
-    y<-calculate_bayesGHelper(listMatG,length_sigma=length_sigma)
-    return( y/sum(y)/(2*max_sigma/(length_sigma-1)) )
-  }else if(Length_Postrior==1) return(listPosteriors[[1]])
-  else  if(Length_Postrior==0) return(NA)
-  else {
-    cons = matrix(unlist(listPosteriors),length(listPosteriors[[1]]),length(listPosteriors))
-    y = fastConv(cons,max_sigma=max_sigma, length_sigma=length_sigma )
-    return( y/sum(y)/(2*max_sigma/(length_sigma-1)) )
-  }
+    listPosteriors = listPosteriors[ !is.na(listPosteriors) ]
+    Length_Postrior<-length(listPosteriors)
+    if(Length_Postrior>1 & Length_Postrior<=Threshold){
+        cons = matrix(unlist(listPosteriors),length(listPosteriors[[1]]),length(listPosteriors))
+        listMatG <- convolutionPowersOfTwoByTwos(cons,length_sigma=length_sigma)
+        y<-calculate_bayesGHelper(listMatG,length_sigma=length_sigma)
+        return( y/sum(y)/(2*max_sigma/(length_sigma-1)) )
+    }else if(Length_Postrior==1) return(listPosteriors[[1]])
+    else  if(Length_Postrior==0) return(NA)
+    else {
+        cons = matrix(unlist(listPosteriors),length(listPosteriors[[1]]),length(listPosteriors))
+        y = fastConv(cons,max_sigma=max_sigma, length_sigma=length_sigma )
+        return( y/sum(y)/(2*max_sigma/(length_sigma-1)) )
+    }
 }
 
 fastConv<-function(cons, max_sigma=20, length_sigma=4001){
-  chunks<-break2chunks(G=ncol(cons))
-  if(ncol(cons)==3) chunks<-2:1
-  index_chunks_end <- cumsum(chunks)
-  index_chunks_start <- c(1,index_chunks_end[-length(index_chunks_end)]+1)
-  index_chunks <- cbind(index_chunks_start,index_chunks_end)
-  
-  case <- sum(chunks!=chunks[1])
-  if(case==1) End <- max(1,((length(index_chunks)/2)-1))
-  else End <- max(1,((length(index_chunks)/2)))
-  
-  firsts <- sapply(1:End,function(i){
-    indexes<-index_chunks[i,1]:index_chunks[i,2]
-    convolutionPowersOfTwoByTwos(cons[ ,indexes])[[1]]
-  })
-  if(case==0){
-    result<-calculate_bayesGHelper( convolutionPowersOfTwoByTwos(firsts) )
-  }else if(case==1){
-    last<-list(calculate_bayesGHelper(
-      convolutionPowersOfTwoByTwos( cons[ ,index_chunks[length(index_chunks)/2,1]:index_chunks[length(index_chunks)/2,2]] )
-    ),0)
-    result_first<-calculate_bayesGHelper(convolutionPowersOfTwoByTwos(firsts))
-    result<-calculate_bayesGHelper(
-      list(
-        cbind(
-          result_first,last[[1]]),
-        c(log(index_chunks_end[length(index_chunks)/2-1],2),log(index_chunks[length(index_chunks)/2,2]-index_chunks[length(index_chunks)/2,1]+1,2))
-      )
-    )
-  }
-  return(as.vector(result))
+    chunks<-break2chunks(G=ncol(cons))
+    if(ncol(cons)==3) chunks<-2:1
+    index_chunks_end <- cumsum(chunks)
+    index_chunks_start <- c(1,index_chunks_end[-length(index_chunks_end)]+1)
+    index_chunks <- cbind(index_chunks_start,index_chunks_end)
+    
+    case <- sum(chunks!=chunks[1])
+    if(case==1) End <- max(1,((length(index_chunks)/2)-1))
+    else End <- max(1,((length(index_chunks)/2)))
+    
+    firsts <- sapply(1:End,function(i){
+        indexes<-index_chunks[i,1]:index_chunks[i,2]
+        convolutionPowersOfTwoByTwos(cons[ ,indexes])[[1]]
+    })
+    if(case==0){
+        result<-calculate_bayesGHelper( convolutionPowersOfTwoByTwos(firsts) )
+    }else if(case==1){
+        last<-list(calculate_bayesGHelper(
+            convolutionPowersOfTwoByTwos( cons[ ,index_chunks[length(index_chunks)/2,1]:index_chunks[length(index_chunks)/2,2]] )
+        ),0)
+        result_first<-calculate_bayesGHelper(convolutionPowersOfTwoByTwos(firsts))
+        result<-calculate_bayesGHelper(
+            list(
+                cbind(
+                    result_first,last[[1]]),
+                c(log(index_chunks_end[length(index_chunks)/2-1],2),log(index_chunks[length(index_chunks)/2,2]-index_chunks[length(index_chunks)/2,1]+1,2))
+            )
+        )
+    }
+    return(as.vector(result))
 }

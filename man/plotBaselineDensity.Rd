@@ -5,9 +5,9 @@
 \title{Plots BASELINe probability density functions}
 \usage{
 plotBaselineDensity(baseline, idColumn, groupColumn = NULL,
-  groupColors = NULL, subsetRegions = NULL, sigmaLimits = c(-5, 5),
-  facetBy = c("region", "group"), style = c("density"), size = 1,
-  silent = FALSE, ...)
+  colorElement = c("id", "group"), colorValues = NULL, title = NULL,
+  subsetRegions = NULL, sigmaLimits = c(-5, 5), facetBy = c("region",
+  "group"), style = c("density"), size = 1, silent = FALSE, ...)
 }
 \arguments{
 \item{baseline}{\code{Baseline} object containing selection probability 
@@ -20,11 +20,17 @@ containing primary identifiers.}
 containing secondary grouping identifiers. If \code{NULL}, 
 organize the plot only on values in \code{idColumn}.}
 
-\item{groupColors}{named vector of colors for entries in \code{groupColumn}, with 
-names defining unique values in the \code{groupColumn} and values
-being colors. Also controls the order in which groups appear on the
+\item{colorElement}{one of \code{c("id", "group")} specifying whether the 
+\code{idColumn} or \code{groupColumn} will be used for color coding. 
+The other entry, if present, will be coded by line style.}
+
+\item{colorValues}{named vector of colors for entries in \code{colorElement}, with 
+names defining unique values in the \code{colorElement} column and values
+being colors. Also controls the order in which values appear on the
 plot. If \code{NULL} alphabetical ordering and a default color palette 
-will be used. Has no effect if \code{facetBy="group"}.}
+will be used.}
+
+\item{title}{string defining the plot title.}
 
 \item{subsetRegions}{character vector defining a subset of regions to plot, correspoding 
 to the regions for which the \code{baseline} data was calculated. If
@@ -33,19 +39,19 @@ to the regions for which the \code{baseline} data was calculated. If
 \item{sigmaLimits}{numeric vector containing two values defining the \code{c(lower, upper)}
 bounds of the selection scores to plot.}
 
-\item{facetBy}{one of c("group", "region") specifying which category to facet the
+\item{facetBy}{one of \code{c("region", "group")} specifying which category to facet the
 plot by, either values in \code{groupColumn} ("group") or regions
-defined in \code{baseline} ("region"). The data that is not used
-for faceting will be color coded.}
+defined in the \code{regions} slot of the \code{baseline} object ("region").
+If this is set to "group", then the region will behave as the \code{groupColumn}
+for purposes of the \code{colorElement} argument.}
 
 \item{style}{type of plot to draw. One of:
 \itemize{
   \item \code{"density"}:  plots a set of curves for each probability 
                            density function in \code{baseline}, 
-                           with the line type determined by \code{idColumn}.
-                           Faceting and coloring are determine by values in 
-                           \code{groupColumn} and regions defined in 
-                           \code{baseline}, depending upon the 
+                           with colors determined by values in the
+                           \code{colorElement} column.
+                           Faceting is determined by the 
                            \code{facetBy} argument.
 }}
 
@@ -65,43 +71,33 @@ analysis using the BASELINe method.
 }
 \examples{
 # Subset example data
-db <- subset(InfluenzaDb, CPRIMER \%in\% c("IGHA","IGHM") & 
-                          BARCODE \%in\% c("RL016","RL018","RL019","RL021"))
+data(ExampleDb, package="alakazam")
+db <- subset(ExampleDb, ISOTYPE \%in\% c("IgA", "IgG") & SAMPLE == "-1h")
 
 # Calculate BASELINe
-# By default, calcBaseline collapses the sequences in the db by the column "CLONE",
-# calculates the numbers of observed mutations and expected frequencies of mutations,
-# as defined in the IMGT_V_NO_CDR3 and using the HS5FModel targeting model.
-# Then, it calculates  the BASELINe posterior probability density functions (PDFs) for
-# sequences in the updated db files; using the focused test statistic
-db_baseline <- calcBaseline(db, 
-                            sequenceColumn="SEQUENCE_IMGT",
-                            germlineColumn="GERMLINE_IMGT_D_MASK", 
-                            testStatistic="focused",
-                            regionDefinition=IMGT_V_NO_CDR3,
-                            targetingModel = HS5FModel,
-                            nproc = 1)
+baseline <- calcBaseline(db, 
+                         sequenceColumn="SEQUENCE_IMGT",
+                         germlineColumn="GERMLINE_IMGT_D_MASK", 
+                         testStatistic="focused",
+                         regionDefinition=IMGT_V_NO_CDR3,
+                         targetingModel=HS5FModel,
+                         nproc=1)
  
-# Grouping the PDFs by the BARCODE and CPRIMER columns in the db, corresponding 
-# respectively to sample barcodes and the constant region isotype primers.
-baseline <- groupBaseline(db_baseline, groupBy=c("BARCODE", "CPRIMER"))
+# Grouping the PDFs by the sample and isotype annotations
+grouped <- groupBaseline(baseline, groupBy=c("SAMPLE", "ISOTYPE"))
 
-# Plot mean and confidence interval
-plotBaselineDensity(baseline, "BARCODE", "CPRIMER", style="density")
-plotBaselineDensity(baseline, "BARCODE", "CPRIMER", subsetRegions="CDR", style="density")
-plotBaselineDensity(baseline, "BARCODE", "CPRIMER", facetBy="group", style="density")
+# Plot density faceted by region with custom isotype colors
+isotype_colors <- c("IgM"="darkorchid", "IgD"="firebrick", 
+                  "IgG"="seagreen", "IgA"="steelblue")
+plotBaselineDensity(grouped, "SAMPLE", "ISOTYPE", colorValues=isotype_colors, 
+                    colorElement="group", sigmaLimits=c(-1, 1))
 
-# Reorder and recolor groups
-group_colors <- c("IGHM"="darkorchid", "IGHD"="firebrick", "IGHG"="seagreen", "IGHA"="steelblue")
-plotBaselineDensity(baseline, "BARCODE", "CPRIMER", groupColors=group_colors, style="density")
+# Facet by isotype instead of region
+plotBaselineDensity(grouped, "SAMPLE", "ISOTYPE", facetBy="group",
+                    sigmaLimits=c(-1, 1))
 
 }
 \seealso{
 Takes as input a \link{Baseline} object returned from \link{groupBaseline}.
-
-Other selection analysis functions: \code{\link{calcBaseline}},
-  \code{\link{groupBaseline}},
-  \code{\link{plotBaselineSummary}},
-  \code{\link{summarizeBaseline}}
 }
 

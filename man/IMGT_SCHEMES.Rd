@@ -7,7 +7,7 @@
 \alias{IMGT_V_BY_REGIONS_NO_CDR3}
 \alias{IMGT_V_NO_CDR3}
 \title{IMGT unique numbering schemes}
-\format{A \code{\link{RegionDefinition}} object containing:
+\format{A \link{RegionDefinition} object containing:
 \itemize{
   \item  \code{IMGT_V}:                     Grouped CDR and FWR V-segment regions including CDR3.
   \item  \code{IMGT_V_BY_REGIONS}:          Individual CDR and FWR V-segment regions including CDR3.

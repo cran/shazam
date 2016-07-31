@@ -4,7 +4,7 @@
 \name{U5NModel}
 \alias{U5NModel}
 \title{Uniform 5-mer targeting model.}
-\format{\code{\link{TargetingModel}} object.}
+\format{\link{TargetingModel} object.}
 \usage{
 U5NModel
 }
@@ -13,7 +13,8 @@ A null 5-mer model of somatic hypermutation targeting where all substitution, mu
 and targeting rates are uniformly distributed.
 }
 \seealso{
-See \code{\link{HS5FModel}} the human 5-mer model.
+See \link{HS5FModel} for the human 5-mer model and \link{MRS5NFModel} 
+          for the mouse 5-mer model.
 }
 \keyword{datasets}
 

@@ -55,10 +55,11 @@ motifs.
 }
 \examples{
 # Subset example data to one isotype and sample as a demo
-db <- subset(InfluenzaDb, CPRIMER == "IGHA" & BARCODE == "RL014")
+data(ExampleDb, package="alakazam")
+db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
 
-# Create model using only silent mutations and ignore multiple mutations
-sub <- createSubstitutionMatrix(db, model="S", multipleMutation="ignore")
+# Create model using only silent mutations
+sub <- createSubstitutionMatrix(db, model="S")
 
 }
 \references{
@@ -69,13 +70,7 @@ sub <- createSubstitutionMatrix(db, model="S", multipleMutation="ignore")
  }
 }
 \seealso{
-Other targeting model functions: \code{\link{calcTargetingDistance}},
-  \code{\link{createMutabilityMatrix}},
-  \code{\link{createTargetingMatrix}},
-  \code{\link{createTargetingModel}},
-  \code{\link{extendMutabilityMatrix}},
-  \code{\link{extendSubstitutionMatrix}},
-  \code{\link{plotMutability}},
-  \code{\link{writeTargetingDistance}}
+\link{extendSubstitutionMatrix}, \link{createMutabilityMatrix}, 
+          \link{createTargetingMatrix}, \link{createTargetingModel}
 }
 

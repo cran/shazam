@@ -30,6 +30,6 @@ createRegionDefinition()
 
 }
 \seealso{
-See \code{\link{RegionDefinition}} for the return object.
+See \link{RegionDefinition} for the return object.
 }
 

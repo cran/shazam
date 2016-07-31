@@ -1,23 +1,4 @@
-# Miscellaneous common functions and data
-
-#### Data ####
-
-#' Example Change-O database
-#'
-#' A small example database subset from Laserson and Vigneault et al, 2014.
-#'
-#' @format   A data.frame containing Change-O style data.
-#' 
-#' @references
-#' \enumerate{
-#'   \item  Laserson U and Vigneault F, et al. High-resolution antibody dynamics of 
-#'            vaccine-induced immune responses. 
-#'            Proc Natl Acad Sci USA. 2014 111:4928-33.
-#' }
-#'
-#' @seealso  See \code{\link{HS1FDistance}} for the human 1-mer distance matrix.
-"InfluenzaDb"
-
+# Miscellaneous common functions
 
 #### Transformation functions ####
 
@@ -114,6 +95,19 @@ checkColumns <- function(data, columns, logic=c("all", "any")) {
     
     # Return TRUE if all checks pass
     return(TRUE)
+}
+
+
+# Convert columns to uppercase
+#
+# @param   data     data.frame to modify.
+# @param   columns  vector of column names to transform to uppercase.
+# @return  The input data.frame with all entries in \code{columns} transformed 
+#          to uppercase.
+toupperColumns <- function(data, columns) {
+    data <- mutate_each_(data, funs(toupper), columns)
+    
+    return(data)
 }
 
 

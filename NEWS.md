@@ -1,3 +1,50 @@
+Version 0.1.3:  July 31, 2016
+-------------------------------------------------------------------------------
+
+General:
+
++ Added ape and igraph dependency
++ Removed the `InfluenzaDb` data object, in favor of the updated `ExampleDb`
+  provided in alakazam 0.2.4.
++ Added conversion of sequence to uppercase for several functions to support
+  data that was not generated via Change-O.
+
+Distance Calculation:
+
++ Added the `cross` argument to `distToNearest()` which allows restriction of 
+  distances to only distances across samples (ie, excludes within-sample 
+  distances).
++ Added `mst` flag to `distToNearest()`, which will return all distances to 
+  neighboring nodes in a minimum spanning tree.
++ Updated single nucleotide distance models to use the new C++ distance
+  methods in alakazam 0.2.4 for better performance.
++ Fixed a bug leading to failed distance calculations for the `aa` model 
+  of `distToNearest()`.
++ Fixed a bug wherein gap characters where being translated into Ns (Asn) 
+  rather than Xs within the `aa` model of `distToNearest()`.
+
+Mutation Profiling:
+
++ Added the `MutationDefinition` `VOLUME_MUTATIONS`.
++ Added the functions `shmulateSeq()` and `shmulateTree()` to simulate
+  mutations on sequences and lineage trees, respectively, using a 5-mer
+  targeting model.
++ Renamed `collapseByClone`, `calcDbExpectedMutations` and 
+  `calcDbObservedMutations` to `collapseClones`, `expectedMutations`,
+  and `observedMutations`, respectively.
+  
+Selection Analysis:
+
++ Fixed a bug wherein passing a `Baseline` object through `groupBaseline()`
+  multiple times resulted in incorrect normalization.
++ Added `title` options to `plotBaselineSummary()` and `plotBaselineDensity()`.
++ Added more control over colors and group ordering to `plotBaselineSummary()` 
+  and `plotBaselineDensity()`.
++ Added the `testBaseline()` function to test the significance of 
+  differences between two selection distributions.
++ Improved selection analysis vignette. 
+
+
 Version 0.1.2:  February 20, 2016
 -------------------------------------------------------------------------------
 
@@ -11,7 +58,7 @@ General:
 + Changed R dependency to R >= 3.1.2.
 + Added stringi dependency.
 
-Distance Profiling:
+Distance Calculation:
 
 + Fixed a bug wherein `distToNearest()` did not return the nearest neighbor 
   with a non-zero distance.
@@ -51,7 +98,7 @@ General:
 + Swapped dependency on reshape2 for tidyr.
 + Documentation clean up.
 
-Distance Profiling:
+Distance Calculation:
 
 + Changed underlying method of calcTargetingDistance to be negative log10 of
   the probability that is then centered at one by dividing by the mean 
@@ -124,7 +171,7 @@ General:
 + Added dependency on data.table >= 1.9.4 to fix bug that occured with 
   earlier versions of data.table.
 
-Distance Profiling:
+Distance Calculation:
 
 + Added a human 1-mer substitution matrix, `HS1FDistance`, based on the
   Yaari et al, 2013 data.

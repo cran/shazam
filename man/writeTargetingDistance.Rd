@@ -7,7 +7,7 @@
 writeTargetingDistance(model, file)
 }
 \arguments{
-\item{model}{\code{\link{TargetingModel}} object with 
+\item{model}{\link{TargetingModel} object with 
 mutation likelihood information.}
 
 \item{file}{name of file to write.}
@@ -30,16 +30,7 @@ writeTargetingModel(HS5FModel, "hs5f.tab")
 
 }
 \seealso{
-Takes as input a \code{\link{TargetingModel}} object and calculates  
+Takes as input a \link{TargetingModel} object and calculates  
           distances using \link{calcTargetingDistance}.
-
-Other targeting model functions: \code{\link{calcTargetingDistance}},
-  \code{\link{createMutabilityMatrix}},
-  \code{\link{createSubstitutionMatrix}},
-  \code{\link{createTargetingMatrix}},
-  \code{\link{createTargetingModel}},
-  \code{\link{extendMutabilityMatrix}},
-  \code{\link{extendSubstitutionMatrix}},
-  \code{\link{plotMutability}}
 }
 

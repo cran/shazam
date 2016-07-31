@@ -2,73 +2,73 @@
 
 #' The shazam package
 #'
-#' Provides tools for advanced anaylisis of immunoglobulin (Ig) somatic hypermutation 
-#' (SHM), including BASELINe, a novel method for quantifying antigen-driven selection in 
-#' high-throughput Ig sequencing data.
-#' 
 #' Dramatic improvements in high-throughput sequencing technologies now enable 
 #' large-scale characterization of Ig repertoires, defined as the collection of transmembrane 
-#' antigen-receptor proteins located on the surface of T and B lymphocytes.
+#' antigen-receptor proteins located on the surface of T and B lymphocytes. The \code{shazam}
+#' package provides tools for advanced analysis of somatic hypermutation (SHM) in
+#' immunoglobulin (Ig) sequences. The key functions in \code{shazam}, broken down topic, are 
+#' described below.
 #' 
-#' The \code{shazam} package provides tools for advanced analysis of Ig sequences following 
-#' germline segment assignment. Namely, the analysis of SHM. 
-#' Which includes:
-#'  \itemize{
-#'      \item   Statistical analysis of SHM patterns \cr
-#'              Computational models and analyses of SHM have separated the process 
-#'              into two independent components: 
-#'              \enumerate{
-#'                  \item  A mutability model that defines where mutations occur.
-#'                  \item  A nucleotide substitution model that defines the resulting mutation.
-#'              }
-#'              Collectively these are what form the targeting model of SHM. \code{shazam} 
-#'              provides tools to build these mutability and substitution (i.e. targeting) 
-#'              models.
-#'                  
-#'      \item   BASELINe \cr
-#'              Bayesian Estimation of Antigen-driven Selection in Ig Sequences is a 
-#'              novel method for quantifying antigen-driven selection in high-throughput
-#'              Ig sequence data. The targeting model created using \code{shazam} is used 
-#'              to estimate the null distribution of expected mutation frequencies in 
-#'              BASELINe.
-#'              
-#'      \item   Distance calculations \cr
-#'              Based on the underlying SHM targeting (calculated using \code{shazam}) one 
-#'              can compute evolutionary distances between sequences or groups of 
-#'              sequences. This information is particularly useful in understanding and 
-#'              defining clonal relationships.
-#'  }
+#' @section  Mutational profiling:
+#' \code{shazam} provides tools to quantify the extent and nature of SHM within
+#' full length V(D)J sequences as well as sub-regions (eg, FWR and CDR).
+#' Quantification of expected mutational loaded, under specific SHM targeting 
+#' models, can also be performed along with model driven simulations of SHM.
 #' 
-#' Below are the functions in \code{shazam} broken down by the three main tasks described
-#' above:
+#' \itemize{
+#'   \item  \link{collapseClones}:           Build clonal consensus sequence.
+#'   \item  \link{observedMutations}:        Compute observed mutation counts and frequencies.
+#'   \item  \link{expectedMutations}:        Compute expected mutation frequencies.
+#'   \item  \link{shmulateSeq}:              Simulate mutations in a single sequence.
+#'   \item  \link{shmulateTree}:             Simulate mutations over a lineage tree.
+#' }
 #' 
-#' @section  Targeting models:
+#' @section  SHM targeting models:
+#' Computational models and analyses of SHM have separated the process 
+#' into two independent components: 
+#' \enumerate{
+#'   \item  A mutability model that defines where mutations occur.
+#'   \item  A nucleotide substitution model that defines the resulting mutation.
+#' }
+#' Collectively these are what form the targeting model of SHM. \code{shazam} 
+#' provides empirically derived targeting models for both humans and mice,
+#' along with tools to build these mutability and substitution models from data.
+#' 
 #' \itemize{
 #'   \item  \link{createTargetingModel}:     Build a 5-mer targeting model.
 #'   \item  \link{plotMutability}:           Plot 5-mer mutability rates.
-#' }
-#' 
-#' @section  Mutational profiling:
-#' \itemize{
-#'   \item  \link{collapseByClone}:    Build clonal consensus sequence.
-#'   \item  \link{calcDBObservedMutations}:  Compute observed mutation counts.
-#'   \item  \link{calcDBExpectedMutations}:  Compute expected mutation frequencies.
+#'   \item  \link{HS5FModel}:                Human 5-mer SHM targeting model.
+#'   \item  \link{MRS5NFModel}:              Mouse 5-mer SHM targeting model.
 #' }
 #'
-#' @section  Selection analysis:
+#' @section  Quantification of selection pressure:
+#' Bayesian Estimation of Antigen-driven Selection in Ig Sequences is a 
+#' novel method for quantifying antigen-driven selection in high-throughput
+#' Ig sequence data. Targeting models created using \code{shazam} can be used 
+#' to estimate the null distribution of expected mutation frequencies used
+#' by BASELINe, providing measures of selection pressure informed by known 
+#' AID targeting biases.
+#'              
 #' \itemize{
 #'   \item  \link{calcBaseline}:             Calculate the BASELINe probability
 #'                                           density functions (PDFs).
 #'   \item  \link{groupBaseline}:            Combine PDFs from sequences grouped
 #'                                           by biological or experimental relevance.
 #'   \item  \link{summarizeBaseline}:        Compute summary statistics from BASELINe PDFs.
+#'   \item  \link{testBaseline}:             Perform significance testing for the difference
+#'                                           between BASELINe PDFs.
 #'   \item  \link{plotBaselineDensity}:      Plot the probability density functions
 #'                                           resulting from selection analysis.
 #'   \item  \link{plotBaselineSummary}:      Plot summary stastistics resulting from 
 #'                                           selection analysis.
 #' }
 #'
-#' @section  Distance profiling:
+#' @section  Mutational distance calculation:
+#' \code{shazam} provides tools to compute evolutionary distances between 
+#' sequences or groups of sequences, which can leverage SHM targeting 
+#' models. This information is particularly useful in understanding and 
+#' defining clonal relationships.
+#'              
 #' \itemize{
 #'   \item  \link{distToNearest}:            Tune clonal assignment thresholds by calculating 
 #'                                           distances to nearest-neighbors.
@@ -91,23 +91,33 @@
 #'   \item  Yaari G, et al. Models of somatic hypermutation targeting and substitution based 
 #'            on synonymous mutations from high-throughput immunoglobulin sequencing data. 
 #'            Front Immunol. 2013 4:358.
+#'   \item  Cui A, et al. A model of somatic hypermutation targeting in mice based on 
+#'            high-throughput immunoglobulin sequencing data. Under review.
 #'  }
 #' 
-#' @import   alakazam
 #' @import   ggplot2
 #' @import   graphics
 #' @import   methods
 #' @import   utils
+#' @importFrom  alakazam    getAllele getGene getFamily getSegment
+#'                          getAAMatrix getDNAMatrix
+#'                          pairwiseDist pairwiseEqual seqDist seqEqual
+#'                          isValidAASeq translateStrings gridPlot
+#'                          getMRCA getPathLengths tableEdges
+#' @importFrom  ape         mst
 #' @importFrom  data.table  data.table setkey setkeyv
 #' @importFrom  doParallel  registerDoParallel
-#' @importFrom  dplyr       do n desc %>%
+#' @importFrom  dplyr       do n desc funs %>%
 #'                          as_data_frame data_frame data_frame_
 #'                          bind_cols bind_rows combine
 #'                          filter filter_ select select_ arrange arrange_
 #'                          group_by group_by_ ungroup
-#'                          mutate mutate_ transmute transmute_
-#'                          rename rename_ summarize summarize_
+#'                          mutate mutate_ summarize summarize_
+#'                          mutate_each mutate_each_ summarize_each summarize_each_
+#'                          rename rename_ transmute transmute_
 #' @importFrom  foreach     foreach %dopar% registerDoSEQ
+#' @importFrom  igraph      V E as_adjacency_matrix graph_from_data_frame
+#'                          vertex_attr set_vertex_attr
 #' @importFrom  lazyeval    interp
 #' @importFrom  scales      log2_trans log10_trans trans_breaks trans_format
 #'                          math_format percent scientific
@@ -116,7 +126,7 @@
 #' @importFrom  SDMTools    wt.sd
 #' @importFrom  seqinr      c2s s2c words translate
 #' @importFrom  stats       na.omit setNames ecdf sd cor cov median mad
-#'                          approx convolve weighted.mean
+#'                          approx convolve weighted.mean p.adjust
 #'                          dbeta pbeta qbeta rbeta
 #' @importFrom  stringi     stri_dup stri_flatten stri_join stri_length
 #'                          stri_count_boundaries stri_count_regex 
@@ -159,4 +169,4 @@ NULL
 
 # Add built-in variables to global variables environment
 utils::globalVariables(c("M1NDistance", "HS1FDistance", 
-                         "U5NModel", "HS5FModel"), package="shazam")
+                         "U5NModel", "HS5FModel", "MRS5NFModel"), package="shazam")

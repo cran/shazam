@@ -38,32 +38,37 @@ from each sample may be combined together, allowing you to compare selection  ac
 samples. This is accomplished through a fast numerical convolution technique.
 }
 \examples{
-# Subset example data
-db <- subset(InfluenzaDb, CPRIMER \%in\% c("IGHA","IGHM") & 
-                          BARCODE \%in\% c("RL016","RL018","RL019","RL021"))
-
-# Calculate BASELINe
-# By default, calcBaseline collapses the sequences in the db by the column "CLONE",
-# calculates the numbers of observed mutations and expected frequencies of mutations,
-# as defined in the IMGT_V_NO_CDR3 and using the HS5FModel targeting model.
-# Then, it calculates  the BASELINe posterior probability density functions (PDFs) for
-# sequences in the updated db files; using the focused test statistic
-db_baseline <- calcBaseline(db, 
-                            sequenceColumn="SEQUENCE_IMGT",
-                            germlineColumn="GERMLINE_IMGT_D_MASK", 
-                            testStatistic="focused",
-                            regionDefinition=IMGT_V_NO_CDR3,
-                            targetingModel = HS5FModel,
-                            nproc = 1)
-
-# Grouping the PDFs by the BARCODE column in the db, corresponding 
-# to sample barcodes.
-baseline_one <- groupBaseline(db_baseline, groupBy="BARCODE")
  
-# Grouping the PDFs by the BARCODE and CPRIMER columns in the db, corresponding 
-# respectively to sample barcodes and the constant region isotype primers.
-baseline_two <- groupBaseline(db_baseline, groupBy=c("BARCODE", "CPRIMER"))
-                  
+\donttest{
+# Subset example data from alakazam
+library(alakazam)
+db <- subset(ExampleDb, ISOTYPE \%in\% c("IgA", "IgG"))
+                 
+# Calculate BASELINe
+baseline <- calcBaseline(db, 
+                         sequenceColumn="SEQUENCE_IMGT",
+                         germlineColumn="GERMLINE_IMGT_D_MASK", 
+                         testStatistic="focused",
+                         regionDefinition=IMGT_V_NO_CDR3,
+                         targetingModel=HS5FModel,
+                         nproc=1)
+                         
+# Group PDFs by sample
+grouped1 <- groupBaseline(baseline, groupBy="SAMPLE")
+plotBaselineDensity(grouped1, idColumn="SAMPLE", colorElement="group", 
+                    sigmaLimits=c(-1, 1))
+ 
+# Group PDFs by both sample (between variable) and isotype (within variable)
+grouped2 <- groupBaseline(baseline, groupBy=c("SAMPLE", "ISOTYPE"))
+plotBaselineDensity(grouped2, idColumn="SAMPLE", groupColumn="ISOTYPE",
+                    colorElement="group", colorValues=IG_COLORS,
+                    sigmaLimits=c(-1, 1))
+
+# Collapse previous isotype (within variable) grouped PDFs into sample PDFs
+grouped3 <- groupBaseline(grouped2, groupBy="SAMPLE")
+plotBaselineDensity(grouped3, idColumn="SAMPLE", colorElement="group",
+                    sigmaLimits=c(-1, 1))
+}
 }
 \references{
 \enumerate{
@@ -73,12 +78,8 @@ baseline_two <- groupBaseline(db_baseline, groupBy=c("BARCODE", "CPRIMER"))
  }
 }
 \seealso{
-To calculate BASELINe statistics, such as the mean selection strength
+To generate the baseline object see \link{calcBaseline}.
+          To calculate BASELINe statistics, such as the mean selection strength
           and the 95\% confidence interval, see \link{summarizeBaseline}.
-
-Other selection analysis functions: \code{\link{calcBaseline}},
-  \code{\link{plotBaselineDensity}},
-  \code{\link{plotBaselineSummary}},
-  \code{\link{summarizeBaseline}}
 }
 

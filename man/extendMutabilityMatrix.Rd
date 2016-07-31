@@ -8,7 +8,7 @@ extendMutabilityMatrix(mutabilityModel)
 }
 \arguments{
 \item{mutabilityModel}{vector of 5-mer mutability rates built by 
-\code{\link{createMutabilityMatrix}}.}
+\link{createMutabilityMatrix}.}
 }
 \value{
 A 3125 vector of normalized mutability rates for each 5-mer motif with 
@@ -20,23 +20,16 @@ with 5-mers that include Ns by averaging over all corresponding 5-mers without N
 }
 \examples{
 # Subset example data to one isotype and sample as a demo
-db <- subset(InfluenzaDb, CPRIMER == "IGHA" & BARCODE == "RL014")
+data(ExampleDb, package="alakazam")
+db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
 
 # Create model using only silent mutations and ignore multiple mutations
-sub_model <- createSubstitutionMatrix(db, model="S", multipleMutation="ignore")
-mut_model <- createMutabilityMatrix(db, sub_model, model="S", multipleMutation="ignore",
-                                    minNumSeqMutations=10)
+sub_model <- createSubstitutionMatrix(db, model="S")
+mut_model <- createMutabilityMatrix(db, sub_model, model="S")
 ext_model <- extendMutabilityMatrix(mut_model)
 
 }
 \seealso{
-Other targeting model functions: \code{\link{calcTargetingDistance}},
-  \code{\link{createMutabilityMatrix}},
-  \code{\link{createSubstitutionMatrix}},
-  \code{\link{createTargetingMatrix}},
-  \code{\link{createTargetingModel}},
-  \code{\link{extendSubstitutionMatrix}},
-  \code{\link{plotMutability}},
-  \code{\link{writeTargetingDistance}}
+\link{createMutabilityMatrix}, \link{extendSubstitutionMatrix}
 }
 

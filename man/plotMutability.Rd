@@ -48,19 +48,11 @@ A named list of ggplot objects defining the plots, with names defined by the
 plotMutability(HS5FModel, "C")
 
 # Plot two nucleotides in barchart style
-plotMutability(HS5FModel, c("G","T"), style="bar")
+plotMutability(HS5FModel, c("G", "T"), style="bar")
 
 }
 \seealso{
-Takes as input a \code{\link{TargetingModel}} object.
-
-Other targeting model functions: \code{\link{calcTargetingDistance}},
-  \code{\link{createMutabilityMatrix}},
-  \code{\link{createSubstitutionMatrix}},
-  \code{\link{createTargetingMatrix}},
-  \code{\link{createTargetingModel}},
-  \code{\link{extendMutabilityMatrix}},
-  \code{\link{extendSubstitutionMatrix}},
-  \code{\link{writeTargetingDistance}}
+Takes as input a \link{TargetingModel} object. 
+          See \link{createTargetingModel} for model building.
 }
 

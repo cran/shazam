@@ -1,65 +1,82 @@
 ## ---- eval=TRUE, warning=FALSE, message=FALSE----------------------------
-# Set example data
+# Load example data
 library(shazam)
-db <- InfluenzaDb
+data(ExampleDb, package="alakazam")
 
 ## ---- eval=TRUE, warning=FALSE, results="hide"---------------------------
-library(shazam)
-
 # Collapse clonal groups into single sequences
-db_clone <- collapseByClone(db, regionDefinition=IMGT_V_NO_CDR3, 
-                            expandedDb=TRUE, nproc=1)
+clones <- collapseClones(ExampleDb, regionDefinition=IMGT_V_NO_CDR3, nproc=1)
 
 ## ---- eval=TRUE, warning=FALSE, results="hide"---------------------------
-# Count observed mutations and add OBSERVED columns to db_clone
-db_obs <- calcDBObservedMutations(db_clone, 
-                                  sequenceColumn="CLONAL_SEQUENCE",
-                                  regionDefinition=IMGT_V_NO_CDR3, nproc=1)
-# Calculate expected mutations and add EXPECTED columns to db_obs
-db_exp <- calcDBExpectedMutations(db_obs, 
-                                  sequenceColumn="CLONAL_SEQUENCE",
-                                  targetingModel=HS5FModel,
-                                  regionDefinition=IMGT_V_NO_CDR3, nproc=1)
+# Count observed mutations and append OBSERVED columns to the output
+observed <- observedMutations(clones, 
+                              sequenceColumn="CLONAL_SEQUENCE",
+                              regionDefinition=IMGT_V_NO_CDR3, nproc=1)
+# Count observed mutations and append EXPECTED columns to the output
+expected <- expectedMutations(observed, 
+                              sequenceColumn="CLONAL_SEQUENCE",
+                              targetingModel=HS5FModel,
+                              regionDefinition=IMGT_V_NO_CDR3, nproc=1)
 
 ## ---- eval=TRUE, warning=FALSE, results="hide"---------------------------
-# Calculate selection scores using the output from calcDBExpectedMutations
-baseline <- calcBaseline(db_exp, testStatistic="focused", 
-                         regionDefinition=IMGT_V_NO_CDR3,
-                         nproc=1)
+# Calculate selection scores using the output from expectedMutations
+baseline <- calcBaseline(expected, testStatistic="focused", 
+                         regionDefinition=IMGT_V_NO_CDR3, nproc=1)
 
-# Subset the original data to two time-points and switched isotypes
-db_sub <- subset(db, CPRIMER %in% c("IGHA", "IGHG") & 
-                     BARCODE %in% c("RL013", "RL018"))
+## ---- eval=TRUE, warning=FALSE, results="hide"---------------------------
+# Calculate selection scores from scratch on subset
+baseline <- calcBaseline(ExampleDb, testStatistic="focused", 
+                         regionDefinition=IMGT_V_NO_CDR3, nproc=1)
+
+# Subset the original data to switched isotypes
+db_sub <- subset(ExampleDb, ISOTYPE %in% c("IgA", "IgG"))
 # Calculate selection scores from scratch on subset
 baseline_sub <- calcBaseline(db_sub, testStatistic="focused", 
                              regionDefinition=IMGT_V_NO_CDR3, nproc=1)
 
+## ---- eval=FALSE, warning=FALSE, results="hide"--------------------------
+#  # Calculate selection on charge class with the mouse 5-mer model
+#  baseline <- calcBaseline(ExampleDb, testStatistic="focused",
+#                           regionDefinition=IMGT_V_NO_CDR3,
+#                           targetingModel=MRS5NFModel,
+#                           targetingModel=CHARGE_MUTATIONS,
+#                           nproc=1)
+
 ## ---- eval=TRUE, warning=FALSE, results="hide"---------------------------
 # Combine selection scores by time-point
-baseline_one <- groupBaseline(baseline, groupBy=c("BARCODE"))
+grouped_1 <- groupBaseline(baseline, groupBy=c("SAMPLE"))
 
 # Combine selection scores by time-point and isotype
-baseline_two <- groupBaseline(baseline, groupBy=c("BARCODE", "CPRIMER"))
-baseline_sub <- groupBaseline(baseline_sub, groupBy=c("BARCODE", "CPRIMER"))
+grouped_2 <- groupBaseline(baseline_sub, groupBy=c("SAMPLE", "ISOTYPE"))
+
+## ---- eval=FALSE, warning=FALSE, results="hide"--------------------------
+#  # First group by subject and status
+#  subject_grouped <- groupBaseline(baseline, groupBy=c("STATUS", "SUBJECT"))
+#  
+#  # Then group the output by status
+#  status_grouped <- groupBaseline(subject_grouped, groupBy="STATUS")
+
+## ---- eval=TRUE----------------------------------------------------------
+testBaseline(grouped_1, groupBy="SAMPLE")
 
 ## ---- eval=TRUE, warning=FALSE-------------------------------------------
+# Set sample and isotype colors
+sample_colors <- c("-1h"="seagreen", "+7d"="steelblue")
+isotype_colors <- c("IgM"="darkorchid", "IgD"="firebrick", 
+                    "IgG"="seagreen", "IgA"="steelblue")
+
 # Plot mean and confidence interval by time-point
-plotBaselineSummary(baseline_one, "BARCODE")
+plotBaselineSummary(grouped_1, "SAMPLE")
 
 # Plot selection scores by time-point and isotype for only CDR
-plotBaselineSummary(baseline_two, "BARCODE", "CPRIMER", subsetRegions="CDR")
-
-# Plot only two time-points and recolor isotypes
-group_colors <- c("IGHM"="darkorchid", "IGHD"="firebrick", 
-                  "IGHG"="seagreen", "IGHA"="steelblue")
-plotBaselineSummary(baseline_sub, "BARCODE", "CPRIMER", groupColors=group_colors)
+plotBaselineSummary(grouped_2, "SAMPLE", "ISOTYPE", groupColors=isotype_colors,
+                    subsetRegions="CDR")
 
 # Group by CDR/FWR and facet by isotype
-plotBaselineSummary(baseline_two, "BARCODE", "CPRIMER", facetBy="group")
+plotBaselineSummary(grouped_2, "SAMPLE", "ISOTYPE", facetBy="group")
 
 ## ---- eval=TRUE, warning=FALSE-------------------------------------------
 # Plot selection PDFs for a subset of the data
-group_colors <- c("RL013"="steelblue", "RL018"="firebrick")
-plotBaselineDensity(baseline_sub, "CPRIMER", "BARCODE",
-                    groupColors=group_colors, sigmaLimits=c(-3, 3))
+plotBaselineDensity(grouped_2, "ISOTYPE", groupColumn="SAMPLE", colorElement="group", 
+                    colorValues=sample_colors, sigmaLimits=c(-1, 1))
 

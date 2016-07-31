@@ -46,7 +46,7 @@ A \code{numeric} vector of the expected frequencies of mutations in the
 \description{
 \code{calcExpectedMutations} calculates the expected mutation
 frequencies of a given sequence. This is primarily a helper function for
-\link{calcDBExpectedMutations}.
+\link{expectedMutations}.
 }
 \details{
 \code{calcExpectedMutations} calculates the expected mutation frequencies of a 
@@ -57,23 +57,26 @@ For example, when using the default \link{IMGT_V_NO_CDR3} definition, mutations 
 positions beyond 312 will be ignored.
 }
 \examples{
-# Extracting the first entry in the exampled data to use for input and germline sequences.
-inputSeq <- InfluenzaDb[1, "SEQUENCE_IMGT"]
-germlineSeq <-  InfluenzaDb[1, "GERMLINE_IMGT_D_MASK"]
+# Load example data
+data(ExampleDb, package="alakazam")
+
+# Use first entry in the exampled data for input and germline sequence
+in_seq <- ExampleDb[1, "SEQUENCE_IMGT"]
+germ_seq <-  ExampleDb[1, "GERMLINE_IMGT_D_MASK"]
 
 # Identify all mutations in the sequence
-calcExpectedMutations(inputSeq, germlineSeq)
+calcExpectedMutations(in_seq, germ_seq)
 
 # Identify only mutations the V segment minus CDR3
-calcExpectedMutations(inputSeq, germlineSeq, regionDefinition=IMGT_V_NO_CDR3)
+calcExpectedMutations(in_seq, germ_seq, regionDefinition=IMGT_V_NO_CDR3)
 
 # Define mutations based on hydropathy
-calcExpectedMutations(inputSeq, germlineSeq, regionDefinition=IMGT_V_NO_CDR3,
+calcExpectedMutations(in_seq, germ_seq, regionDefinition=IMGT_V_NO_CDR3,
                       mutationDefinition=HYDROPATHY_MUTATIONS)
 
 }
 \seealso{
-\link{calcDBExpectedMutations} calls this function.
+\link{expectedMutations} calls this function.
 To create a custom \code{targetingModel} see \link{createTargetingModel}.
 See \link{calcObservedMutations} for getting observed mutation counts.
 }

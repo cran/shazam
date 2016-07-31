@@ -5,15 +5,18 @@
 \alias{HYDROPATHY_MUTATIONS}
 \alias{MUTATION_SCHEMES}
 \alias{POLARITY_MUTATIONS}
+\alias{VOLUME_MUTATIONS}
 \title{Amino acid mutation definitions}
-\format{A \code{\link{MutationDefinition}} object defining:
+\format{A \link{MutationDefinition} object defining:
 \itemize{
   \item  \code{CHARGE_MUTATIONS}:      Amino acid mutations are defined by changes
-                                       in charge classes.
+                                       in side chain charge class.
   \item  \code{HYDROPATHY_MUTATIONS}:  Amino acid mutations are defined by changes
-                                       in hydrophobicitity classes.
+                                       in side chain hydrophobicitity class.
   \item  \code{POLARITY_MUTATIONS}:    Amino acid mutations are defined by changes
-                                       in polarity classes.
+                                       in side chain polarity class.
+  \item  \code{VOLUME_MUTATIONS}:      Amino acid mutations are defined by changes
+                                       in side chain volume class.
 }}
 \description{
 Definitions of replacement (R) and silent (S) mutations for different amino acid

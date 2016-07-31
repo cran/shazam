@@ -21,7 +21,7 @@ human Ig sequence data.
 }
 }
 \seealso{
-See \code{\link{HS5FModel}} for the 5-mer model from same publication.
+See \link{HS5FModel} for the 5-mer model from same publication.
 }
 \keyword{datasets}
 

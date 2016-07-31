@@ -8,7 +8,7 @@ extendSubstitutionMatrix(substitutionModel)
 }
 \arguments{
 \item{substitutionModel}{matrix of 5-mers substitution counts built by 
-\code{\link{createSubstitutionMatrix}}.}
+\link{createSubstitutionMatrix}.}
 }
 \value{
 A 5x3125 matrix of normalized substitution rate for each 5-mer motif with 
@@ -21,21 +21,15 @@ with 5-mers that include Ns by averaging over all corresponding 5-mers without N
 }
 \examples{
 # Subset example data to one isotype and sample as a demo
-db <- subset(InfluenzaDb, CPRIMER == "IGHA" & BARCODE == "RL014")
+data(ExampleDb, package="alakazam")
+db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
 
-# Create model using only silent mutations and ignore multiple mutations
-sub_model <- createSubstitutionMatrix(db, model="S", multipleMutation="ignore")
+# Create model using only silent mutations
+sub_model <- createSubstitutionMatrix(db, model="S")
 ext_model <- extendSubstitutionMatrix(sub_model)
 
 }
 \seealso{
-Other targeting model functions: \code{\link{calcTargetingDistance}},
-  \code{\link{createMutabilityMatrix}},
-  \code{\link{createSubstitutionMatrix}},
-  \code{\link{createTargetingMatrix}},
-  \code{\link{createTargetingModel}},
-  \code{\link{extendMutabilityMatrix}},
-  \code{\link{plotMutability}},
-  \code{\link{writeTargetingDistance}}
+\link{createSubstitutionMatrix}, \link{extendMutabilityMatrix}
 }
 

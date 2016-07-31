@@ -40,22 +40,23 @@ the default \link{IMGT_V_NO_CDR3} definition, then mutations in positions beyond
 312 will be ignored.
 }
 \examples{
-# Extracting the first entry in the example data to use for input and germline sequences.
-inputSeq <- InfluenzaDb[1, "SEQUENCE_IMGT"]
-germlineSeq <-  InfluenzaDb[1, "GERMLINE_IMGT_D_MASK"]
+# Use first entry in the exampled data for input and germline sequence
+data(ExampleDb, package="alakazam")
+in_seq <- ExampleDb[1, "SEQUENCE_IMGT"]
+germ_seq <-  ExampleDb[1, "GERMLINE_IMGT_D_MASK"]
 
 # Identify all mutations in the sequence
-calcObservedMutations(inputSeq, germlineSeq)
+calcObservedMutations(in_seq, germ_seq)
 
 # Identify only mutations the V segment minus CDR3
-calcObservedMutations(inputSeq, germlineSeq, regionDefinition=IMGT_V_NO_CDR3)
+calcObservedMutations(in_seq, germ_seq, regionDefinition=IMGT_V_NO_CDR3)
  
 # Identify mutations by change in hydropathy class
-calcObservedMutations(inputSeq, germlineSeq, regionDefinition=IMGT_V_NO_CDR3,
+calcObservedMutations(in_seq, germ_seq, regionDefinition=IMGT_V_NO_CDR3,
                       mutationDefinition=HYDROPATHY_MUTATIONS, frequency=TRUE)
 
 }
 \seealso{
-See \link{calcDBObservedMutations} for counting the number of observed mutations.
+See \link{observedMutations} for counting the number of observed mutations.
 }
 

@@ -29,29 +29,32 @@ inferred from observed mutations in the data. The model can then be transformed
 into a distance function to compare Ig sequences of a given dataset based on the 
 likelihood of the observed mutations. This is done via the following steps:
 
-1. Load a Change-O tab-delimited database file.
-2. Infer a substitution model, which is the likelihood of a base mutating to 
+1. Infer a substitution model, which is the likelihood of a base mutating to 
    each other base given the microsequence context. 
-3. Infer a mutability model, which is likelihood of a given base being mutated
+2. Infer a mutability model, which is likelihood of a given base being mutated
    given the microsequence context and substitution model.
-4. Visualize the mutability model to identify hot and cold spots.
-5. Calculate a nucleotide distance matrix based on the underlying SHM models.
+3. Visualize the mutability model to identify hot and cold spots.
+4. Calculate a nucleotide distance matrix based on the underlying SHM models.
 
-Load Change-O data
---------------------------------------------------------------------------------
-A small example Change-O tab-delimited database file is included in the `shazam` 
-package. Inferring a targeting model requires the following fields (columns) to 
-be present in the Change-O file: `SEQUENCE_IMGT`, `GERMLINE_IMGT_D_MASK` and 
-`V_CALL`.
+## Example data
+
+A small example Change-O database is included in the `shazam` package. 
+Inferring a targeting model requires the following fields (columns) to 
+be present in the Change-O database: 
+
+* `SEQUENCE_ID`
+* `SEQUENCE_IMGT`
+* `GERMLINE_IMGT_D_MASK`
+* `V_CALL`
 
 ```{r, eval=TRUE, warning=FALSE, message=FALSE}
-# Set example data
+# Load example data
 library(shazam)
-db <- InfluenzaDb
+data(ExampleDb, package="alakazam")
 ```
 
-Infer targeting model (substitution and mutability)
---------------------------------------------------------------------------------
+## Infer targeting model (substitution and mutability)
+
 The function for inferring substitution rates (`createSubstitutionMatrix`) 
 counts the number of mutations from a given base to all others occurring in the 
 center position for all 5-mer motifs in the dataset. The `model` argument of 
@@ -77,24 +80,13 @@ averaging over all corresponding unambiguous 5-mers.
 
 These extended substitution and mutability matrices can be used to create an 
 overall SHM targeting matrix (`createTargetingMatrix`), which is the combined 
-probability of mutability and substitution. All of the above steps can be combined 
-by using the single function `createTargetingModel` to infer a `TargetingModel` 
-object directly from the dataset.
+probability of mutability and substitution. 
 
 ```{r, eval=FALSE}
-
-# Create a consensus sequence for each clone to avoid over-counting mutations
-# Adds the CLONAL_CONSENSUS_SEQUENCE column
-db_cons <- collapseByClone(db)
-
 # Create substitution model using silent mutations
-sub_matrix <- createSubstitutionMatrix(db_cons, 
-                                       sequenceColumn="CLONAL_SEQUENCE", 
-                                       model="S")
+sub_matrix <- createSubstitutionMatrix(ExampleDb, model="S")
 # Create mutability model using silent mutations
-mut_matrix <- createMutabilityMatrix(db_cons, sub_matrix, 
-                                     sequenceColumn="CLONAL_SEQUENCE", 
-                                     model="S")
+mut_matrix <- createMutabilityMatrix(ExampleDb, sub_matrix, model="S")
 
 # Extend models to include ambiguous 5-mers
 sub_matrix <- extendSubstitutionMatrix(sub_matrix)
@@ -104,13 +96,23 @@ mut_matrix <- extendMutabilityMatrix(mut_matrix)
 tar_matrix <- createTargetingMatrix(sub_matrix, mut_matrix)
 ```
 
+All of the above steps can be combined by using the single function 
+`createTargetingModel` to infer a `TargetingModel` object directly from 
+the dataset. Additionally, it is generally appropriate to consider the mutations
+within a clone only once. Consensus sequences for each clone can be generated
+using the `collapseClones` function.
+
 ```{r, eval=TRUE, warning=FALSE}
+# Collapse sequences into clonal consensus
+clone_db <- collapseClones(ExampleDb, nproc=1)
 # Create targeting model in one step using only silent mutations
-model <- createTargetingModel(db, model="S")
+# Use consensus sequence input and germline columns
+model <- createTargetingModel(clone_db, model="S", sequenceColumn="CLONAL_SEQUENCE", 
+                              germlineColumn="CLONAL_GERMLINE")
 ```
 
-Visualize targeting model
---------------------------------------------------------------------------------
+## Visualize targeting model
+
 The visualization of a dataset's underlying SHM mutability model can be used to 
 investigate hot and cold spot motifs. The length of the bars on the plot of 
 mutability rates corresponds to the likelihood of a given base in the given 
@@ -131,8 +133,8 @@ plotMutability(model, nucleotides="G", style="bar")
 plotMutability(model, nucleotides="T", style="bar")
 ```
 
-Calculate targeting distance matrix
---------------------------------------------------------------------------------
+## Calculate targeting distance matrix
+
 In the Change-O pipeline, the `hs5f` cloning method rely on an inferred 
 targeting model. If users wish to use a targeting model inferred from their 
 data to assign distance between sequences for clonal grouping, then the observed 

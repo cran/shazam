@@ -1,6 +1,6 @@
 # Targeting models
 
-#' @include shazam.R
+#' @include Shazam.R
 NULL
 
 #### Data ####
@@ -20,7 +20,7 @@ NULL
 #'            J Immunol. 1996 156:2642-52. 
 #' }
 #'
-#' @seealso  See \code{\link{HS1FDistance}} for the human 1-mer distance matrix.
+#' @seealso  See \link{HS1FDistance} for the human 1-mer distance matrix.
 "M1NDistance"
 
 
@@ -39,7 +39,7 @@ NULL
 #'            Front Immunol. 2013 4(November):358.
 #' }
 #'
-#' @seealso  See \code{\link{HS5FModel}} for the 5-mer model from same publication.
+#' @seealso  See \link{HS5FModel} for the 5-mer model from same publication.
 "HS1FDistance"
 
 
@@ -48,9 +48,10 @@ NULL
 #' A null 5-mer model of somatic hypermutation targeting where all substitution, mutability
 #' and targeting rates are uniformly distributed.
 #'
-#' @format \code{\link{TargetingModel}} object.
+#' @format \link{TargetingModel} object.
 #' 
-#' @seealso  See \code{\link{HS5FModel}} the human 5-mer model.
+#' @seealso  See \link{HS5FModel} for the human 5-mer model and \link{MRS5NFModel} 
+#'           for the mouse 5-mer model.
 "U5NModel"
 
 
@@ -59,7 +60,7 @@ NULL
 #' 5-mer model of somatic hypermutation targeting based on analysis of silent mutations
 #' in functional Ig sequences from Homo sapiens.
 #'
-#' @format \code{\link{TargetingModel}} object.
+#' @format \link{TargetingModel} object.
 #' 
 #' @references
 #' \enumerate{
@@ -68,9 +69,29 @@ NULL
 #'            Front Immunol. 2013 4(November):358.
 #'  }
 #'  
-#' @seealso  See \code{\link{HS1FDistance}} for the 1-mer distance matrix from the same 
-#'           publication.
+#' @seealso  See \link{HS1FDistance} for the 1-mer distance matrix from the same 
+#'           publication, \link{MRS5NFModel} for the mouse 5-mer model, and 
+#'           \link{U5NModel} for the uniform 5-mer model.
 "HS5FModel"
+
+
+#' Mouse 5-mer targeting model.
+#'
+#' 5-mer model of somatic hypermutation targeting based on analysis of replacement and
+#' silent mutations in non-functional IgK from NP-immunized Mus musculus.
+#'
+#' @format \link{TargetingModel} object.
+#' 
+#' @references
+#' \enumerate{
+#'   \item  Cui A, et al. A model of somatic hypermutation targeting in mice based on 
+#'          high-throughput immunoglobulin sequencing data. Under review.
+#'  }
+#'  
+#' @seealso  See \link{HS5FModel} for human 5-mer targeting model, \link{U5NModel}
+#'           for the uniform 5-mer model, and \link{M1NDistance} for the mouse 
+#'           1-mer distance matrix.
+"MRS5NFModel"
 
 
 #### Classes ####
@@ -171,17 +192,20 @@ setClass("TargetingModel",
 #'            Front Immunol. 2013 4(November):358.
 #'  }
 #'
-#' @family   targeting model functions
+#' @seealso  \link{extendSubstitutionMatrix}, \link{createMutabilityMatrix}, 
+#'           \link{createTargetingMatrix}, \link{createTargetingModel}
 #' 
 #' @examples
 #' # Subset example data to one isotype and sample as a demo
-#' db <- subset(InfluenzaDb, CPRIMER == "IGHA" & BARCODE == "RL014")
+#' data(ExampleDb, package="alakazam")
+#' db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
 #' 
-#' # Create model using only silent mutations and ignore multiple mutations
-#' sub <- createSubstitutionMatrix(db, model="S", multipleMutation="ignore")
+#' # Create model using only silent mutations
+#' sub <- createSubstitutionMatrix(db, model="S")
 #' 
 #' @export
-createSubstitutionMatrix <- function(db, model=c("RS", "S"), sequenceColumn="SEQUENCE_IMGT",
+createSubstitutionMatrix <- function(db, model=c("RS", "S"), 
+                                     sequenceColumn="SEQUENCE_IMGT",
                                      germlineColumn="GERMLINE_IMGT_D_MASK",
                                      vCallColumn="V_CALL",
                                      multipleMutation=c("independent", "ignore"),
@@ -195,8 +219,9 @@ createSubstitutionMatrix <- function(db, model=c("RS", "S"), sequenceColumn="SEQ
     # Check for valid columns
     check <- checkColumns(db, c(sequenceColumn, germlineColumn, vCallColumn))
     if (check != TRUE) { stop(check) }
-    db[[sequenceColumn]] = toupper(db[[sequenceColumn]])
-    db[[germlineColumn]] = toupper(db[[germlineColumn]])
+    
+    # Convert sequence columns to uppercase
+    db <- toupperColumns(db, c(sequenceColumn, germlineColumn))
     
     # Setup
     nuc_chars <- NUCLEOTIDES[1:4]
@@ -371,7 +396,7 @@ createSubstitutionMatrix <- function(db, model=c("RS", "S"), sequenceColumn="SEQ
 #'
 #' @param    db                  data.frame containing sequence data.
 #' @param    substitutionModel   matrix of 5-mer substitution rates built by 
-#'                               \code{\link{createSubstitutionMatrix}}.
+#'                               \link{createSubstitutionMatrix}.
 #' @param    model               type of model to create. The default model, "RS", creates 
 #'                               a model by counting both replacement and silent mutations.
 #'                               The "S" specification builds a model by counting only 
@@ -401,16 +426,17 @@ createSubstitutionMatrix <- function(db, model=c("RS", "S"), sequenceColumn="SEQ
 #'            Front Immunol. 2013 4(November):358.
 #'  }
 #' 
-#' @family   targeting model functions
+#' @seealso  \link{extendMutabilityMatrix}, \link{createSubstitutionMatrix}, 
+#'           \link{createTargetingMatrix}, \link{createTargetingModel}
 #' 
 #' @examples
 #' # Subset example data to one isotype and sample as a demo
-#' db <- subset(InfluenzaDb, CPRIMER == "IGHA" & BARCODE == "RL014")
+#' data(ExampleDb, package="alakazam")
+#' db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
 #'
-#' # Create model using only silent mutations and ignore multiple mutations
-#' sub_model <- createSubstitutionMatrix(db, model="S", multipleMutation="ignore")
-#' mut_model <- createMutabilityMatrix(db, sub_model, model="S", multipleMutation="ignore",
-#'                                     minNumSeqMutations=10)
+#' # Create model using only silent mutations
+#' sub_model <- createSubstitutionMatrix(db, model="S")
+#' mut_model <- createMutabilityMatrix(db, sub_model, model="S")
 #' 
 #' @export
 createMutabilityMatrix <- function(db, substitutionModel, model=c("RS", "S"),
@@ -430,8 +456,9 @@ createMutabilityMatrix <- function(db, substitutionModel, model=c("RS", "S"),
     # Check for valid columns
     check <- checkColumns(db, c(sequenceColumn, germlineColumn, vCallColumn))
     if (check != TRUE) { stop(check) }
-    db[[sequenceColumn]] = toupper(db[[sequenceColumn]])
-    db[[germlineColumn]] = toupper(db[[germlineColumn]])
+    
+    # Convert sequence columns to uppercase
+    db <- toupperColumns(db, c(sequenceColumn, germlineColumn))
     
     # Check that the substitution model is valid
     if (any(dim(substitutionModel) != c(4, 1024))) {
@@ -653,20 +680,21 @@ createMutabilityMatrix <- function(db, substitutionModel, model=c("RS", "S"),
 #' with 5-mers that include Ns by averaging over all corresponding 5-mers without Ns.
 #'
 #' @param    substitutionModel  matrix of 5-mers substitution counts built by 
-#'                              \code{\link{createSubstitutionMatrix}}.
+#'                              \link{createSubstitutionMatrix}.
 #' 
 #' @return   A 5x3125 matrix of normalized substitution rate for each 5-mer motif with 
 #'           rows names defining the center nucleotide, one of \code{c("A", "C", "G", "T", "N")}, 
 #'           and column names defining the 5-mer nucleotide sequence.
 #' 
-#' @family   targeting model functions
+#' @seealso  \link{createSubstitutionMatrix}, \link{extendMutabilityMatrix}
 #' 
 #' @examples
 #' # Subset example data to one isotype and sample as a demo
-#' db <- subset(InfluenzaDb, CPRIMER == "IGHA" & BARCODE == "RL014")
+#' data(ExampleDb, package="alakazam")
+#' db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
 #'
-#' # Create model using only silent mutations and ignore multiple mutations
-#' sub_model <- createSubstitutionMatrix(db, model="S", multipleMutation="ignore")
+#' # Create model using only silent mutations
+#' sub_model <- createSubstitutionMatrix(db, model="S")
 #' ext_model <- extendSubstitutionMatrix(sub_model)
 #' 
 #' @export
@@ -714,21 +742,21 @@ extendSubstitutionMatrix <- function(substitutionModel) {
 #' with 5-mers that include Ns by averaging over all corresponding 5-mers without Ns.
 #'
 #' @param    mutabilityModel  vector of 5-mer mutability rates built by 
-#'                            \code{\link{createMutabilityMatrix}}.
+#'                            \link{createMutabilityMatrix}.
 #' 
 #' @return   A 3125 vector of normalized mutability rates for each 5-mer motif with 
 #'           names defining the 5-mer nucleotide sequence.
 #' 
-#' @family   targeting model functions
+#' @seealso  \link{createMutabilityMatrix}, \link{extendSubstitutionMatrix}
 #' 
 #' @examples
 #' # Subset example data to one isotype and sample as a demo
-#' db <- subset(InfluenzaDb, CPRIMER == "IGHA" & BARCODE == "RL014")
+#' data(ExampleDb, package="alakazam")
+#' db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
 #'
 #' # Create model using only silent mutations and ignore multiple mutations
-#' sub_model <- createSubstitutionMatrix(db, model="S", multipleMutation="ignore")
-#' mut_model <- createMutabilityMatrix(db, sub_model, model="S", multipleMutation="ignore",
-#'                                     minNumSeqMutations=10)
+#' sub_model <- createSubstitutionMatrix(db, model="S")
+#' mut_model <- createMutabilityMatrix(db, sub_model, model="S")
 #' ext_model <- extendMutabilityMatrix(mut_model)
 #' 
 #' @export
@@ -776,11 +804,11 @@ extendMutabilityMatrix <- function(mutabilityModel) {
 #' combined probability of mutability and substitution.
 #'
 #' @param    substitutionModel  matrix of 5-mers substitution rates built by 
-#'                              \code{\link{createSubstitutionMatrix}} or 
-#'                              \code{\link{extendSubstitutionMatrix}}.
+#'                              \link{createSubstitutionMatrix} or 
+#'                              \link{extendSubstitutionMatrix}.
 #' @param    mutabilityModel    vector of 5-mers mutability rates built by 
-#'                              \code{\link{createMutabilityMatrix}} or 
-#'                              \code{\link{extendMutabilityMatrix}}.
+#'                              \link{createMutabilityMatrix} or 
+#'                              \link{extendMutabilityMatrix}.
 #' 
 #' @return   A matrix with the same dimensions as the input \code{substitutionModel} 
 #'           containing normalized targeting probabilities for each 5-mer motif with 
@@ -798,21 +826,24 @@ extendMutabilityMatrix <- function(mutabilityModel) {
 #'            Front Immunol. 2013 4(November):358.
 #'  }
 #' 
-#' @family   targeting model functions
+#' @seealso  \link{createSubstitutionMatrix}, \link{extendSubstitutionMatrix}, 
+#'           \link{createMutabilityMatrix}, \link{extendMutabilityMatrix}, 
+#'           \link{createTargetingModel}
 #' 
 #' @examples
 #' # Subset example data to one isotype and sample as a demo
-#' db <- subset(InfluenzaDb, CPRIMER == "IGHA" & BARCODE == "RL014")
+#' data(ExampleDb, package="alakazam")
+#' db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
 #'
-#' # Create 4x1024 model using only silent mutations and ignore multiple mutations
-#' sub_model <- createSubstitutionMatrix(db, model="S", multipleMutation="ignore")
-#' mut_model <- createMutabilityMatrix(db, sub_model, model="S", multipleMutation="ignore",
-#'                                     minNumSeqMutations=10)
-#' tar_model <- createTargetingMatrix(sub_model, mut_model)
+#' # Create 4x1024 models using only silent mutations
+#' sub_model <- createSubstitutionMatrix(db, model="S")
+#' mut_model <- createMutabilityMatrix(db, sub_model, model="S")
 #' 
-#' # Create 5x3125 model including Ns
+#' # Extend substitution and mutability to including Ns (5x3125 model)
 #' sub_model <- extendSubstitutionMatrix(sub_model)
 #' mut_model <- extendMutabilityMatrix(mut_model)
+#' 
+#' # Create targeting model from substitution and mutability
 #' tar_model <- createTargetingMatrix(sub_model, mut_model)
 #' 
 #' @export
@@ -820,7 +851,7 @@ createTargetingMatrix <- function(substitutionModel, mutabilityModel) {
     # Calculate targeting
     tar_mat <- sweep(substitutionModel, 2, mutabilityModel, `*`)
     
-    # Normalize    
+    # Normalize
     #tar_mat <- tar_mat / sum(tar_mat, na.rm=TRUE)
     tar_mat[!is.finite(tar_mat)] <- NA
     
@@ -860,7 +891,7 @@ createTargetingMatrix <- function(substitutionModel, mutabilityModel) {
 #'                               will be used.
 #' @param    modelCitation       publication source.
 #' 
-#' @return   A \code{\link{TargetingModel}} object.
+#' @return   A \link{TargetingModel} object.
 #' 
 #' @references
 #' \enumerate{
@@ -869,12 +900,16 @@ createTargetingMatrix <- function(substitutionModel, mutabilityModel) {
 #'            Front Immunol. 2013 4(November):358.
 #'  }
 #' 
-#' @seealso  See \link{TargetingModel} for the return object.
-#' @family   targeting model functions
+#' @seealso  See \link{TargetingModel} for the return object. 
+#'           See \link{plotMutability} plotting a mutability model.
+#'           See \link{createSubstitutionMatrix}, \link{extendSubstitutionMatrix}, 
+#'           \link{createMutabilityMatrix}, \link{extendMutabilityMatrix} and 
+#'           \link{createTargetingMatrix} for component steps in building a model.
 #' 
 #' @examples
 #' # Subset example data to one isotype and sample as a demo
-#' db <- subset(InfluenzaDb, CPRIMER == "IGHA" & BARCODE == "RL014")
+#' data(ExampleDb, package="alakazam")
+#' db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
 #'
 #' # Create model using only silent mutations and ignore multiple mutations
 #' model <- createTargetingModel(db, model="S", multipleMutation="ignore")
@@ -918,6 +953,7 @@ createTargetingModel <- function(db, model=c("RS", "S"), sequenceColumn="SEQUENC
     sub_mat <- extendSubstitutionMatrix(sub_mat)
     mut_mat <- extendMutabilityMatrix(mut_mat)
     
+    # Make targeting matrix
     tar_mat <- createTargetingMatrix(sub_mat, mut_mat) 
     
     # Define TargetingModel object
@@ -956,8 +992,8 @@ createTargetingModel <- function(db, model=c("RS", "S"), sequenceColumn="SEQUENC
 #'          zero.
 #' }
 #' 
-#' @seealso  Takes as input a \link{TargetingModel} object.
-#' @family   targeting model functions
+#' @seealso  Takes as input a \link{TargetingModel} object. See \link{createTargetingModel}
+#'           for building a model.
 #' 
 #' @examples
 #' # Calculate targeting distance of HS5FModel
@@ -1001,11 +1037,11 @@ calcTargetingDistance <- function(model) {
 #           equal to \code{mean}.
 #           
 # @seealso  Takes as input a \link{TargetingModel} object.
-# @family   targeting model functions
 # 
 # @examples
 # # Subset example data to one isotype and sample as a demo
-# db <- subset(InfluenzaDb, CPRIMER == "IGHA" & BARCODE == "RL014")
+# data(ExampleDb, package="alakazam")
+# db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
 #
 # # Create model and rescale mutabilities
 # model <- createTargetingModel(db, model="S", multipleMutation="ignore")
@@ -1066,7 +1102,7 @@ removeCodonGaps <- function(matInput) {
 #' \code{writeTargetingDistance} writes a 5-mer targeting distance matrix 
 #' to a tab-delimited file.
 #' 
-#' @param    model     \code{\link{TargetingModel}} object with 
+#' @param    model     \link{TargetingModel} object with 
 #'                     mutation likelihood information.
 #' @param    file      name of file to write.
 #'                                                
@@ -1078,9 +1114,8 @@ removeCodonGaps <- function(matInput) {
 #' and columns define the complete 5-mer of the unmutated nucleotide sequence. 
 #' \code{NA} values in the distance matrix are replaced with distance 0.
 #'    
-#' @seealso  Takes as input a \code{\link{TargetingModel}} object and calculates  
+#' @seealso  Takes as input a \link{TargetingModel} object and calculates  
 #'           distances using \link{calcTargetingDistance}.
-#' @family   targeting model functions
 #' 
 #' @examples
 #' \dontrun{
@@ -1128,18 +1163,19 @@ writeTargetingDistance <- function(model, file) {
 #' @return   A named list of ggplot objects defining the plots, with names defined by the 
 #'           center nucleotide for the plot object.
 #'    
-#' @seealso  Takes as input a \code{\link{TargetingModel}} object.
-#' @family   targeting model functions
+#' @seealso  Takes as input a \link{TargetingModel} object. 
+#'           See \link{createTargetingModel} for model building.
+#' 
 #' 
 #' @examples
 #' # Plot one nucleotide in circular style
 #' plotMutability(HS5FModel, "C")
 #' 
 #' # Plot two nucleotides in barchart style
-#' plotMutability(HS5FModel, c("G","T"), style="bar")
+#' plotMutability(HS5FModel, c("G", "T"), style="bar")
 #' 
 #' @export
-plotMutability <- function(model, nucleotides=c("A", "C", "G", "T"), 
+plotMutability <- function(model, nucleotides=c("A", "C", "G", "T"),
                            style=c("hedgehog", "bar"), size=1, silent=FALSE, 
                            ...) {
     # model=HS5FModel
@@ -1351,7 +1387,7 @@ plotMutability <- function(model, nucleotides=c("A", "C", "G", "T"),
     
     # Plot
     if (!silent) { 
-        do.call(multiggplot, args=c(plot_list, ncol=length(plot_list))) 
+        do.call(gridPlot, args=c(plot_list, ncol=length(plot_list))) 
     }
     
     invisible(plot_list)
@@ -1432,7 +1468,7 @@ listMutations <- function(seqInput, seqGL, multipleMutation, model) {
     matIGL = matrix(c(seqI, seqG), ncol=length(seqI), nrow=2, byrow=T)
     mutations <- analyzeMutations2NucUri(matIGL)
     mutations <- mutations[!is.na(mutations)]
-    positions <- as.numeric(names(mutations))
+    #positions <- as.numeric(names(mutations))
     # mutations <- mutations[positions <= VLENGTH]
     
     #remove the nucleotide mutations in the codons with multiple mutations

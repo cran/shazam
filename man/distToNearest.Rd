@@ -7,7 +7,7 @@
 distToNearest(db, sequenceColumn = "JUNCTION", vCallColumn = "V_CALL",
   jCallColumn = "J_CALL", model = c("hs1f", "m1n", "ham", "aa", "hs5f"),
   normalize = c("length", "none"), symmetry = c("avg", "min"),
-  first = TRUE, nproc = 1, fields = NULL)
+  first = TRUE, nproc = 1, fields = NULL, cross = NULL, mst = FALSE)
 }
 \arguments{
 \item{db}{data.frame containing sequence data.}
@@ -25,22 +25,30 @@ See Details for further information.}
 
 \item{normalize}{method of normalization. The default is \code{"length"}, which 
 divides the distance by the length of the sequence group. If 
-\code{"none"} then no normalization if performed}
+\code{"none"} then no normalization if performed.}
 
 \item{symmetry}{if model is hs5f, distance between seq1 and seq2 is either the
 average (avg) of seq1->seq2 and seq2->seq1 or the minimum (min).}
 
-\item{first}{if \code{TRUE} only the first call of the gene assignments is used.
-If \code{FALSE} the union of ambiguous gene assignments is used to 
-group all sequences with any overlapping gene calls.}
+\item{first}{if \code{TRUE} only the first call of the gene assignments 
+is used. if \code{FALSE} the union of ambiguous gene 
+assignments is used to group all sequences with any 
+overlapping gene calls.}
 
 \item{nproc}{number of cores to distribute the function over.}
 
-\item{fields}{Additional fields to use for grouping}
+\item{fields}{additional fields to use for grouping.}
+
+\item{cross}{columns for grouping to calculate distances across groups 
+(self vs others).}
+
+\item{mst}{if \code{TRUE}, return comma-separated branch lengths from minimum 
+spanning tree.}
 }
 \value{
 Returns a modified \code{db} data.frame with nearest neighbor distances in the 
-          \code{DIST_NEAREST} column.
+          \code{DIST_NEAREST} column if \code{crossGrups=NULL} or in the 
+          \code{CROSS_DIST_NEAREST} column if \code{crossGroups} was specified.
 }
 \description{
 Get distance of every sequence to its nearest sequence sharing same V gene, J gene, and
@@ -52,15 +60,15 @@ sequences to clonal groups. A histogram of the resulting vector is often bimodal
 with the ideal threshold being a value that separates the two modes.
 
 "hs5f" use distance derived from the \link{HS5FModel}
-using \link{calcTargetingDistance}. "hs1f" and "m1n" use \link{HS1FDistance} and \link{M1NDistance}
- to calculate distances respectively. "ham" uses a nucleotide hamming distance matrix from 
- \link{getDNAMatrix}, with gaps being zero. "aa" uses an amino acid hamming distance matrix 
- from \link{getAAMatrix}.
+using \link{calcTargetingDistance}. "hs1f" and "m1n" use \link{HS1FDistance} and 
+\link{M1NDistance} to calculate distances respectively. "ham" uses a nucleotide 
+hamming distance matrix from \link[alakazam]{getDNAMatrix}, with gaps being zero. 
+"aa" uses an amino acid hamming distance matrix from \link[alakazam]{getAAMatrix}.
 }
 \examples{
-# Subset data for demo purposes
-db <- subset(InfluenzaDb, CPRIMER \%in\% c("IGHA","IGHM") & 
-             BARCODE \%in\% c("RL016","RL018","RL019","RL021"))
+# Subset example data to one sample as a demo
+data(ExampleDb, package="alakazam")
+db <- subset(ExampleDb, SAMPLE == "-1h")
 
 # Use genotyped V assignments, HS1F model, and normalize by junction length
 dist_hs1f <- distToNearest(db, vCallColumn="V_CALL_GENOTYPED", 
@@ -91,7 +99,7 @@ plot(p1)
 \seealso{
 See \link{calcTargetingDistance} for generating nucleotide distance matrices 
           from a \link{TargetingModel} object. See \link{M1NDistance}, 
-          \link{HS5FModel}, \link{getDNAMatrix}, and \link{getAAMatrix}
+          \link{HS5FModel}, \link[alakazam]{getDNAMatrix}, and \link[alakazam]{getAAMatrix}
           for individual model details.
 }
 

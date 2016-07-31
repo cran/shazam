@@ -13,7 +13,7 @@ createMutabilityMatrix(db, substitutionModel, model = c("RS", "S"),
 \item{db}{data.frame containing sequence data.}
 
 \item{substitutionModel}{matrix of 5-mer substitution rates built by 
-\code{\link{createSubstitutionMatrix}}.}
+\link{createSubstitutionMatrix}.}
 
 \item{model}{type of model to create. The default model, "RS", creates 
 a model by counting both replacement and silent mutations.
@@ -50,12 +50,12 @@ the number of mutations occuring in the center position for all 5-mer motifs.
 }
 \examples{
 # Subset example data to one isotype and sample as a demo
-db <- subset(InfluenzaDb, CPRIMER == "IGHA" & BARCODE == "RL014")
+data(ExampleDb, package="alakazam")
+db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
 
-# Create model using only silent mutations and ignore multiple mutations
-sub_model <- createSubstitutionMatrix(db, model="S", multipleMutation="ignore")
-mut_model <- createMutabilityMatrix(db, sub_model, model="S", multipleMutation="ignore",
-                                    minNumSeqMutations=10)
+# Create model using only silent mutations
+sub_model <- createSubstitutionMatrix(db, model="S")
+mut_model <- createMutabilityMatrix(db, sub_model, model="S")
 
 }
 \references{
@@ -66,13 +66,7 @@ mut_model <- createMutabilityMatrix(db, sub_model, model="S", multipleMutation="
  }
 }
 \seealso{
-Other targeting model functions: \code{\link{calcTargetingDistance}},
-  \code{\link{createSubstitutionMatrix}},
-  \code{\link{createTargetingMatrix}},
-  \code{\link{createTargetingModel}},
-  \code{\link{extendMutabilityMatrix}},
-  \code{\link{extendSubstitutionMatrix}},
-  \code{\link{plotMutability}},
-  \code{\link{writeTargetingDistance}}
+\link{extendMutabilityMatrix}, \link{createSubstitutionMatrix}, 
+          \link{createTargetingMatrix}, \link{createTargetingModel}
 }
 
