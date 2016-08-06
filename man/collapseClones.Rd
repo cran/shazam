@@ -2,7 +2,7 @@
 % Please edit documentation in R/MutationProfiling.R
 \name{collapseClones}
 \alias{collapseClones}
-\title{Constructs clonal consensus sequences}
+\title{Constructs effective clonal sequences}
 \usage{
 collapseClones(db, cloneColumn = "CLONE", sequenceColumn = "SEQUENCE_IMGT",
   germlineColumn = "GERMLINE_IMGT_D_MASK", expandedDb = FALSE,
@@ -38,29 +38,29 @@ at the leaves.}
 A modified \code{db} with clonal consensus sequences added 
           in the following columns:
           \itemize{
-            \item \code{CLONAL_SEQUENCE}:  consensus input sequence for the clone.
-            \item \code{CLONAL_GERMLINE}:  consensus germline sequence for the clone.
+            \item \code{CLONAL_SEQUENCE}:  effective sequence for the clone.
+            \item \code{CLONAL_GERMLINE}:  germline sequence for the clone.
                                            Generally, this will be unchanged from
                                            the data in \code{germlineColumn}, but
                                            may be truncated when the input sequence
-                                           is truncaated due to inconsistencies 
+                                           is truncated due to inconsistencies 
                                            in the lengths of the input sequences or
                                            \code{regionDefinition} limits.
           }
 }
 \description{
-\code{collapseClones} identifies the consensus sequence of each clonal 
-group and appends columns to the input \code{data.frame} containing the clonal 
-consensus and germline for each sequence.
+\code{collapseClones} creates an effective sequence for each clonal 
+group and appends columns to the input \code{data.frame} containing the effective 
+sequence and germline for each clone.
 }
 \details{
-For sequences identified to be part of the same clone, this function defines an 
-effective sequence that will be representative for all mutations in the clone. Each 
-position in this consensus (or effective) sequence is created by a weighted sampling 
-of each mutated base (and non "N", "." or "-" characters) from all the sequences in 
-the clone. For example, in a clone with 5 sequences that have a C at position 1, and 
-5 sequences with a T at this same position, the consensus sequence will have a C 50\%  
-and T 50\% of the time it is called.
+For sequences identified to be part of the same clone, an effective clonal sequence, 
+representative of all mutations in a clone, is constructed using a stochastic approach. 
+Each position in th effective sequence is determined by a weighted sampling 
+of each mutated non-ambiguous base (excluding "N", "." or "-" characters) from all 
+the sequences in the clone. For example, in a clone with 5 sequences that have "C" 
+at position 1, and 5 sequences with "T" at this same position, the effective sequence 
+will have a "C" 50\% and "T" 50\% of the time it is called.
 
 Non-terminal branch mutations are defined as the set of mutations that occur on 
 branches of the lineage tree that are not connected to a leaf. For computational 

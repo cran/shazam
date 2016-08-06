@@ -6,7 +6,7 @@
 \usage{
 calcBaseline(db, sequenceColumn = "SEQUENCE_IMGT",
   germlineColumn = "GERMLINE_IMGT_D_MASK", testStatistic = c("local",
-  "focused", "imbalance"), regionDefinition = NULL,
+  "focused", "imbalanced"), regionDefinition = NULL,
   targetingModel = HS5FModel, mutationDefinition = NULL,
   calcStats = FALSE, nproc = 1)
 }
@@ -20,7 +20,8 @@ containing input sequences.}
 containing germline sequences.}
 
 \item{testStatistic}{\code{character} indicating the statistical framework 
-used to test for selection. One of \code{c("local", "focused", "imbalance")}.}
+used to test for selection. One of 
+\code{c("local", "focused", "imbalanced")}.}
 
 \item{regionDefinition}{\link{RegionDefinition} object defining the regions
 and boundaries of the Ig sequences.}

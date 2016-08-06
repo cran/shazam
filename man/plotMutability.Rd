@@ -8,7 +8,7 @@ plotMutability(model, nucleotides = c("A", "C", "G", "T"),
   style = c("hedgehog", "bar"), size = 1, silent = FALSE, ...)
 }
 \arguments{
-\item{model}{\link{TargetingModel} object or matrix containing normalized 
+\item{model}{\link{TargetingModel} object or vector containing normalized 
 mutability rates.}
 
 \item{nucleotides}{vector of center nucleotide characters to plot.}
