@@ -5,9 +5,10 @@
 \title{Distance to nearest neighbor}
 \usage{
 distToNearest(db, sequenceColumn = "JUNCTION", vCallColumn = "V_CALL",
-  jCallColumn = "J_CALL", model = c("hs1f", "m1n", "ham", "aa", "hs5f"),
-  normalize = c("length", "none"), symmetry = c("avg", "min"),
-  first = TRUE, nproc = 1, fields = NULL, cross = NULL, mst = FALSE)
+  jCallColumn = "J_CALL", model = c("ham", "aa", "hh_s1f", "hh_s5f",
+  "mk_rs1nf", "mk_rs5nf", "m1n_compat", "hs1f_compat"), normalize = c("len",
+  "none"), symmetry = c("avg", "min"), first = TRUE, nproc = 1,
+  fields = NULL, cross = NULL, mst = FALSE)
 }
 \arguments{
 \item{db}{data.frame containing sequence data.}
@@ -20,10 +21,10 @@ Also used to determine sequence length for grouping.}
 \item{jCallColumn}{name of the column containing the J-segment allele calls.}
 
 \item{model}{underlying SHM model, which must be one of 
-\code{c("m1n", "ham", "aa", "hs5f")}.
+\code{c("ham", "aa", "hh_s1f", "hh_s5f", "mk_rs1nf", "hs1f_compat", "m1n_compat")}.
 See Details for further information.}
 
-\item{normalize}{method of normalization. The default is \code{"length"}, which 
+\item{normalize}{method of normalization. The default is \code{"len"}, which 
 divides the distance by the length of the sequence group. If 
 \code{"none"} then no normalization if performed.}
 
@@ -51,35 +52,61 @@ Returns a modified \code{db} data.frame with nearest neighbor distances in the
           \code{CROSS_DIST_NEAREST} column if \code{crossGroups} was specified.
 }
 \description{
-Get distance of every sequence to its nearest sequence sharing same V gene, J gene, and
-sequence length.
+Get non-zero distance of every sequence (as defined by \code{sequenceColumn}) to its 
+nearest sequence sharing same V gene, J gene, and sequence length.
 }
 \details{
 The distance to nearest neighbor can be used to estimate a threshold for assigning Ig
 sequences to clonal groups. A histogram of the resulting vector is often bimodal, 
 with the ideal threshold being a value that separates the two modes.
 
-"hs5f" use distance derived from the \link{HS5FModel}
-using \link{calcTargetingDistance}. "hs1f" and "m1n" use \link{HS1FDistance} and 
-\link{M1NDistance} to calculate distances respectively. "ham" uses a nucleotide 
-hamming distance matrix from \link[alakazam]{getDNAMatrix}, with gaps being zero. 
-"aa" uses an amino acid hamming distance matrix from \link[alakazam]{getAAMatrix}.
+The following distance measures are accepted by the \code{model} parameter.
+
+\itemize{
+  \item \code{"ham"}:          Single nucleotide Hamming distance matrix from \link[alakazam]{getDNAMatrix} 
+                               with gaps assigned zero distance.
+  \item \code{"aa"}:           Single amino acid Hamming distance matrix from \link[alakazam]{getAAMatrix}.
+  \item \code{"hh_s1f"}:       Human single nucleotide distance matrix derived from \link{HH_S1F} with 
+                               \link{calcTargetingDistance}.
+  \item \code{"hh_s5f"}:       Human 5-mer nucleotide context distance matix derived from \link{HH_S5F} with 
+                               \link{calcTargetingDistance}.
+  \item \code{"mk_rs1nf"}:     Mouse single nucleotide distance matrix derived from \link{MK_RS1NF} with 
+                               \link{calcTargetingDistance}.
+  \item \code{"mk_rs5nf"}:     Mouse 5-mer nucleotide context distance matrix derived from \link{MK_RS1NF} with 
+                               \link{calcTargetingDistance}.
+  \item \code{"hs1f_compat"}:  Backwards compatible human single nucleotide distance matrix used in 
+                               SHazaM v0.1.4 and Change-O v0.3.3.
+  \item \code{"m1n_compat"}:   Backwards compatibley mouse single nucleotide distance matrix used in 
+                               SHazaM v0.1.4 and Change-O v0.3.3.
+}
+
+Note on \code{NA}s: if, for a given combination of V gene, J gene, and sequence length,
+there is only 1 sequence (as defined by \code{sequenceColumn}), \code{NA} is returned 
+instead of a distance (since it has no neighbor). If for a given combination there are 
+multiple sequences but only 1 unique sequence, (in which case every sequence in this 
+group is the de facto nearest neighbor to each other, thus giving rise to distances 
+of 0), \code{NA}s are returned instead of zero-distances.
 }
 \examples{
 # Subset example data to one sample as a demo
 data(ExampleDb, package="alakazam")
 db <- subset(ExampleDb, SAMPLE == "-1h")
 
-# Use genotyped V assignments, HS1F model, and normalize by junction length
-dist_hs1f <- distToNearest(db, vCallColumn="V_CALL_GENOTYPED", 
-                           model="hs1f", first=FALSE, normalize="length")
+# Use genotyped V assignments, Hamming distance, and normalize by junction length
+dist <- distToNearest(db, vCallColumn="V_CALL_GENOTYPED", model="ham", 
+                      first=FALSE, normalize="len")
                            
 # Plot histogram of non-NA distances
-p1 <- ggplot(data=subset(dist_hs1f, !is.na(DIST_NEAREST))) + theme_bw() + 
-    ggtitle("Distance to nearest: hs1f") + xlab("distance") +
-    geom_histogram(aes(x=DIST_NEAREST), binwidth=0.025, 
-                   fill="steelblue", color="white")
+p1 <- ggplot(data=subset(dist, !is.na(DIST_NEAREST))) + 
+      theme_bw() + 
+      ggtitle("Distance to nearest: Hamming") + 
+      xlab("distance") +
+      geom_histogram(aes(x=DIST_NEAREST), binwidth=0.025, 
+                     fill="steelblue", color="white")
 plot(p1)
+
+# Use human 5-mer model
+dist <- distToNearest(db, vCallColumn="V_CALL_GENOTYPED", model="hh_s5f")
 
 }
 \references{
@@ -98,8 +125,7 @@ plot(p1)
 }
 \seealso{
 See \link{calcTargetingDistance} for generating nucleotide distance matrices 
-          from a \link{TargetingModel} object. See \link{M1NDistance}, 
-          \link{HS5FModel}, \link[alakazam]{getDNAMatrix}, and \link[alakazam]{getAAMatrix}
+          from a \link{TargetingModel} object. See \link{HH_S5F}, \link{HH_S1F}, 
+          \link{MK_RS1NF}, \link[alakazam]{getDNAMatrix}, and \link[alakazam]{getAAMatrix}
           for individual model details.
 }
-

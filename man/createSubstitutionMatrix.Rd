@@ -7,7 +7,8 @@
 createSubstitutionMatrix(db, model = c("RS", "S"),
   sequenceColumn = "SEQUENCE_IMGT", germlineColumn = "GERMLINE_IMGT_D_MASK",
   vCallColumn = "V_CALL", multipleMutation = c("independent", "ignore"),
-  returnModel = c("5mer", "1mer", "1mer_raw"), minNumMutations = 50)
+  returnModel = c("5mer", "1mer", "1mer_raw"), minNumMutations = 50,
+  numMutationsOnly = FALSE)
 }
 \arguments{
 \item{db}{data.frame containing sequence data.}
@@ -41,12 +42,38 @@ as input to \link{createMutabilityMatrix}.}
 \item{minNumMutations}{minimum number of mutations required to compute the 5-mer 
 substitution rates. If the number of mutations for a 5-mer
 is below this threshold, its substitution rates will be 
-estimated from neighboring 5-mers. Default is 50.}
+estimated from neighboring 5-mers. Default is 50. 
+Not required if \code{numMutationsOnly=TRUE}.}
+
+\item{numMutationsOnly}{when \code{TRUE}, return counting information on the number
+of mutations for each 5-mer, instead of building a substitution
+matrix. This option can be used for parameter tuning for 
+\code{minNumMutations} during preliminary analysis. 
+Default is \code{FALSE}. Only applies when \code{returnModel} 
+is set to \code{"5mer"}. The \code{data.frame} returned when
+this argument is \code{TRUE} can serve as the input for
+\link{minNumMutationsTune}.}
 }
 \value{
-A 4x1024 matrix of column normalized substitution rates for each 5-mer motif with 
-          row names defining the center nucleotide, one of \code{c("A", "C", "G", "T")}, 
-          and column names defining the 5-mer nucleotide sequence.
+For \code{returnModel = "5mer"}: 
+
+          When \code{numMutationsOnly} is \code{FALSE}, a 4x1024 matrix of column 
+          normalized substitution rates for each 5-mer motif with row names defining 
+          the center nucleotide, one of \code{c("A", "C", "G", "T")}, and column names 
+          defining the 5-mer nucleotide sequence. 
+          
+          When \code{numMutationsOnly} is 
+          \code{TRUE}, a 1024x4 data frame with each row providing information on 
+          counting the number of mutations for a 5-mer. Columns are named 
+          \code{fivemer.total}, \code{fivemer.every}, \code{inner3.total}, and
+          \code{inner3.every}, corresponding to, respectively,
+          the total number of mutations when counted as a 5-mer, 
+          whether there is mutation to every other base when counted as a 5-mer,
+          the total number of mutations when counted as an inner 3-mer, and
+          whether there is mutation to every other base when counted as an inner 3-mer.
+          
+          For \code{returnModel = "1mer"} or \code{"1mer_raw"}:
+          a 4x4 normalized or un-normalized 1-mer substitution matrix respectively.
 }
 \description{
 \code{createSubstitutionMatrix} builds a 5-mer nucleotide substitution model by counting 
@@ -54,12 +81,20 @@ the number of substitution mutations occuring in the center position for all 5-m
 motifs.
 }
 \examples{
+\donttest{
 # Subset example data to one isotype and sample as a demo
 data(ExampleDb, package="alakazam")
 db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
 
+# Count the number of mutations per 5-mer
+subCount <- createSubstitutionMatrix(db, model="S", multipleMutation="independent",
+                                     returnModel="5mer", numMutationsOnly=TRUE)
+
 # Create model using only silent mutations
-sub <- createSubstitutionMatrix(db, model="S")
+sub <- createSubstitutionMatrix(db, model="S", multipleMutation="independent",
+                                returnModel="5mer", numMutationsOnly=FALSE,
+                                minNumMutations=20)
+}
 
 }
 \references{
@@ -71,6 +106,6 @@ sub <- createSubstitutionMatrix(db, model="S")
 }
 \seealso{
 \link{extendSubstitutionMatrix}, \link{createMutabilityMatrix}, 
-          \link{createTargetingMatrix}, \link{createTargetingModel}
+          \link{createTargetingMatrix}, \link{createTargetingModel},
+          \link{minNumMutationsTune}.
 }
-

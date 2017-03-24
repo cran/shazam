@@ -16,4 +16,3 @@ Determines the numbers of CPU cores available
 getnproc()
 
 }
-

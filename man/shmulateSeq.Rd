@@ -4,7 +4,7 @@
 \alias{shmulateSeq}
 \title{Simulate mutations in a single sequence}
 \usage{
-shmulateSeq(sequence, mutations, targetingModel = HS5FModel)
+shmulateSeq(sequence, mutations, targetingModel = HH_S5F)
 }
 \arguments{
 \item{sequence}{sequence string in which mutations are to be introduced.}
@@ -13,7 +13,7 @@ shmulateSeq(sequence, mutations, targetingModel = HS5FModel)
 
 \item{targetingModel}{5-mer \link{TargetingModel} object to be used for computing 
 probabilities of mutations at each position. Defaults to
-\link{HS5FModel}.}
+\link{HH_S5F}.}
 }
 \value{
 A string defining the mutated sequence.
@@ -32,7 +32,6 @@ shmulateSeq(sequence, mutations=6)
 }
 \seealso{
 See \link{shmulateTree} for imposing mutations on a lineage tree. 
-          See \link{HS5FModel} and \link{MRS5NFModel} for predefined 
+          See \link{HH_S5F} and \link{MK_RS5NF} for predefined 
           \link{TargetingModel} objects.
 }
-

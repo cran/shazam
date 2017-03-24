@@ -5,7 +5,7 @@
 \title{Count the number of observed mutations in a sequence.}
 \usage{
 calcObservedMutations(inputSeq, germlineSeq, frequency = FALSE,
-  regionDefinition = NULL, mutationDefinition = NULL)
+  regionDefinition = NULL, mutationDefinition = NULL, returnRaw = FALSE)
 }
 \arguments{
 \item{inputSeq}{input sequence.}
@@ -13,7 +13,9 @@ calcObservedMutations(inputSeq, germlineSeq, frequency = FALSE,
 \item{germlineSeq}{germline sequence.}
 
 \item{frequency}{\code{logical} indicating whether or not to calculate
-mutation frequencies. Default is \code{FALSE}.}
+mutation frequencies. The denominator used is the number of bases
+that are non-N in both the input and the germline sequences.
+Default is \code{FALSE}.}
 
 \item{regionDefinition}{\link{RegionDefinition} object defining the regions
 and boundaries of the Ig sequences. Note, only the part of
@@ -24,39 +26,82 @@ If NULL, mutations are counted for entire sequence.}
 and silent mutation criteria. If \code{NULL} then 
 replacement and silent are determined by exact 
 amino acid identity.}
+
+\item{returnRaw}{return the positions of point mutations and their corresponding
+mutation types, as opposed to counts of mutations.
+Also returns the number of non-N bases used as the denominator when
+calculating frequency. Default is \code{FALSE}.}
 }
 \value{
-An \code{array} of the mutations, replacement (R) or silent(S), with the 
-          names indicating the nucleotide postion of the mutations in the sequence.
+For \code{returnRaw=FALSE}, an \code{array} with the number of replacement (R) 
+          and silent(S) mutations. For \code{returnRaw=TRUE}, a list containing a data 
+          frame (\code{$pos}) whose columns (\code{position}, \code{type}, and \code{region}) 
+          indicate the position, mutation type (R or S), and region of each mutation; and a 
+          vector (\code{$nonN}) indicating the number of non-N bases in regions defined by
+          \code{regionDefinition}.
 }
 \description{
 \code{calcObservedMutations} determines all the mutations in a given input seqeunce compared
 to its germline sequence.
 }
 \details{
-Each mutation is considered independently in its codon context. Note, only the part of 
+Each mutation is considered independently in the germline context. Note, only the part of 
 \code{inputSeq} defined in \code{regionDefinition} is analyzed. For example, when using 
-the default \link{IMGT_V_NO_CDR3} definition, then mutations in positions beyond 
-312 will be ignored.
+the default \link{IMGT_V} definition, then mutations in positions beyond 
+312 will be ignored. 
+
+Note that only replacement (R) and silent (S) mutations are included in the 
+results. Stop mutations and mutations such as the case in which NNN in the germline
+sequence is observed as NNC in the input sequence are excluded. In other words,
+a result that is \code{NA} or zero indicates absence of R and S mutations, not 
+necessarily all types of mutations, such as the excluded ones mentioned above.
 }
 \examples{
-# Use first entry in the exampled data for input and germline sequence
+# Use an entry in the example data for input and germline sequence
 data(ExampleDb, package="alakazam")
-in_seq <- ExampleDb[1, "SEQUENCE_IMGT"]
-germ_seq <-  ExampleDb[1, "GERMLINE_IMGT_D_MASK"]
+in_seq <- ExampleDb[100, "SEQUENCE_IMGT"]
+germ_seq <-  ExampleDb[100, "GERMLINE_IMGT_D_MASK"]
 
 # Identify all mutations in the sequence
-calcObservedMutations(in_seq, germ_seq)
+ex1_raw = calcObservedMutations(in_seq, germ_seq, returnRaw=TRUE)
+# Count all mutations in the sequence
+ex1_count = calcObservedMutations(in_seq, germ_seq, returnRaw=FALSE)
+ex1_freq = calcObservedMutations(in_seq, germ_seq, returnRaw=FALSE, frequency=TRUE)
+# Compare this with ex1_count
+table(ex1_raw$pos$region, ex1_raw$pos$type)
+# Compare this with ex1_freq
+table(ex1_raw$pos$region, ex1_raw$pos$type) / ex1_raw$nonN
 
 # Identify only mutations the V segment minus CDR3
-calcObservedMutations(in_seq, germ_seq, regionDefinition=IMGT_V_NO_CDR3)
- 
-# Identify mutations by change in hydropathy class
-calcObservedMutations(in_seq, germ_seq, regionDefinition=IMGT_V_NO_CDR3,
-                      mutationDefinition=HYDROPATHY_MUTATIONS, frequency=TRUE)
+ex2_raw = calcObservedMutations(in_seq, germ_seq, 
+                                regionDefinition=IMGT_V, returnRaw=TRUE)
+# Count only mutations the V segment minus CDR3
+ex2_count = calcObservedMutations(in_seq, germ_seq, 
+                                  regionDefinition=IMGT_V, returnRaw=FALSE)
+ex2_freq = calcObservedMutations(in_seq, germ_seq, 
+                                 regionDefinition=IMGT_V, returnRaw=FALSE,
+                                 frequency=TRUE)
+# Compare this with ex2_count
+table(ex2_raw$pos$region, ex2_raw$pos$type)                                 
+# Compare this with ex2_freq
+table(ex2_raw$pos$region, ex2_raw$pos$type) / ex2_raw$nonN                                        
 
+# Identify mutations by change in hydropathy class
+ex3_raw = calcObservedMutations(in_seq, germ_seq, regionDefinition=IMGT_V,
+                                mutationDefinition=HYDROPATHY_MUTATIONS, returnRaw=TRUE)
+# Count mutations by change in hydropathy class
+ex3_count = calcObservedMutations(in_seq, germ_seq, regionDefinition=IMGT_V,
+                                  mutationDefinition=HYDROPATHY_MUTATIONS, returnRaw=FALSE)
+ex3_freq = calcObservedMutations(in_seq, germ_seq, regionDefinition=IMGT_V,
+                                 mutationDefinition=HYDROPATHY_MUTATIONS, returnRaw=FALSE, 
+                                 frequency=TRUE)
+# Compre this with ex3_count
+table(ex3_raw$pos$region, ex3_raw$pos$type)                                        
+# Compare this with ex3_freq
+table(ex3_raw$pos$region, ex3_raw$pos$type) / ex3_raw$nonN                                        
+                                
 }
 \seealso{
-See \link{observedMutations} for counting the number of observed mutations.
+See \link{observedMutations} for counting the number of observed mutations 
+in a \code{data.frame}.
 }
-

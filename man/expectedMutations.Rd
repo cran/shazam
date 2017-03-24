@@ -5,7 +5,7 @@
 \title{Calculate expected mutation frequencies}
 \usage{
 expectedMutations(db, sequenceColumn = "SEQUENCE_IMGT",
-  germlineColumn = "GERMLINE_IMGT_D_MASK", targetingModel = HS5FModel,
+  germlineColumn = "GERMLINE_IMGT_D_MASK", targetingModel = HH_S5F,
   regionDefinition = NULL, mutationDefinition = NULL, nproc = 1)
 }
 \arguments{
@@ -17,7 +17,7 @@ sequences.}
 \item{germlineColumn}{\code{character} name of the column containing 
 the germline or reference sequence.}
 
-\item{targetingModel}{\link{TargetingModel} object. Default is \link{HS5FModel}.}
+\item{targetingModel}{\link{TargetingModel} object. Default is \link{HH_S5F}.}
 
 \item{regionDefinition}{\link{RegionDefinition} object defining the regions
 and boundaries of the Ig sequences.}
@@ -37,7 +37,7 @@ A modified \code{db} \code{data.frame} with expected mutation frequencies
           for each region defined in \code{regionDefinition}.
          
           The columns names are dynamically created based on the regions in  
-          \code{regionDefinition}. For example, when using the \link{IMGT_V_NO_CDR3}
+          \code{regionDefinition}. For example, when using the \link{IMGT_V}
           definition, which defines positions for CDR and FWR, the following columns are
           added:  
           \itemize{
@@ -57,7 +57,7 @@ sequence in the input \code{data.frame}.
 }
 \details{
 Only the part of the sequences defined in \code{regionDefinition} are analyzed. 
-For example, when using the \link{IMGT_V_NO_CDR3} definition, mutations in
+For example, when using the \link{IMGT_V} definition, mutations in
 positions beyond 312 will be ignored.
 }
 \examples{
@@ -69,14 +69,14 @@ db <- subset(ExampleDb, ISOTYPE \%in\% c("IgA", "IgG") & SAMPLE == "+7d")
 db_exp <- expectedMutations(db,
                             sequenceColumn="SEQUENCE_IMGT",
                             germlineColumn="GERMLINE_IMGT_D_MASK",
-                            regionDefinition=IMGT_V_NO_CDR3,
+                            regionDefinition=IMGT_V,
                             nproc=1)
 
 # Calculate hydropathy expected mutations over V region
 db_exp <- expectedMutations(db,
                            sequenceColumn="SEQUENCE_IMGT",
                            germlineColumn="GERMLINE_IMGT_D_MASK",
-                           regionDefinition=IMGT_V_NO_CDR3,
+                           regionDefinition=IMGT_V,
                            mutationDefinition=HYDROPATHY_MUTATIONS,
                            nproc=1)
 
@@ -87,4 +87,3 @@ mutation frequencies. See \link{observedMutations} for getting observed
 mutation counts. See \link{IMGT_SCHEMES} for a set of predefined 
 \link{RegionDefinition} objects.
 }
-

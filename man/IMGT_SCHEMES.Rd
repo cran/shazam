@@ -4,15 +4,11 @@
 \alias{IMGT_SCHEMES}
 \alias{IMGT_V}
 \alias{IMGT_V_BY_REGIONS}
-\alias{IMGT_V_BY_REGIONS_NO_CDR3}
-\alias{IMGT_V_NO_CDR3}
 \title{IMGT unique numbering schemes}
 \format{A \link{RegionDefinition} object containing:
 \itemize{
-  \item  \code{IMGT_V}:                     Grouped CDR and FWR V-segment regions including CDR3.
-  \item  \code{IMGT_V_BY_REGIONS}:          Individual CDR and FWR V-segment regions including CDR3.
-  \item  \code{IMGT_V_NO_CDR3}:             Grouped CDR and FWR V-segment regions excluding CDR3.
-  \item  \code{IMGT_V_BY_REGIONS_NO_CDR3}:  Individual CDR and FWR V-segment regions excluding CDR3.
+  \item  \code{IMGT_V}:                     Grouped CDR and FWR V-segment regions excluding CDR3.
+  \item  \code{IMGT_V_BY_REGIONS}:          Individual CDR and FWR V-segment regions excluding CDR3.
 }}
 \description{
 Definitions of the CDR and FWR, according to the IMGT unique numbering scheme.
@@ -24,4 +20,3 @@ Definitions of the CDR and FWR, according to the IMGT unique numbering scheme.
            Developmental and comparative immunology. 2003 27:55-77.
 }
 }
-

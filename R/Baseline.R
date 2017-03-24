@@ -45,13 +45,16 @@ NULL
 #'                              \code{r} = number of rows = number of sequences or groups. \cr
 #'                              \code{c} = number of columns = length of the PDF (default 4001).
 #' @slot    stats               \code{data.frame} of BASELINe statistics, 
-#'                              including: selection strength (Sigma), 95\% confidence 
-#'                              intervals, and P values.
+#'                              including: mean selection strength (mean Sigma), 95\% confidence 
+#'                              intervals, and p-values with positive signs for the presence of 
+#'                              positive selection and/or p-values with negative signs for the
+#'                              presence of negative selection.
 #'                          
 #' @name         Baseline-class
 #' @rdname       Baseline-class
 #' @aliases      Baseline
 #' @exportClass  Baseline
+#' @seealso      See \link{summarizeBaseline} for more information on \code{@stats}.
 setClass("Baseline", 
          slots=c(description="character",
                  db="data.frame",
@@ -80,7 +83,7 @@ setClass("Baseline",
 #'                              and boundaries of the Ig sequences.
 #' @param   testStatistic       \code{character} indicating the statistical framework 
 #'                              used to test for selection. For example, \code{"local"} or 
-#'                              \code{"focused"} or \code{"imbalance"}.                           
+#'                              \code{"focused"} or \code{"imbalanced"}.                           
 #' @param   regions             \code{character} vector defining the regions the BASELINe 
 #'                              analysis was carried out on. For \code{"CDR"} and \code{"FWR"} 
 #'                              or \code{"CDR1"}, \code{"CDR2"}, \code{"CDR3"}, etc. If \code{NULL}
@@ -107,8 +110,10 @@ setClass("Baseline",
 #'                              \code{r} = number of rows = number of sequences or groups. \cr
 #'                              \code{c} = number of columns = length of the PDF (default 4001).
 #' @param   stats               \code{data.frame} of BASELINe statistics, 
-#'                              including: selection strength (Sigma), 95\% confidence 
-#'                              intervals, and P values.
+#'                              including: mean selection strength (mean Sigma), 95\% confidence 
+#'                              intervals, and p-values with positive signs for the presence of 
+#'                              positive selection and/or p-values with negative signs for the
+#'                              presence of negative selection.
 #'                              
 #' @return   A \code{Baseline} object.
 #' 
@@ -193,17 +198,36 @@ createBaseline <- function(description="",
 }
 
 
-# Edit the Baseline object
-# 
-# \code{editBaseline} edits a \code{Baseline}.
-#
-# @param   baseline     The \code{Baseline} S4 object to be edited.
-# @param   field_name   Name of the field in the \code{Baseline} S4 object to be edited.
-# @param   value        The value to set the \code{field_name}.
-# 
-# @return   A \code{Baseline} object.
-# 
-# @seealso  See \link{Baseline} for the return object.
+#' Edit the Baseline object
+#' 
+#' \code{editBaseline} edits a field in a \code{Baseline} object.
+#'
+#' @param   baseline     The \code{Baseline} S4 object to be edited.
+#' @param   field_name   Name of the field in the \code{Baseline} S4 object to be edited.
+#' @param   value        The value to set the \code{field_name}.
+#' 
+#' @return   A \code{Baseline} object with the field of choice updated.
+#' 
+#' @seealso  See \link{Baseline} for the return object.
+#'
+#' @examples
+#' # Subset example data
+#' data(ExampleDb, package="alakazam")
+#' db <- subset(ExampleDb, ISOTYPE %in% c("IgA", "IgG") & SAMPLE == "+7d")
+#' 
+#' # Calculate BASELINe
+#' baseline <- calcBaseline(db, 
+#'                          sequenceColumn="SEQUENCE_IMGT",
+#'                          germlineColumn="GERMLINE_IMGT_D_MASK", 
+#'                          testStatistic="focused",
+#'                          regionDefinition=IMGT_V,
+#'                          targetingModel=HH_S5F,
+#'                          nproc = 1)
+#' # Edit the field "description"
+#' baseline <- editBaseline(baseline, field_name = "description", 
+#'                          value = "+7d IgA & IgG")
+#'                                                   
+#' @export
 editBaseline <- function(baseline, field_name, value) {
     if (!match(field_name, slotNames(baseline))) { 
         stop("field_name not part of BASELINe object!")
@@ -223,8 +247,10 @@ editBaseline <- function(baseline, field_name, value) {
 #' @param    baseline  \code{Baseline} object that has been run through
 #'                     either \link{groupBaseline} or \link{summarizeBaseline}.
 #' 
-#' @return   A \code{data.frame} with the BASELINe selection strength scores (Sigma),
-#'           95\% confidence intervals and P-values. 
+#' @return   A \code{data.frame} with the mean selection strength (mean Sigma), 95\% 
+#'           confidence intervals, and p-values with positive signs for the presence 
+#'           of positive selection and/or p-values with negative signs for the presence 
+#'           of negative selection. 
 #' 
 #' @seealso  For calculating the BASELINe summary statistics see \link{summarizeBaseline}.
 #' 
@@ -238,8 +264,8 @@ editBaseline <- function(baseline, field_name, value) {
 #'                          sequenceColumn="SEQUENCE_IMGT",
 #'                          germlineColumn="GERMLINE_IMGT_D_MASK", 
 #'                          testStatistic="focused",
-#'                          regionDefinition=IMGT_V_NO_CDR3,
-#'                          targetingModel = HS5FModel,
+#'                          regionDefinition=IMGT_V,
+#'                          targetingModel=HH_S5F,
 #'                          nproc = 1)
 #' 
 #' # Grouping the PDFs by the isotype and sample annotations.
@@ -271,7 +297,7 @@ getBaselineStats <- function(baseline) {
 #'                              \code{c("local", "focused", "imbalanced")}.
 #' @param   regionDefinition    \link{RegionDefinition} object defining the regions
 #'                              and boundaries of the Ig sequences.
-#' @param   targetingModel      \link{TargetingModel} object. Default is  \link{HS5FModel}.
+#' @param   targetingModel      \link{TargetingModel} object. Default is  \link{HH_S5F}.
 #' @param   mutationDefinition  \link{MutationDefinition} object defining replacement
 #'                              and silent mutation criteria. If \code{NULL} then 
 #'                              replacement and silent are determined by exact 
@@ -309,7 +335,7 @@ getBaselineStats <- function(baseline) {
 #' \itemize{
 #'   \item   \code{local} = CDR_R / (CDR_R + CDR_S).
 #'   \item   \code{focused} = CDR_R / (CDR_R + CDR_S + FWR_S).
-#'   \item   \code{imbalance} = CDR_R + CDR_S / (CDR_R + CDR_S + FWR_S + FRW_R).
+#'   \item   \code{imbalanced} = CDR_R + CDR_S / (CDR_R + CDR_S + FWR_S + FRW_R).
 #' }
 #' For \code{focused} the \code{regionDefinition} must only contain two regions. If more 
 #' than two regions are defined the \code{local} test statistic will be used.
@@ -341,8 +367,8 @@ getBaselineStats <- function(baseline) {
 #'                          sequenceColumn="SEQUENCE_IMGT",
 #'                          germlineColumn="GERMLINE_IMGT_D_MASK", 
 #'                          testStatistic="focused",
-#'                          regionDefinition=IMGT_V_NO_CDR3,
-#'                          targetingModel = HS5FModel,
+#'                          regionDefinition=IMGT_V,
+#'                          targetingModel=HH_S5F,
 #'                          nproc=1)
 #'                          
 #' @export
@@ -351,7 +377,7 @@ calcBaseline <- function(db,
                          germlineColumn="GERMLINE_IMGT_D_MASK",
                          testStatistic=c("local", "focused", "imbalanced"),
                          regionDefinition=NULL,
-                         targetingModel=HS5FModel,
+                         targetingModel=HH_S5F,
                          mutationDefinition=NULL,
                          calcStats=FALSE,
                          nproc=1) {
@@ -364,6 +390,21 @@ calcBaseline <- function(db,
     # Check for valid columns
     check <- checkColumns(db, c(sequenceColumn, germlineColumn))
     if (check != TRUE) { stop(check) }
+    
+    # Check region definition
+    if (!is.null(regionDefinition) & !is(regionDefinition, "RegionDefinition")) {
+        stop(deparse(substitute(regionDefinition)), " is not a valid RegionDefinition object")
+    }
+    
+    # Check mutation definition
+    if (!is.null(mutationDefinition) & !is(mutationDefinition, "MutationDefinition")) {
+        stop(deparse(substitute(mutationDefinition)), " is not a valid MutationDefinition object")
+    }
+    
+    # Check targeting model
+    if (!is(targetingModel, "TargetingModel")) {
+        stop(deparse(substitute(targetingModel)), " is not a valid TargetingModel object")
+    }
     
     # Convert sequence columns to uppercase
     db <- toupperColumns(db, c(sequenceColumn, germlineColumn))
@@ -399,13 +440,13 @@ calcBaseline <- function(db,
                                               'mutationType','translateCodonToAminoAcid',
                                               'AMINO_ACIDS','binMutationsByRegion',
                                               'collapseMatrixToVector','calcExpectedMutations',
-                                              'calculateTargeting','HS5FModel','calculateMutationalPaths',
+                                              'calculateTargeting','HH_S5F','calculateMutationalPaths',
                                               'CODON_TABLE'
         ), 
         envir=environment() )    
         registerDoParallel(cluster, cores=nproc)
         nproc_arg <- cluster
-    } else if ( nproc==1 ) {
+    } else if (nproc == 1) {
         # If needed to run on a single core/cpu then, regsiter DoSEQ 
         # (needed for 'foreach' in non-parallel mode)
         registerDoSEQ()
@@ -611,6 +652,10 @@ calcBaselineHelper  <- function(observed,
                                 region,
                                 testStatistic="local",
                                 regionDefinition=NULL) {
+    # Check region definition
+    if (!is.null(regionDefinition) & !is(regionDefinition, "RegionDefinition")) {
+        stop(deparse(substitute(regionDefinition)), " is not a valid RegionDefinition object")
+    }
     
     if (is.null(regionDefinition)) {
         regions <- makeNullRegionDefinition()@regions
@@ -619,7 +664,7 @@ calcBaselineHelper  <- function(observed,
     }
     
     # Evaluate argument choices
-    testStatistic <- match.arg(testStatistic, c("local", "focused","imbalance"))
+    testStatistic <- match.arg(testStatistic, c("local", "focused", "imbalanced"))
     
     #If there are more than two regions (e.g. CDR and FWR then you cannot perform the focused test)
     if (testStatistic=="focused" & length(regions)!=2) {
@@ -629,10 +674,16 @@ calcBaselineHelper  <- function(observed,
     # local test statistic
     if (testStatistic == "local") { 
         obsX_Index <- grep( paste0("OBSERVED_", region,"_R"),  names(observed) )
-        obsN_Index <- grep( paste0("OBSERVED_", region),  names(observed) )
+        # important to have "_" after region
+        # otherwise this might happen (leading to bugs in results):
+        # region = codon_1
+        # expect grep to find only codon_1_S and codon_1_R
+        # in fact, however, codon_10_S, codon_10_R, codon_101_S, codon_101_R are matched
+        obsN_Index <- grep( paste0("OBSERVED_", region, "_"),  names(observed) )
         
         expX_Index <- grep( paste0("EXPECTED_", region,"_R"),  names(expected) )
-        expN_Index <- grep( paste0("EXPECTED_", region),  names(expected) )       
+        # important to have "_" after region
+        expN_Index <- grep( paste0("EXPECTED_", region, "_"),  names(expected) )       
     }
     
     # focused test statistic
@@ -658,8 +709,8 @@ calcBaselineHelper  <- function(observed,
             )        
     }     
     
-    # imbalance test statistic
-    if (testStatistic == "imbalance") { 
+    # imbalanced test statistic
+    if (testStatistic == "imbalanced") { 
         obsX_Index <- grep( paste0("OBSERVED_", region),  names(observed) )
         obsN_Index <- grep( "OBSERVED_",names(observed))  
         
@@ -693,7 +744,9 @@ calcBaselineBinomialPdf <- function (x=3,
         sigma_s<-seq(-max_sigma,max_sigma,length.out=length_sigma)
         sigma_1<-log({CONST_i/{1-CONST_i}}/{p/{1-p}})
         index<-min(n,60)
+
         y <- dbeta(CONST_i, x+BAYESIAN_FITTED[index], n+BAYESIAN_FITTED[index]-x)*(1-p)*p*exp(sigma_1)/({1-p}^2+2*p*{1-p}*exp(sigma_1)+{p^2}*exp(2*sigma_1))
+
         if (!sum(is.na(y))) {
             tmp <- approx(sigma_1, y, sigma_s)$y
             return(tmp / sum(tmp) / (2 * max_sigma / (length_sigma - 1)))
@@ -742,7 +795,8 @@ calcBaselineBinomialPdf <- function (x=3,
 #' \enumerate{
 #'   \item  Yaari G, et al. Quantifying selection in high-throughput immunoglobulin 
 #'            sequencing data sets. 
-#'            Nucleic Acids Res. 2012 40(17):e134.
+#'            Nucleic Acids Res. 2012 40(17):e134. 
+#'            (Corrections at http://selection.med.yale.edu/baseline/correction/)
 #'  }
 #' 
 #' @examples  
@@ -756,8 +810,8 @@ calcBaselineBinomialPdf <- function (x=3,
 #'                          sequenceColumn="SEQUENCE_IMGT",
 #'                          germlineColumn="GERMLINE_IMGT_D_MASK", 
 #'                          testStatistic="focused",
-#'                          regionDefinition=IMGT_V_NO_CDR3,
-#'                          targetingModel=HS5FModel,
+#'                          regionDefinition=IMGT_V,
+#'                          targetingModel=HH_S5F,
 #'                          nproc=1)
 #'                          
 #' # Group PDFs by sample
@@ -1022,8 +1076,9 @@ groupBaseline <- function(baseline, groupBy, nproc=1) {
 
 #' Calculate BASELINe summary statistics
 #'
-#' \code{summarizeBaseline} calculates BASELINe statistics such as the selection strength
-#' (Sigma), the 95\% confidence intervals and P-values.
+#' \code{summarizeBaseline} calculates BASELINe statistics such as the mean selection 
+#' strength (mean Sigma), the 95\% confidence intervals and p-values for the presence of
+#' selection.
 #'
 #' @param    baseline    \code{Baseline} object returned by \link{calcBaseline} containing 
 #'                       annotations and BASELINe posterior probability density functions 
@@ -1036,11 +1091,22 @@ groupBaseline <- function(baseline, groupBy, nproc=1) {
 #'                       set and will not be reset.
 #' 
 #' @return   Either a modified \code{Baseline} object or data.frame containing the 
-#'           BASELINe selection strength, 95\% confidence intervals and P-value.  
-#'           
+#'           mean BASELINe selection strength, its 95\% confidence intervals, and 
+#'           a p-value for the presence of selection.
+#' 
+#' @details  The returned p-value can be either positive or negative. Its magnitude 
+#'           (without the sign) should be interpreted as per normal. Its sign indicates 
+#'           the direction of the selection detected. A positive p-value indicates positive
+#'           selection, whereas a negative p-value indicates negative selection.
+#'                     
 #' @seealso  See \link{calcBaseline} for generating \code{Baseline} objects and
 #'           \link{groupBaseline} for convolving groups of BASELINe PDFs.
 #'           
+#' @references
+#' \enumerate{
+#'   \item  Uduman M, et al. Detecting selection in immunoglobulin sequences. 
+#'            Nucleic Acids Res. 2011 39(Web Server issue):W499-504.
+#' }
 #' 
 #' @examples
 #' # Subset example data
@@ -1052,8 +1118,8 @@ groupBaseline <- function(baseline, groupBy, nproc=1) {
 #'                          sequenceColumn="SEQUENCE_IMGT",
 #'                          germlineColumn="GERMLINE_IMGT_D_MASK", 
 #'                          testStatistic="focused",
-#'                          regionDefinition=IMGT_V_NO_CDR3,
-#'                          targetingModel = HS5FModel,
+#'                          regionDefinition=IMGT_V,
+#'                          targetingModel=HH_S5F,
 #'                          nproc = 1)
 #' 
 #' # Grouping the PDFs by the sample and isotype annotations
@@ -1161,7 +1227,8 @@ summarizeBaseline <- function(baseline, returnType=c("baseline", "df"), nproc=1)
 #' \enumerate{
 #'   \item  Yaari G, et al. Quantifying selection in high-throughput immunoglobulin 
 #'            sequencing data sets. 
-#'            Nucleic Acids Res. 2012 40(17):e134.
+#'            Nucleic Acids Res. 2012 40(17):e134. 
+#'            (Corretions at http://selection.med.yale.edu/baseline/correction/)
 #'  }
 #' 
 #' @examples
@@ -1174,8 +1241,8 @@ summarizeBaseline <- function(baseline, returnType=c("baseline", "df"), nproc=1)
 #'                          sequenceColumn="SEQUENCE_IMGT",
 #'                          germlineColumn="GERMLINE_IMGT_D_MASK", 
 #'                          testStatistic="focused",
-#'                          regionDefinition=IMGT_V_NO_CDR3,
-#'                          targetingModel=HS5FModel,
+#'                          regionDefinition=IMGT_V,
+#'                          targetingModel=HH_S5F,
 #'                          nproc=1)
 #' 
 #' # Group PDFs by the sample identifier
@@ -1265,13 +1332,36 @@ baselineCI <- function (base, low=0.025, up=0.975, max_sigma=20, length_sigma=40
 # @param   base          BASLINe PDF vector.
 # @param   max_sigma     maximum sigma score.
 # @param   length_sigma  length of the PDF vector.
-# @return  A vector of \code{c(lower, upper)} confidence bounds.
+# @return  A p-value. The returned p-value can be either positive or negative. 
+#          Its magnitude (without the sign) should be interpreted as per normal. 
+#          Its sign indicate the direction of the selection detected. A positive 
+#          p-value indicates positive selection, whereas a negative p-value 
+#          indicates negative selection.
 baselinePValue <- function (base, length_sigma=4001, max_sigma=20){
+    # note: since there isn't a null distribution, this "p-value" isn't a p-value in the 
+    # conventional sense
     if (!any(is.na(base))) {
+        # normalization factor
         #norm <- (length_sigma - 1) / 2 / max_sigma
-        norm <- sum(base, na.rm=TRUE)
-        pvalue <- sum(base[1:((length_sigma - 1)/2)] + base[((length_sigma + 1) / 2)] / 2) / norm
-        if (pvalue > 0.5) { pvalue <- 1 - pvalue }
+        # sums up to 100 for default setting (sigma_s from -20 to 20 with length 4001)
+        norm <- sum(base, na.rm=TRUE) 
+        
+        # compute Pr(selection strength < 0):
+        # sum up density for sigma from min_sigma up to and right before 0 (area under curve), plus
+        # + binomial correction (density at sigma=0 divided by 2); 
+        # normalized
+        pvalue <- ( sum(base[1:((length_sigma - 1) / 2)]) + 
+                    base[((length_sigma + 1) / 2)] / 2 ) / norm
+        
+        # from Fig 4 caption of Detecting selection in immunoglobulin sequences by Uduman et al. 2011
+        # "Note that P values less than zero are indicative of negative selection."
+        
+        # 1) if Pr(selection strength < 0) <= 0.5, return Pr(selection strength < 0)
+        #    this will be positive, and serves as the "p-value" for positive selection
+        # 2) if Pr(selection strength < 0) > 0.5, return -Pr(selection strength>0)
+        #    this will be negative, and serves as the "p-value" for negative selection
+        #    (negative sign highlights the fact that selection is negative)
+        if (pvalue > 0.5) { pvalue <- -(1 - pvalue) } 
     } else {
         pvalue <- NA
     }
@@ -1296,6 +1386,10 @@ baseline2DistPValue <-function(base1, base2) {
     # Check input
     if (len1 != len2) {
         stop("base1 and base2 must be the same length.")
+    }
+    # NA if all values in pdfs are NA
+    if (sum(is.na(base1))==len1 | sum(is.na(base2))==len2) {
+        return(NA)
     }
 
     # Determine p-value
@@ -1376,8 +1470,8 @@ baseline2DistPValue <-function(base1, base2) {
 #'                          sequenceColumn="SEQUENCE_IMGT",
 #'                          germlineColumn="GERMLINE_IMGT_D_MASK", 
 #'                          testStatistic="focused",
-#'                          regionDefinition=IMGT_V_NO_CDR3,
-#'                          targetingModel=HS5FModel,
+#'                          regionDefinition=IMGT_V,
+#'                          targetingModel=HH_S5F,
 #'                          nproc=1)
 #'  
 #' # Grouping the PDFs by the sample and isotype annotations
@@ -1581,8 +1675,8 @@ plotBaselineDensity <- function(baseline, idColumn, groupColumn=NULL, colorEleme
 #'                          sequenceColumn="SEQUENCE_IMGT",
 #'                          germlineColumn="GERMLINE_IMGT_D_MASK", 
 #'                          testStatistic="focused",
-#'                          regionDefinition=IMGT_V_NO_CDR3,
-#'                          targetingModel=HS5FModel,
+#'                          regionDefinition=IMGT_V,
+#'                          targetingModel=HH_S5F,
 #'                          nproc=1)
 #'  
 #' # Grouping the PDFs by sample and isotype annotations
@@ -1684,13 +1778,12 @@ plotBaselineSummary <- function(baseline, idColumn, groupColumn=NULL, groupColor
     # Add additional theme elements
     p1 <- p1 + do.call(theme, list(...))
     
-    #   # Plot
-    #   if (!silent) { 
-    p1
-    #   } else {
-    #       invisible(p1)
-    #   }
-    
+    # Plot
+    if (!silent) { 
+        p1
+    } else {
+        invisible(p1)
+    }
 }
 
 

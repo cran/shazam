@@ -2,8 +2,8 @@
 % Please edit documentation in R/MutationDefinitions.R
 \docType{class}
 \name{MutationDefinition-class}
-\alias{MutationDefinition}
 \alias{MutationDefinition-class}
+\alias{MutationDefinition}
 \title{S4 class defining replacement and silent mutation definitions}
 \description{
 \code{MutationDefinition} defines a common data structure for defining the whether
@@ -26,7 +26,7 @@ change in class.}
 
 \item{\code{citation}}{publication source.}
 }}
+
 \seealso{
 See \link{MUTATION_SCHEMES} for a set of predefined \code{MutationDefinition} objects.
 }
-

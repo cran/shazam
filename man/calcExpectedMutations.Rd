@@ -4,9 +4,8 @@
 \alias{calcExpectedMutations}
 \title{Calculate expected mutation frequencies of a sequence}
 \usage{
-calcExpectedMutations(germlineSeq, inputSeq = NULL,
-  targetingModel = HS5FModel, regionDefinition = NULL,
-  mutationDefinition = NULL)
+calcExpectedMutations(germlineSeq, inputSeq = NULL, targetingModel = HH_S5F,
+  regionDefinition = NULL, mutationDefinition = NULL)
 }
 \arguments{
 \item{germlineSeq}{germline (reference) sequence.}
@@ -17,7 +16,7 @@ same length as \code{inputSeq} and positions in
 \code{germlineSeq} corresponding to positions with Ns in 
 \code{inputSeq} will also be assigned an N.}
 
-\item{targetingModel}{\link{TargetingModel} object. Default is \link{HS5FModel}.}
+\item{targetingModel}{\link{TargetingModel} object. Default is \link{HH_S5F}.}
 
 \item{regionDefinition}{\link{RegionDefinition} object defining the regions
 and boundaries of the Ig sequences.}
@@ -30,7 +29,7 @@ amino acid identity.}
 \value{
 A \code{numeric} vector of the expected frequencies of mutations in the 
           regions in the \code{regionDefinition}. For example, when using the default 
-          \link{IMGT_V_NO_CDR3} definition, which defines positions for CDR and 
+          \link{IMGT_V} definition, which defines positions for CDR and 
           FWR, the following columns are calculated:
           \itemize{
              \item  \code{EXPECTED_CDR_R}:  number of replacement mutations in CDR1 and 
@@ -53,7 +52,7 @@ frequencies of a given sequence. This is primarily a helper function for
 given sequence and its germline. 
 
 Note, only the part of the sequences defined in \code{regionDefinition} are analyzed. 
-For example, when using the default \link{IMGT_V_NO_CDR3} definition, mutations in
+For example, when using the default \link{IMGT_V} definition, mutations in
 positions beyond 312 will be ignored.
 }
 \examples{
@@ -68,10 +67,10 @@ germ_seq <-  ExampleDb[1, "GERMLINE_IMGT_D_MASK"]
 calcExpectedMutations(in_seq, germ_seq)
 
 # Identify only mutations the V segment minus CDR3
-calcExpectedMutations(in_seq, germ_seq, regionDefinition=IMGT_V_NO_CDR3)
+calcExpectedMutations(in_seq, germ_seq, regionDefinition=IMGT_V)
 
 # Define mutations based on hydropathy
-calcExpectedMutations(in_seq, germ_seq, regionDefinition=IMGT_V_NO_CDR3,
+calcExpectedMutations(in_seq, germ_seq, regionDefinition=IMGT_V,
                       mutationDefinition=HYDROPATHY_MUTATIONS)
 
 }
@@ -80,4 +79,3 @@ calcExpectedMutations(in_seq, germ_seq, regionDefinition=IMGT_V_NO_CDR3,
 To create a custom \code{targetingModel} see \link{createTargetingModel}.
 See \link{calcObservedMutations} for getting observed mutation counts.
 }
-

@@ -16,4 +16,3 @@ Determines the OS platform being used
 getPlatform()
 
 }
-

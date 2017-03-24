@@ -11,8 +11,10 @@ getBaselineStats(baseline)
 either \link{groupBaseline} or \link{summarizeBaseline}.}
 }
 \value{
-A \code{data.frame} with the BASELINe selection strength scores (Sigma),
-          95\% confidence intervals and P-values.
+A \code{data.frame} with the mean selection strength (mean Sigma), 95\% 
+          confidence intervals, and p-values with positive signs for the presence 
+          of positive selection and/or p-values with negative signs for the presence 
+          of negative selection.
 }
 \description{
 \code{getBaselineStats} is an accessor method that returns the 
@@ -29,8 +31,8 @@ baseline <- calcBaseline(db,
                          sequenceColumn="SEQUENCE_IMGT",
                          germlineColumn="GERMLINE_IMGT_D_MASK", 
                          testStatistic="focused",
-                         regionDefinition=IMGT_V_NO_CDR3,
-                         targetingModel = HS5FModel,
+                         regionDefinition=IMGT_V,
+                         targetingModel=HH_S5F,
                          nproc = 1)
 
 # Grouping the PDFs by the isotype and sample annotations.
@@ -43,4 +45,3 @@ getBaselineStats(grouped)
 \seealso{
 For calculating the BASELINe summary statistics see \link{summarizeBaseline}.
 }
-

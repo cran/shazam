@@ -7,8 +7,8 @@
 calcBaseline(db, sequenceColumn = "SEQUENCE_IMGT",
   germlineColumn = "GERMLINE_IMGT_D_MASK", testStatistic = c("local",
   "focused", "imbalanced"), regionDefinition = NULL,
-  targetingModel = HS5FModel, mutationDefinition = NULL,
-  calcStats = FALSE, nproc = 1)
+  targetingModel = HH_S5F, mutationDefinition = NULL, calcStats = FALSE,
+  nproc = 1)
 }
 \arguments{
 \item{db}{\code{data.frame} containing sequence data and annotations.}
@@ -26,7 +26,7 @@ used to test for selection. One of
 \item{regionDefinition}{\link{RegionDefinition} object defining the regions
 and boundaries of the Ig sequences.}
 
-\item{targetingModel}{\link{TargetingModel} object. Default is  \link{HS5FModel}.}
+\item{targetingModel}{\link{TargetingModel} object. Default is  \link{HH_S5F}.}
 
 \item{mutationDefinition}{\link{MutationDefinition} object defining replacement
 and silent mutation criteria. If \code{NULL} then 
@@ -72,7 +72,7 @@ E.g.
 \itemize{
   \item   \code{local} = CDR_R / (CDR_R + CDR_S).
   \item   \code{focused} = CDR_R / (CDR_R + CDR_S + FWR_S).
-  \item   \code{imbalance} = CDR_R + CDR_S / (CDR_R + CDR_S + FWR_S + FRW_R).
+  \item   \code{imbalanced} = CDR_R + CDR_S / (CDR_R + CDR_S + FWR_S + FRW_R).
 }
 For \code{focused} the \code{regionDefinition} must only contain two regions. If more 
 than two regions are defined the \code{local} test statistic will be used.
@@ -88,8 +88,8 @@ baseline <- calcBaseline(db,
                          sequenceColumn="SEQUENCE_IMGT",
                          germlineColumn="GERMLINE_IMGT_D_MASK", 
                          testStatistic="focused",
-                         regionDefinition=IMGT_V_NO_CDR3,
-                         targetingModel = HS5FModel,
+                         regionDefinition=IMGT_V,
+                         targetingModel=HH_S5F,
                          nproc=1)
                          
 }
@@ -110,4 +110,3 @@ See \link{Baseline} for the return object.
          See \link{groupBaseline} and \link{summarizeBaseline} for further processing.
          See \link{plotBaselineSummary} and \link{plotBaselineDensity} for plotting results.
 }
-

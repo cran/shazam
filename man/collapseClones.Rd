@@ -78,11 +78,10 @@ clones <- collapseClones(db, nproc=1)
                          
 # Build clonal consensus for V-region only 
 # Return the same number of rows as the input
-clones <- collapseClones(db, regionDefinition=IMGT_V_NO_CDR3, 
+clones <- collapseClones(db, regionDefinition=IMGT_V, 
                          expandedDb=TRUE, nproc=1)
 
 }
 \seealso{
 See \link{IMGT_SCHEMES} for a set of predefined \link{RegionDefinition} objects.
 }
-

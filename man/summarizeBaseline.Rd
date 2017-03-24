@@ -21,11 +21,19 @@ set and will not be reset.}
 }
 \value{
 Either a modified \code{Baseline} object or data.frame containing the 
-          BASELINe selection strength, 95\% confidence intervals and P-value.
+          mean BASELINe selection strength, its 95\% confidence intervals, and 
+          a p-value for the presence of selection.
 }
 \description{
-\code{summarizeBaseline} calculates BASELINe statistics such as the selection strength
-(Sigma), the 95\% confidence intervals and P-values.
+\code{summarizeBaseline} calculates BASELINe statistics such as the mean selection 
+strength (mean Sigma), the 95\% confidence intervals and p-values for the presence of
+selection.
+}
+\details{
+The returned p-value can be either positive or negative. Its magnitude 
+          (without the sign) should be interpreted as per normal. Its sign indicates 
+          the direction of the selection detected. A positive p-value indicates positive
+          selection, whereas a negative p-value indicates negative selection.
 }
 \examples{
 # Subset example data
@@ -37,8 +45,8 @@ baseline <- calcBaseline(db,
                          sequenceColumn="SEQUENCE_IMGT",
                          germlineColumn="GERMLINE_IMGT_D_MASK", 
                          testStatistic="focused",
-                         regionDefinition=IMGT_V_NO_CDR3,
-                         targetingModel = HS5FModel,
+                         regionDefinition=IMGT_V,
+                         targetingModel=HH_S5F,
                          nproc = 1)
 
 # Grouping the PDFs by the sample and isotype annotations
@@ -48,8 +56,13 @@ grouped <- groupBaseline(baseline, groupBy=c("SAMPLE", "ISOTYPE"))
 stats <- summarizeBaseline(grouped, returnType="df")
                      
 }
+\references{
+\enumerate{
+  \item  Uduman M, et al. Detecting selection in immunoglobulin sequences. 
+           Nucleic Acids Res. 2011 39(Web Server issue):W499-504.
+}
+}
 \seealso{
 See \link{calcBaseline} for generating \code{Baseline} objects and
           \link{groupBaseline} for convolving groups of BASELINe PDFs.
 }
-

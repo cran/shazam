@@ -45,14 +45,13 @@ A named list of ggplot objects defining the plots, with names defined by the
 }
 \examples{
 # Plot one nucleotide in circular style
-plotMutability(HS5FModel, "C")
+plotMutability(HH_S5F, "C")
 
 # Plot two nucleotides in barchart style
-plotMutability(HS5FModel, c("G", "T"), style="bar")
+plotMutability(HH_S5F, c("G", "T"), style="bar")
 
 }
 \seealso{
 Takes as input a \link{TargetingModel} object. 
           See \link{createTargetingModel} for model building.
 }
-

@@ -72,7 +72,7 @@ NULL
 #'                          
 #' # Build clonal consensus for V-region only 
 #' # Return the same number of rows as the input
-#' clones <- collapseClones(db, regionDefinition=IMGT_V_NO_CDR3, 
+#' clones <- collapseClones(db, regionDefinition=IMGT_V, 
 #'                          expandedDb=TRUE, nproc=1)
 #' 
 #' @export
@@ -95,6 +95,11 @@ collapseClones <- function(db,
     check <- checkColumns(db, c(cloneColumn, sequenceColumn, germlineColumn))
     if (check != TRUE) { stop(check) }
     
+    # Check region definition
+    if (!is.null(regionDefinition) & !is(regionDefinition, "RegionDefinition")) {
+        stop(deparse(substitute(regionDefinition)), " is not a valid RegionDefinition object")
+    }
+
     # Convert sequence columns to uppercase
     db <- toupperColumns(db, c(sequenceColumn, germlineColumn))
     
@@ -153,7 +158,7 @@ collapseClones <- function(db,
     
     #cons_list <- foreach(idx=iterators::icount(lenGroups), .combine=c, .verbose=FALSE, 
     cons_mat <- foreach(idx=iterators::icount(lenGroups), .combine="cbind", 
-                        .verbose=FALSE, .errorhandling='pass') %dopar% {
+                        .verbose=FALSE, .errorhandling='stop') %dopar% {
         calcClonalConsensus(inputSeq=db[[sequenceColumn]][groups[[idx]]],
                             germlineSeq=db[[germlineColumn]][groups[[idx]]],
                             regionDefinition=regionDefinition, 
@@ -198,6 +203,11 @@ calcClonalConsensus <- function(inputSeq, germlineSeq, regionDefinition=NULL,
                                 nonTerminalOnly=FALSE) {
     ## DEBUG
     # inputSeq=db$SEQUENCE_IMGT[4:6]; germlineSeq=db$GERMLINE_IMGT_D_MASK[4:6]; regionDefinition=NULL; nonTerminalOnly=FALSE
+    
+    # Check region definition
+    if (!is.null(regionDefinition) & !is(regionDefinition, "RegionDefinition")) {
+        stop(deparse(substitute(regionDefinition)), " is not a valid RegionDefinition object")
+    }
     
     # If only one sequence in clone, return it
     if (length(inputSeq) == 1) {
@@ -302,6 +312,11 @@ calcClonalConsensus <- function(inputSeq, germlineSeq, regionDefinition=NULL,
 #'                               and silent mutation criteria. If \code{NULL} then 
 #'                               replacement and silent are determined by exact 
 #'                               amino acid identity.
+#' @param    combine             \code{logical} indicating whether for each sequence should
+#'                               the mutation counts for the different regions (CDR, FWR) and 
+#'                               mutation types be combined and return one value of 
+#'                               count/frequency per sequence instead of 
+#'                               multiple values. Default is \code{FALSE}.                          
 #' @param    nproc               number of cores to distribute the operation over. If the 
 #'                               cluster has already been set the call function with 
 #'                               \code{nproc} = 0 to not reset or reinitialize. Default is 
@@ -310,7 +325,7 @@ calcClonalConsensus <- function(inputSeq, germlineSeq, regionDefinition=NULL,
 #' @return   A modified \code{db} \code{data.frame} with observed mutation counts for each 
 #'           sequence listed. The columns names are dynamically created based on the
 #'           regions in the \code{regionDefinition}. For example, when using the
-#'           \link{IMGT_V_NO_CDR3} definition, which defines positions for CDR and
+#'           \link{IMGT_V} definition, which defines positions for CDR and
 #'           FWR, the following columns are added:
 #'           \itemize{
 #'             \item  \code{OBSERVED_CDR_R}:  number of replacement mutations in CDR1 and 
@@ -322,7 +337,25 @@ calcClonalConsensus <- function(inputSeq, germlineSeq, regionDefinition=NULL,
 #'             \item  \code{OBSERVED_FWR_S}:  number of silent mutations in FWR1, FWR2 and
 #'                                            FWR3 of the V-segment.
 #'           }
-#'           
+#'           If \code{frequency=TRUE}, R and S mutation frequencies are
+#'           calculated over the number of non-N positions in the speficied regions.
+#'           \itemize{
+#'             \item  \code{MU_FREQ_CDR_R}:  frequency of replacement mutations in CDR1 and 
+#'                                            CDR2 of the V-segment.
+#'             \item  \code{MU_FREQ_CDR_S}:  frequency of silent mutations in CDR1 and CDR2 
+#'                                            of the V-segment.
+#'             \item  \code{MU_FREQ_FWR_R}:  frequency of replacement mutations in FWR1, 
+#'                                            FWR2 and FWR3 of the V-segment.
+#'             \item  \code{MU_FREQ_FWR_S}:  frequency of silent mutations in FWR1, FWR2 and
+#'                                            FWR3 of the V-segment.
+#'           } 
+#'           If \code{frequency=TRUE} and \code{combine=TRUE}, the mutations and non-N positions
+#'           are aggregated and a single \code{MU_FREQ} value is returned
+#'           \itemize{
+#'             \item  \code{MU_FREQ}:  frequency of replacement and silent mutations in the 
+#'                                      specified region
+#'           }     
+#'                                  
 #' @details
 #' Mutation count are determined by comparing the input sequences (in the column specified 
 #' by \code{sequenceColumn}) to the germline sequence (in the column specified by 
@@ -335,7 +368,7 @@ calcClonalConsensus <- function(inputSeq, germlineSeq, regionDefinition=NULL,
 #' additional columns.
 #' 
 #' @seealso  
-#' \link{calcObservedMutations} is called by this function to get the list of mutations 
+#' \link{calcObservedMutations} is called by this function to get the number of mutations 
 #' in each sequence grouped by the \link{RegionDefinition}. 
 #' See \link{IMGT_SCHEMES} for a set of predefined \link{RegionDefinition} objects.
 #' See \link{expectedMutations} for calculating expected mutation frequencies.
@@ -356,7 +389,7 @@ calcClonalConsensus <- function(inputSeq, germlineSeq, regionDefinition=NULL,
 #' # With mutations only considered replacement if charge changes
 #' db_obs <- observedMutations(db, sequenceColumn="SEQUENCE_IMGT",
 #'                             germlineColumn="GERMLINE_IMGT_D_MASK",
-#'                             regionDefinition=IMGT_V_NO_CDR3,
+#'                             regionDefinition=IMGT_V,
 #'                             mutationDefinition=CHARGE_MUTATIONS,
 #'                             nproc=1)
 #'                      
@@ -365,6 +398,7 @@ observedMutations <- function(db,
                               sequenceColumn="SEQUENCE_IMGT",
                               germlineColumn="GERMLINE_IMGT_D_MASK",
                               frequency=FALSE,
+                              combine=FALSE,
                               regionDefinition=NULL,
                               mutationDefinition=NULL,
                               nproc=1) {
@@ -374,6 +408,16 @@ observedMutations <- function(db,
     # Check for valid columns
     check <- checkColumns(db, c(sequenceColumn, germlineColumn))
     if (check != TRUE) { stop(check) }
+    
+    # Check region definition
+    if (!is.null(regionDefinition) & !is(regionDefinition, "RegionDefinition")) {
+        stop(deparse(substitute(regionDefinition)), " is not a valid RegionDefinition object")
+    }
+    
+    # Check mutation definition
+    if (!is.null(mutationDefinition) & !is(mutationDefinition, "MutationDefinition")) {
+        stop(deparse(substitute(mutationDefinition)), " is not a valid MutationDefinition object")
+    }
     
     # Convert sequence columns to uppercase
     db <- toupperColumns(db, c(sequenceColumn, germlineColumn))
@@ -392,7 +436,7 @@ observedMutations <- function(db,
     if (nproc > 1) {        
         cluster <- parallel::makeCluster(nproc, type = "PSOCK")
         parallel::clusterExport(cluster, list('db', 'sequenceColumn', 'germlineColumn', 
-                                              'regionDefinition', 'frequency',
+                                              'regionDefinition', 'frequency', 'combine',
                                               'calcObservedMutations','s2c','c2s','NUCLEOTIDES',
                                               'getCodonPos','getContextInCodon','mutationType',
                                               'translateCodonToAminoAcid','AMINO_ACIDS','binMutationsByRegion',
@@ -409,21 +453,36 @@ observedMutations <- function(db,
     cat("Calculating observed number of mutations...\n")
     
     # Identify all the mutations in the sequences
-    # observedMutations helper function returns a list (1 element per sequence)
-    # containing an array of mutations (s or R) and the array labels indicate
-    # the nucleotide position of the mutations.
     numbOfSeqs <- nrow(db)
     observedMutations_list <-
         foreach(idx=iterators::icount(numbOfSeqs)) %dopar% {
-            calcObservedMutations(db[idx, sequenceColumn], 
+            oM <- calcObservedMutations(db[idx, sequenceColumn], 
                                   db[idx, germlineColumn],
-                                  frequency=frequency,
+                                  frequency=frequency & !combine,
                                   regionDefinition=regionDefinition,
-                                  mutationDefinition=mutationDefinition)
+                                  mutationDefinition=mutationDefinition,
+                                  returnRaw = combine)
+            if (combine) {
+                num_mutations <- 0
+                if (!all(is.na(oM$pos))) {
+                    num_mutations <- length(oM$pos$position)
+                }
+                if (!frequency) {
+                    num_mutations
+                } else {
+                    num_nonN <- sum(oM$nonN)
+                    mu_freq <- num_mutations/num_nonN
+                    mu_freq
+                }
+            } else {
+                oM   
+            }
         }
     
     # Convert list of mutations to data.frame
-    if (!is.null(regionDefinition)) {
+    if (combine) {
+        labels_length <- 1
+    } else if (!is.null(regionDefinition)) {
         labels_length <- length(regionDefinition@labels)
     } else{
         #labels_length=1
@@ -439,9 +498,9 @@ observedMutations <- function(db,
     if (ncol(observed_mutations) > 1) sep <- "_"
     observed_mutations[is.na(observed_mutations)] <- 0
     if (frequency == TRUE) {
-        colnames(observed_mutations) <- paste("MU_FREQ", colnames(observed_mutations), sep=sep)
+        colnames(observed_mutations) <- gsub("_$","",paste("MU_FREQ", colnames(observed_mutations), sep=sep))
     } else {
-        colnames(observed_mutations) <- paste("OBSERVED", colnames(observed_mutations), sep=sep)
+        colnames(observed_mutations) <- gsub("_$","",paste("OBSERVED", colnames(observed_mutations), sep=sep))
     }
     
     # Properly shutting down the cluster
@@ -461,7 +520,9 @@ observedMutations <- function(db,
 #' @param    inputSeq            input sequence.
 #' @param    germlineSeq         germline sequence.
 #' @param    frequency           \code{logical} indicating whether or not to calculate
-#'                               mutation frequencies. Default is \code{FALSE}.
+#'                               mutation frequencies. The denominator used is the number of bases
+#'                               that are non-N in both the input and the germline sequences.
+#'                               Default is \code{FALSE}.
 #' @param    regionDefinition    \link{RegionDefinition} object defining the regions
 #'                               and boundaries of the Ig sequences. Note, only the part of
 #'                               sequences defined in \code{regionDefinition} are analyzed.
@@ -470,37 +531,91 @@ observedMutations <- function(db,
 #'                               and silent mutation criteria. If \code{NULL} then 
 #'                               replacement and silent are determined by exact 
 #'                               amino acid identity.
+#' @param    returnRaw           return the positions of point mutations and their corresponding
+#'                               mutation types, as opposed to counts of mutations.
+#'                               Also returns the number of non-N bases used as the denominator when
+#'                               calculating frequency. Default is \code{FALSE}.                               
 #'                               
-#' @return   An \code{array} of the mutations, replacement (R) or silent(S), with the 
-#'           names indicating the nucleotide postion of the mutations in the sequence.
+#' @return   For \code{returnRaw=FALSE}, an \code{array} with the number of replacement (R) 
+#'           and silent(S) mutations. For \code{returnRaw=TRUE}, a list containing a data 
+#'           frame (\code{$pos}) whose columns (\code{position}, \code{type}, and \code{region}) 
+#'           indicate the position, mutation type (R or S), and region of each mutation; and a 
+#'           vector (\code{$nonN}) indicating the number of non-N bases in regions defined by
+#'           \code{regionDefinition}.
 #'           
 #' @details
-#' Each mutation is considered independently in its codon context. Note, only the part of 
+#' Each mutation is considered independently in the germline context. Note, only the part of 
 #' \code{inputSeq} defined in \code{regionDefinition} is analyzed. For example, when using 
-#' the default \link{IMGT_V_NO_CDR3} definition, then mutations in positions beyond 
-#' 312 will be ignored.
+#' the default \link{IMGT_V} definition, then mutations in positions beyond 
+#' 312 will be ignored. 
 #' 
-#' @seealso  See \link{observedMutations} for counting the number of observed mutations.
+#' Note that only replacement (R) and silent (S) mutations are included in the 
+#' results. Stop mutations and mutations such as the case in which NNN in the germline
+#' sequence is observed as NNC in the input sequence are excluded. In other words,
+#' a result that is \code{NA} or zero indicates absence of R and S mutations, not 
+#' necessarily all types of mutations, such as the excluded ones mentioned above.
+#' 
+#' @seealso  See \link{observedMutations} for counting the number of observed mutations 
+#' in a \code{data.frame}.
 #' 
 #' @examples
-#' # Use first entry in the exampled data for input and germline sequence
+#' # Use an entry in the example data for input and germline sequence
 #' data(ExampleDb, package="alakazam")
-#' in_seq <- ExampleDb[1, "SEQUENCE_IMGT"]
-#' germ_seq <-  ExampleDb[1, "GERMLINE_IMGT_D_MASK"]
+#' in_seq <- ExampleDb[100, "SEQUENCE_IMGT"]
+#' germ_seq <-  ExampleDb[100, "GERMLINE_IMGT_D_MASK"]
 #' 
 #' # Identify all mutations in the sequence
-#' calcObservedMutations(in_seq, germ_seq)
+#' ex1_raw = calcObservedMutations(in_seq, germ_seq, returnRaw=TRUE)
+#' # Count all mutations in the sequence
+#' ex1_count = calcObservedMutations(in_seq, germ_seq, returnRaw=FALSE)
+#' ex1_freq = calcObservedMutations(in_seq, germ_seq, returnRaw=FALSE, frequency=TRUE)
+#' # Compare this with ex1_count
+#' table(ex1_raw$pos$region, ex1_raw$pos$type)
+#' # Compare this with ex1_freq
+#' table(ex1_raw$pos$region, ex1_raw$pos$type) / ex1_raw$nonN
 #' 
 #' # Identify only mutations the V segment minus CDR3
-#' calcObservedMutations(in_seq, germ_seq, regionDefinition=IMGT_V_NO_CDR3)
-#'  
-#' # Identify mutations by change in hydropathy class
-#' calcObservedMutations(in_seq, germ_seq, regionDefinition=IMGT_V_NO_CDR3,
-#'                       mutationDefinition=HYDROPATHY_MUTATIONS, frequency=TRUE)
+#' ex2_raw = calcObservedMutations(in_seq, germ_seq, 
+#'                                 regionDefinition=IMGT_V, returnRaw=TRUE)
+#' # Count only mutations the V segment minus CDR3
+#' ex2_count = calcObservedMutations(in_seq, germ_seq, 
+#'                                   regionDefinition=IMGT_V, returnRaw=FALSE)
+#' ex2_freq = calcObservedMutations(in_seq, germ_seq, 
+#'                                  regionDefinition=IMGT_V, returnRaw=FALSE,
+#'                                  frequency=TRUE)
+#' # Compare this with ex2_count
+#' table(ex2_raw$pos$region, ex2_raw$pos$type)                                 
+#' # Compare this with ex2_freq
+#' table(ex2_raw$pos$region, ex2_raw$pos$type) / ex2_raw$nonN                                        
 #' 
+#' # Identify mutations by change in hydropathy class
+#' ex3_raw = calcObservedMutations(in_seq, germ_seq, regionDefinition=IMGT_V,
+#'                                 mutationDefinition=HYDROPATHY_MUTATIONS, returnRaw=TRUE)
+#' # Count mutations by change in hydropathy class
+#' ex3_count = calcObservedMutations(in_seq, germ_seq, regionDefinition=IMGT_V,
+#'                                   mutationDefinition=HYDROPATHY_MUTATIONS, returnRaw=FALSE)
+#' ex3_freq = calcObservedMutations(in_seq, germ_seq, regionDefinition=IMGT_V,
+#'                                  mutationDefinition=HYDROPATHY_MUTATIONS, returnRaw=FALSE, 
+#'                                  frequency=TRUE)
+#' # Compre this with ex3_count
+#' table(ex3_raw$pos$region, ex3_raw$pos$type)                                        
+#' # Compare this with ex3_freq
+#' table(ex3_raw$pos$region, ex3_raw$pos$type) / ex3_raw$nonN                                        
+#'                                 
 #' @export
 calcObservedMutations <- function(inputSeq, germlineSeq, frequency=FALSE,
-                                  regionDefinition=NULL, mutationDefinition=NULL) {
+                                  regionDefinition=NULL, mutationDefinition=NULL,
+                                  returnRaw=FALSE) {
+    # Check region definition
+    if (!is.null(regionDefinition) & !is(regionDefinition, "RegionDefinition")) {
+        stop(deparse(substitute(regionDefinition)), " is not a valid RegionDefinition object")
+    }
+    
+    # Check mutation definition
+    if (!is.null(mutationDefinition) & !is(mutationDefinition, "MutationDefinition")) {
+        stop(deparse(substitute(mutationDefinition)), " is not a valid MutationDefinition object")
+    }
+    
     # Assign mutation definition
     aminoAcidClasses <- if (is.null(mutationDefinition)) { NULL } else { mutationDefinition@classes }
         
@@ -546,6 +661,7 @@ calcObservedMutations <- function(inputSeq, germlineSeq, frequency=FALSE,
         c_germlineSeq <- c( c_germlineSeq, fillWithNs)
     }
     
+    mutations_array_raw <- NA
     mutations_array <- NA
     mutations = (c_germlineSeq != c_inputSeq) & (c_germlineSeq%in%NUCLEOTIDES[1:5]) & (c_inputSeq%in%NUCLEOTIDES[1:5])
     if (sum(mutations) > 0) {
@@ -565,26 +681,62 @@ calcObservedMutations <- function(inputSeq, germlineSeq, frequency=FALSE,
         c_inputSeq_codons <- strsplit(gsub("([[:alnum:]]{3})", "\\1 ", c2s(c_inputSeq_codons)), " ")[[1]]
         
         # Determine whether the mutations are R or S
-        mutations_array <- apply(rbind(c_germlineSeq_codons, c_inputSeq_codons), 2, 
-                                 function(x) { mutationType(c2s(x[1]), c2s(x[2]), aminoAcidClasses=aminoAcidClasses) })
-        names(mutations_array) = mutations_pos
-        mutations_array<- mutations_array[!is.na(mutations_array)]
-        if(length(mutations_array)==sum(is.na(mutations_array))){
-            mutations_array<-NA    
+        mutations_array_raw <- apply(rbind(c_germlineSeq_codons, c_inputSeq_codons), 2, 
+                                     function(x) { mutationType(c2s(x[1]), c2s(x[2]), aminoAcidClasses=aminoAcidClasses) })
+        names(mutations_array_raw) = mutations_pos
+        # remove NAs (arisen from cases such as NNN [germline] and NNC [input])
+        mutations_array_raw <- mutations_array_raw[!is.na(mutations_array_raw)]
+        
+        if(length(mutations_array_raw)==0){
+            # NA if mutations_array_raw contains all NAs and they have all been removed
+            mutations_array_raw <- NA
+            mutations_array <- NA    
         } else {
-            mutations_array <- binMutationsByRegion(mutations_array,regionDefinition)
+            # mutation types other than "R" and "S" (e.g. "Stop") will be removed by binMutationsByRegion,
+            # and stored in mutations_array
+            mutations_array <- binMutationsByRegion(mutations_array_raw, regionDefinition)
             if (frequency==TRUE) {
                 tempNames <- sapply(regionDefinition@labels, function(x) { substr(x, 1, nchar(x)-2) })
                 # Subset boundaries to only non N bases (in both seq and gl)
                 boundaries <- regionDefinition@boundaries[c_inputSeq%in%NUCLEOTIDES[1:4] &  
-                                                              c_germlineSeq%in%NUCLEOTIDES[1:4]]
+                                                          c_germlineSeq%in%NUCLEOTIDES[1:4]]
                 # Freq = numb of mutations / numb of non N bases (in both seq and gl)
                 denoms <- sapply(tempNames, function(x) { sum(boundaries==x) })
                 mutations_array <- mutations_array/denoms
             }
+            # for consistency, manually remove non-"R"/"S" from mutations_array_raw
+            # i.e. not counting mutations such as "Stop"
+            mutations_array_raw = mutations_array_raw[mutations_array_raw %in% c("R", "S")]
         }        
-    }    
-    return(mutations_array)
+    }
+    
+    # return positions of point mutations and their mutation types ("raw")
+    if (returnRaw){
+      # number of non-N bases (in both seq and gl)
+      nonN.regions <- unique(sapply(regionDefinition@labels, function(x) { substr(x, 1, nchar(x)-2) }))
+      nonN.boundaries <- regionDefinition@boundaries[c_inputSeq%in%NUCLEOTIDES[1:4] &  
+                                                       c_germlineSeq%in%NUCLEOTIDES[1:4]]
+      nonN.denoms <- sapply(nonN.regions, function(x) { sum(nonN.boundaries==x) })
+      
+      if (length(mutations_array_raw) == sum(is.na(mutations_array_raw))) {
+        # if mutations_array_raw is NA, or 
+        # if mutations_array_raw is empty due to all mutations being "Stop" and hence removed
+        # avoid is.na(mutations_array_raw) to avoid warning in case mutations_array_raw is a vector
+        return(list(pos=mutations_array_raw, nonN=nonN.denoms))
+      } else {
+        # df indicating position, mutation type (R or S), and region of each mutation
+        rawDf = data.frame(as.numeric(names(mutations_array_raw)))
+        rawDf = cbind(rawDf,
+                      as.character(mutations_array_raw), # as.character to remove names of the vector
+                      as.character(regionDefinition@boundaries[as.numeric(names(mutations_array_raw))]),
+                      stringsAsFactors=F)
+        colnames(rawDf) = c("position", "type", "region")
+      return(list(pos=rawDf, nonN=nonN.denoms))
+      }
+    } else {
+    # return counts of each mutation type  
+      return(mutations_array)
+    }
 }
 
 
@@ -604,7 +756,7 @@ calcObservedMutations <- function(inputSeq, germlineSeq, frequency=FALSE,
 # 
 # @details
 # Note, only the part of sequences defined in \code{regionDefinition} are analyzed.
-# For example, if the default \link{IMGT_V_NO_CDR3} definition is used, then mutations
+# For example, if the default \link{IMGT_V} definition is used, then mutations
 # in positions beyond 312 will be ignored.
 # 
 # @seealso  
@@ -621,9 +773,14 @@ calcObservedMutations <- function(inputSeq, germlineSeq, frequency=FALSE,
 # 
 # # Random mutations
 # binMutationsByRegion(mutations_array, regionDefinition=NULL)
-# binMutationsByRegion(mutations_array, regionDefinition=IMGT_V_NO_CDR3)
+# binMutationsByRegion(mutations_array, regionDefinition=IMGT_V)
 binMutationsByRegion <- function(mutationsArray, 
                                  regionDefinition=NULL) {
+    # Check region definition
+    if (!is.null(regionDefinition) & !is(regionDefinition, "RegionDefinition")) {
+        stop(deparse(substitute(regionDefinition)), " is not a valid RegionDefinition object")
+    }
+
     # Create full sequence RegionDefinition object 
     # The seqLength will be the largest index of a mutation
     if (is.null(regionDefinition)) {
@@ -645,6 +802,445 @@ binMutationsByRegion <- function(mutationsArray,
 }
 
 
+#### Sliding window approach ####
+#' Sliding window approach towards filtering a single sequence
+#'
+#' \code{slideWindowSeq} determines whether an input sequence contains equal to or more than 
+#' a given number of mutations in a given length of consecutive nucleotides (a "window") 
+#' when compared to a germline sequence.
+#' 
+#' @param    inputSeq            input sequence.
+#' @param    germlineSeq         germline sequence.
+#' @param    mutThresh           threshold on the number of mutations in \code{windowSize} 
+#'                               consecutive nucleotides. Must be between 1 and \code{windowSize} 
+#'                               inclusive. 
+#' @param    windowSize          length of consecutive nucleotides. Must be at least 2.
+#'                               
+#' @return  \code{TRUE} if there are equal to or more than \code{mutThresh} number of mutations
+#'          in any window of \code{windowSize} consecutive nucleotides (i.e. the sequence should
+#'          be filtered); \code{FALSE} if otherwise.
+#' 
+#' @seealso  \link{calcObservedMutations} is called by \code{slideWindowSeq} to identify observed 
+#'           mutations. See \link{slideWindowDb} for applying the sliding window approach on a 
+#'           \code{data.frame}. See \link{slideWindowTune} for parameter tuning for \code{mutThresh}
+#'           and \code{windowSize}.
+#' 
+#' @examples
+#' # Use an entry in the example data for input and germline sequence
+#' data(ExampleDb, package="alakazam")
+#' in_seq <- ExampleDb[100, "SEQUENCE_IMGT"]
+#' germ_seq <-  ExampleDb[100, "GERMLINE_IMGT_D_MASK"]
+#' 
+#' # Determine if in_seq has 6 or more mutations in 10 consecutive nucleotides
+#' slideWindowSeq(inputSeq=in_seq, germlineSeq=germ_seq, mutThresh=6, windowSize=10)
+#'                                 
+#' @export
+slideWindowSeq <- function(inputSeq, germlineSeq, mutThresh, windowSize){
+  # identify all R and S mutations in input sequence
+  inputMut <- calcObservedMutations(inputSeq=inputSeq, germlineSeq=germlineSeq, returnRaw=T)$pos
+  
+  # extract positions of mutations
+  # inputMut must either be NA (no observed mutation) or a df
+  # avoid is.na (in case inputMut is a data frame then will get multiple T/F values and hence warning)
+  if (!is.data.frame(inputMut)) {
+    inputMutPos = NA
+  } else {
+    inputMutPos = inputMut$position
+  }
+
+  # call helper
+  return(slideWindowSeqHelper(mutPos=inputMutPos, mutThresh=mutThresh, windowSize=windowSize))
+}
+
+
+# Helper for sliding window approach towards filtering sequences
+#
+# @param    mutPos              a numeric vector containing positions of point mutations as 
+#                               returned in the \code{position} column by 
+#                               \code{calcObserverdMutations()} with \code{returnRaw=TRUE}. 
+#                               Can be \code{NA}, in which case the returned value will be 
+#                               \code{FALSE}.
+# @param    mutThresh           threshold on the number of mutations in \code{windowSize} 
+#                               consecutive nucleotides. Must be between 1 and \code{windowSize} 
+#                               inclusive.
+# @param    windowSize          length of consecutive nucleotides. Must be at least 2.
+#
+# @return   \code{TRUE} if there are equal to or more than \code{mutThresh} number of mutations
+#           in any window of \code{windowSize} consecutive nucleotides; \code{FALSE} if otherwise.
+#
+slideWindowSeqHelper <- function(mutPos, mutThresh, windowSize){
+  # check preconditions
+  stopifnot(mutThresh >= 1 & mutThresh <= windowSize & windowSize>=2)
+  
+  if (length(mutPos) == 1 && is.na(mutPos)) {
+    # use && instead of & to short-circuit in case length(mutPos)!=1 (otherwise warning)
+    return(FALSE)
+  } else {
+    # general idea:
+    # only need to check windows containing mutations (as opposed to every possible window)
+    for (i in 1:length(mutPos)){
+      # get window limits
+      lower = mutPos[i]
+      upper = lower + windowSize - 1
+      # how many mutations fall within current window
+      windowCount = sum(mutPos>=lower & mutPos <= upper)
+      # return as soon as a window has >= mutThresh mutations
+      if (windowCount >= mutThresh) { return(TRUE) }
+    }
+    
+    return(FALSE)
+  }
+}
+
+
+#' Sliding window approach towards filtering sequences in a \code{data.frame}
+#'
+#' \code{slideWindowDb} determines whether each input sequence in a \code{data.frame} 
+#' contains equal to or more than a given number of mutations in a given length of 
+#' consecutive nucleotides (a "window") when compared to their respective germline 
+#' sequence.
+#' 
+#' @param    db                  \code{data.frame} containing sequence data.
+#' @param    sequenceColumn      name of the column containing IMGT-gapped sample sequences.
+#' @param    germlineColumn      name of the column containing IMGT-gapped germline sequences.
+#' @param    mutThresh           threshold on the number of mutations in \code{windowSize} 
+#'                               consecutive nucleotides. Must be between 1 and \code{windowSize} 
+#'                               inclusive. 
+#' @param    windowSize          length of consecutive nucleotides. Must be at least 2.
+#'                               
+#' @return   a logical vector. The length of the vector matches the number of input sequences in 
+#'           \code{db}. Each entry in the vector indicates whether the corresponding input sequence
+#'           should be filtered based on the given parameters.
+#' 
+#' @seealso  See \link{slideWindowSeq} for applying the sliding window approach on a single sequence. 
+#'           See \link{slideWindowTune} for parameter tuning for \code{mutThresh} and \code{windowSize}.
+#' 
+#' @examples
+#' # Use an entry in the example data for input and germline sequence
+#' data(ExampleDb, package="alakazam")
+#' 
+#' # Apply the sliding window approach on a subset of ExampleDb
+#' slideWindowDb(db = ExampleDb[1:10, ], mutThresh=6, windowSize=10)
+#' 
+#' @export
+slideWindowDb <- function(db, sequenceColumn="SEQUENCE_IMGT", 
+                          germlineColumn="GERMLINE_IMGT_D_MASK",
+                          mutThresh, windowSize){
+  db_filter <- sapply(1:nrow(db), function(i) { slideWindowSeq(inputSeq = db[i, sequenceColumn],
+                                                               germlineSeq = db[i, germlineColumn],
+                                                               mutThresh = mutThresh,
+                                                               windowSize = windowSize)})
+  return(db_filter)
+}
+
+
+#' Parameter tuning for sliding window approach
+#'
+#' Apply \link{slideWindowDb} over a search grid made of combinations of \code{mutThresh} and 
+#' \code{windowSize} to help with picking a pair of values for these parameters. Parameter 
+#' tuning can be performed by choosing a combination that gives a reasonable number of 
+#' filtered/remaining sequences. 
+#' 
+#' @param    db                  \code{data.frame} containing sequence data.
+#' @param    sequenceColumn      name of the column containing IMGT-gapped sample sequences.
+#' @param    germlineColumn      name of the column containing IMGT-gapped germline sequences.
+#' @param    dbMutList           if supplied, this should be a list of \code{data.frame}s returned 
+#'                               as \code{$pos} of the nested list produced by 
+#'                               \link{calcObservedMutations} with \code{returnRaw=TRUE}; otherwise, 
+#'                               \link{calcObservedMutations} is called on columns \code{sequenceColumn}
+#'                               and \code{germlineColumn} of \code{db}. Default is \code{NULL}. 
+#' @param    mutThreshRange      range of threshold on the number of mutations in \code{windowSize} 
+#'                               consecutive nucleotides to try. Must be between 1 and 
+#'                               maximum \code{windowSizeRange} inclusive. 
+#' @param    windowSizeRange     range of length of consecutive nucleotides to try. The lower end
+#'                               must be at least 2.
+#' @param    verbose             whether to print out messages indicating current progress. Default
+#'                               is \code{TRUE}.              
+#'                               
+#' @return   a list of logical matrices. Each matrix corresponds to a \code{windowSize} in 
+#'           \code{windowSizeRange}. Each column in a matrix corresponds to a \code{mutThresh} in
+#'           \code{mutThreshRange}.
+#' 
+#' @details  If, in a given combination of \code{mutThresh} and \code{windowSize}, \code{mutThresh} 
+#'           is greater than \code{windowSize}, \code{NA}s will be returned for that particular
+#'           combination. A message indicating that the combination has been "skipped" will be 
+#'           printed if \code{verbose=TRUE}.
+#'           
+#'           If \link{calcObservedMutations} was previously run on \code{db} and saved, supplying
+#'           \code{$pos} from the saved result as \code{dbMutList} could save time by skipping a
+#'           second call of \link{calcObservedMutations}. This could be helpful especially when 
+#'           \code{db} is large.
+#' 
+#' @seealso  \link{slideWindowDb} is called on \code{db} for tuning. See \link{slideWindowTunePlot} 
+#'           for visualization. See \link{calcObservedMutations} for generating \code{dbMutList}.
+#' 
+#' @examples
+#' # Load and subset example data
+#' data(ExampleDb, package="alakazam")
+#' db <- ExampleDb[1:5, ]
+#' 
+#' # Try out thresholds of 2-4 mutations in window sizes of 7-9 nucleotides. 
+#' # In this case, all combinations are legal.
+#' slideWindowTune(db, mutThreshRange=2:4, windowSizeRange=7:9)
+#' 
+#' # Illegal combinations are skipped, returning NAs.
+#' slideWindowTune(db, mutThreshRange=2:4, windowSizeRange=2:4, 
+#'                 verbose=FALSE)
+#'                                                             
+#' # Run calcObservedMutations separately
+#' exDbMutList <- sapply(1:5, function(i) {
+#'     calcObservedMutations(inputSeq=db[i, "SEQUENCE_IMGT"],
+#'                           germlineSeq=db[i, "GERMLINE_IMGT_D_MASK"],
+#'                           returnRaw=TRUE)$pos })
+#' slideWindowTune(db, dbMutList=exDbMutList, 
+#'                 mutThreshRange=2:4, windowSizeRange=2:4)
+#'                                                            
+#' @export
+slideWindowTune <- function(db, sequenceColumn="SEQUENCE_IMGT", 
+                            germlineColumn="GERMLINE_IMGT_D_MASK",
+                            dbMutList=NULL,
+                            mutThreshRange, windowSizeRange, verbose=TRUE){
+  # check preconditions
+  stopifnot(!is.null(db))
+  stopifnot(min(mutThreshRange) >= 1 & 
+             max(mutThreshRange) <= max(windowSizeRange) &
+             min(windowSizeRange) >= 2)
+  
+  
+  # get positions of R/S mutations for sequences in db
+  # do this here and then call slideWindowSeqHelper (so it's done only once)
+  # instead of calling slideWindowDb which does this every time it is called
+  if (is.null(dbMutList)) {
+    inputMutList = sapply(1:nrow(db), 
+                          function(i){
+                            calcObservedMutations(inputSeq=db[i, sequenceColumn],
+                                                  germlineSeq=db[i, germlineColumn],
+                                                  returnRaw=T)$pos})    
+  } else {
+    if (verbose) {cat("dbMutList supplied; skipped calling calcObservedMutations()\n")}
+    inputMutList = dbMutList
+  }
+  
+  inputMutPosList = lapply(inputMutList, 
+                           function(x){
+                             if (!is.data.frame(x)) {
+                               return(NA) 
+                             } else {
+                               return(x$position)
+                             }
+                           })
+    
+  # apply slideWindow on combinations of windowSize and mutThresh
+  for (size in windowSizeRange) {
+    if (verbose) {cat(paste0("now computing for windowSize = ", size, "\n"))}
+    
+    for (thresh in mutThreshRange) {
+      if (thresh <= size){
+        if (verbose) {cat(paste0(">>> mutThresh = ", thresh, "\n"))}
+        # apply slideWindow using current pair of parameters
+        cur.logical = unlist(lapply(inputMutPosList,
+                                    slideWindowSeqHelper,
+                                    mutThresh = thresh, windowSize = size))
+      } else {
+        if (verbose) {cat(paste0(">>> mutThresh = ", thresh, " > windowSize = ", 
+                                 size, " (skipped)\n"))}
+        # NA if skipped
+        cur.logical = rep(NA, nrow(db))
+      }
+      # store results for each thresh as a column in a logical matrix
+      if (thresh == mutThreshRange[1]) {
+        cur.mtx = matrix(data=cur.logical, nrow=length(cur.logical))
+      } else {
+        cur.mtx = cbind(cur.mtx, cur.logical)
+      }
+    }
+    colnames(cur.mtx) = as.character(mutThreshRange)
+    
+    # store results for each size (and threshes under that size) as a logical matrix in a list
+    if (size == windowSizeRange[1]) {
+      cur.list = list(cur.mtx)
+    } else {
+      cur.list = c(cur.list, list(cur.mtx))
+    }
+  }
+  names(cur.list) = as.character(windowSizeRange)
+  
+  return(cur.list)
+}
+
+
+#' Visualize parameter tuning for sliding window approach
+#'
+#' Visualize results from \link{slideWindowTune}
+#' 
+#' @param    tuneList            a list of logical matrices returned by \link{slideWindowTune}.
+#' @param    plotFiltered        whether to plot the number of filtered sequences (as opposed to
+#'                               the number of remaining sequences). Default is \code{TRUE}.
+#' @param    percentage          whether to plot on the y-axis the percentage of filtered sequences
+#'                               (as opposed to the absolute number). Default is \code{FALSE}.                             
+#' @param    jitter.x            whether to jitter x-axis values. Default is \code{FALSE}.                               
+#' @param    jitter.x.amt        amount of jittering to be applied on x-axis values if 
+#'                               \code{jitter.x=TRUE}. Default is 0.1.
+#' @param    jitter.y            whether to jitter y-axis values. Default is \code{FALSE}.
+#' @param    jitter.y.amt        amount of jittering to be applied on y-axis values if 
+#'                               \code{jitter.y=TRUE}. Default is 0.1.                               
+#' @param    pchs                point types to pass on to \link{plot}.
+#' @param    ltys                line types to pass on to \link{plot}.
+#' @param    cols                colors to pass on to \link{plot}.                             
+#' @param    plotLegend          whether to plot legend. Default is \code{TRUE}.
+#' @param    legendPos           position of legend to pass on to \link{legend}. Can be either a
+#'                               numeric vector specifying x-y coordinates, or one of 
+#'                               \code{"topright"}, \code{"center"}, etc. Default is \code{"topright"}.
+#' @param    legendHoriz         whether to make legend horizontal. Default is \code{FALSE}.
+#' @param    legendCex           numeric values by which legend should be magnified relative to 1.
+#' @param    title               plot main title. Default is NULL (no title)
+#' 
+#' @details  For each \code{windowSize}, the numbers of sequences filtered or remaining after applying
+#'           the sliding window approach are plotted on the y-axis against thresholds on the number of
+#'           mutations in a window on the x-axis.
+#'           
+#'           When plotting, a user-defined \code{amount} of jittering can be applied on values plotted
+#'           on either axis or both axes via adjusting \code{jitter.x}, \code{jitter.y}, 
+#'           \code{jitter.x.amt} and \code{jitter.y.amt}. This may be help with visually distinguishing
+#'           lines for different window sizes in case they are very close or identical to each other. 
+#'           If plotting percentages (\code{percentage=TRUE}) and using jittering on the y-axis values 
+#'           (\code{jitter.y=TRUE}), it is strongly recommended that \code{jitter.y.amt} be set very
+#'           small (e.g. 0.01). 
+#'           
+#'           \code{NA} for a combination of \code{mutThresh} and \code{windowSize} where 
+#'           \code{mutThresh} is greater than \code{windowSize} will not be plotted. 
+#' 
+#' @seealso  See \link{slideWindowTune} for how to get \code{tuneList}. See \link{jitter} for 
+#'           use of \code{amount} of jittering.
+#' 
+#' @examples
+#' # Use an entry in the example data for input and germline sequence
+#' data(ExampleDb, package="alakazam")
+#' 
+#' # Try out thresholds of 2-4 mutations in window sizes of 3-5 nucleotides 
+#' # on a subset of ExampleDb
+#' tuneList = slideWindowTune(db = ExampleDb[1:10, ], 
+#'                            mutThreshRange = 2:4, windowSizeRange = 3:5,
+#'                            verbose = FALSE)
+#'
+#' # Visualize
+#' # Plot numbers of sequences filtered without jittering y-axis values
+#' slideWindowTunePlot(tuneList, pchs=1:3, ltys=1:3, cols=1:3, 
+#'                     plotFiltered=TRUE, jitter.y=FALSE)
+#'                     
+#' # Notice that some of the lines overlap
+#' # Jittering could help
+#' slideWindowTunePlot(tuneList, pchs=1:3, ltys=1:3, cols=1:3,
+#'                     plotFiltered=TRUE, jitter.y=TRUE)
+#'                     
+#' # Plot numbers of sequences remaining instead of filtered
+#' slideWindowTunePlot(tuneList, pchs=1:3, ltys=1:3, cols=1:3, 
+#'                     plotFiltered=FALSE, jitter.y=TRUE, 
+#'                     legendPos="bottomright")
+#'                     
+#' # Plot percentages of sequences filtered with a tiny amount of jittering
+#' slideWindowTunePlot(tuneList, pchs=1:3, ltys=1:3, cols=1:3,
+#'                     plotFiltered=TRUE, percentage=TRUE, 
+#'                     jitter.y=TRUE, jitter.y.amt=0.01)
+#'                                                             
+#' @export
+slideWindowTunePlot = function(tuneList, plotFiltered = TRUE, percentage = FALSE,
+                               jitter.x = FALSE, jitter.x.amt = 0.1,
+                               jitter.y = FALSE, jitter.y.amt = 0.1,
+                               pchs = 1, ltys = 2, cols = 1,
+                               plotLegend = TRUE, legendPos = "topright", 
+                               legendHoriz = FALSE, legendCex = 1, title=NULL){
+  
+  # invert (!) tuneList if plotting retained sequences
+  ylab.part.2 = "filtered"
+  if (!plotFiltered) {
+    tuneList = lapply(tuneList, function(x){!x})
+    ylab.part.2 = "remaining"}
+  
+  # if number of pchs/ltys/cols provided does not match number of lines expected
+  # expand into vector with repeating values (otherwise legend would break)
+  if (length(pchs)!=length(tuneList)) {pchs = rep(pchs, length.out=length(tuneList))}
+  if (length(ltys)!=length(tuneList)) {ltys = rep(ltys, length.out=length(tuneList))}
+  if (length(cols)!=length(tuneList)) {cols = rep(cols, length.out=length(tuneList))}
+  
+  # tabulate tuneList (and if applicable convert to percentage)
+  plotList = lapply(tuneList, colSums)
+  if (percentage) {plotList = lapply(plotList, function(x){x/nrow(tuneList[[1]])})}
+  
+  # get x-axis values (i.e. mutThreshRange; colnames of matrix in tuneList with most columns)
+  #threshes = as.numeric(colnames(tuneList[[which.max(lapply(lapply(tuneList, colnames), length))]]))
+  threshes = as.numeric(colnames(tuneList[[1]]))
+  
+  # plot for first window size
+  x1 = threshes
+  if (jitter.x) {x1 = jitter(x1, amount=jitter.x.amt)}
+  y1 = plotList[[1]]
+  if (jitter.y) {y1 = jitter(y1, amount=jitter.y.amt)}
+  
+  if (percentage) {
+    ylab.part.1 = "Percentage of sequences"
+    # ylim
+    ylim.padding = abs(diff(range(plotList, na.rm=T)))*0.01
+    ylims = c(max(0, min(range(plotList, na.rm=T)) - ylim.padding), 
+              min(1, max(range(plotList, na.rm=T)) + ylim.padding) )
+
+  } else {
+    ylab.part.1 = "Number of sequences"
+    # ylim: non-negative lower limit; upper limit slight above max tabulated sum
+    ylims = c( max(0, min(range(plotList, na.rm=T)) - max(1, jitter.y.amt) ), 
+               max(range(plotList, na.rm=T)) + max(1, jitter.y.amt) )
+  }
+  
+  plot(x1, # mutThreshRange on x-axis
+       y1, # tabulated sums in plotList on y-axis
+       ylim = ylims,
+       # xlim: +/- jitter.x.amt*2 to accommodate for amount of jittering on x-axis
+       xlim = c(min(threshes)-jitter.x.amt*2, max(threshes+jitter.x.amt*2)),
+       xaxt="n", xlab="Threshold on number of mutations",
+       ylab=paste(ylab.part.1, ylab.part.2),
+       cex.lab=1.5, cex.axis=1.5, type="b", lwd=1.5,
+       pch=pchs[1], lty=ltys[1], col=cols[1])
+  axis(side=1, at=threshes, cex.axis=1.5)
+  
+  # add title
+  if (!is.null(title)) {
+      title(main=title)
+  }
+  
+  # plot for the rest of the window sizes
+  for (i in 1:length(plotList)){
+    if (i>=2) {
+      
+      xi = threshes
+      if (jitter.x) {xi = jitter(xi, amount=jitter.x.amt)}
+      yi = plotList[[i]]
+      if (jitter.y) {yi = jitter(yi, amount=jitter.y.amt)}
+      
+      points(xi, yi, type='b', lwd=1.5,
+             pch=pchs[i], lty=ltys[i], col=cols[i])
+    }
+  }
+  
+  # add legend
+  if (plotLegend) {
+    # if legendPos specified as xy coordinates
+    if (is.numeric(legendPos) & length(legendPos)==2) {
+      legend(x=legendPos[1], y=legendPos[2], 
+             legend = c("Window Size", names(tuneList)),
+             horiz = legendHoriz, cex = legendCex,
+             pch=c(NA, pchs), lty=c(NA, ltys), col=c(NA, cols))
+    } else {
+    # if legendPos specified as "center", "topright", etc.  
+      legend(legendPos, 
+             legend = c("Window Size", names(tuneList)),
+             horiz = legendHoriz, cex = legendCex,
+             pch=c(NA, pchs), lty=c(NA, ltys), col=c(NA, cols))
+    }
+  }
+  
+}
+
+
 #### Expected frequencies calculating functions ####
 
 #' Calculate expected mutation frequencies
@@ -657,7 +1253,7 @@ binMutationsByRegion <- function(mutationsArray,
 #'                               sequences.
 #' @param    germlineColumn      \code{character} name of the column containing 
 #'                               the germline or reference sequence.
-#' @param    targetingModel      \link{TargetingModel} object. Default is \link{HS5FModel}.
+#' @param    targetingModel      \link{TargetingModel} object. Default is \link{HH_S5F}.
 #' @param    regionDefinition    \link{RegionDefinition} object defining the regions
 #'                               and boundaries of the Ig sequences.
 #' @param    mutationDefinition  \link{MutationDefinition} object defining replacement
@@ -673,7 +1269,7 @@ binMutationsByRegion <- function(mutationsArray,
 #'           for each region defined in \code{regionDefinition}.
 #'          
 #'           The columns names are dynamically created based on the regions in  
-#'           \code{regionDefinition}. For example, when using the \link{IMGT_V_NO_CDR3}
+#'           \code{regionDefinition}. For example, when using the \link{IMGT_V}
 #'           definition, which defines positions for CDR and FWR, the following columns are
 #'           added:  
 #'           \itemize{
@@ -689,7 +1285,7 @@ binMutationsByRegion <- function(mutationsArray,
 #'           
 #' @details
 #' Only the part of the sequences defined in \code{regionDefinition} are analyzed. 
-#' For example, when using the \link{IMGT_V_NO_CDR3} definition, mutations in
+#' For example, when using the \link{IMGT_V} definition, mutations in
 #' positions beyond 312 will be ignored.
 #' 
 #' @seealso  
@@ -707,14 +1303,14 @@ binMutationsByRegion <- function(mutationsArray,
 #' db_exp <- expectedMutations(db,
 #'                             sequenceColumn="SEQUENCE_IMGT",
 #'                             germlineColumn="GERMLINE_IMGT_D_MASK",
-#'                             regionDefinition=IMGT_V_NO_CDR3,
+#'                             regionDefinition=IMGT_V,
 #'                             nproc=1)
 #' 
 #' # Calculate hydropathy expected mutations over V region
 #' db_exp <- expectedMutations(db,
 #'                            sequenceColumn="SEQUENCE_IMGT",
 #'                            germlineColumn="GERMLINE_IMGT_D_MASK",
-#'                            regionDefinition=IMGT_V_NO_CDR3,
+#'                            regionDefinition=IMGT_V,
 #'                            mutationDefinition=HYDROPATHY_MUTATIONS,
 #'                            nproc=1)
 #'
@@ -722,7 +1318,7 @@ binMutationsByRegion <- function(mutationsArray,
 expectedMutations <- function(db, 
                               sequenceColumn="SEQUENCE_IMGT",
                               germlineColumn="GERMLINE_IMGT_D_MASK",
-                              targetingModel=HS5FModel,
+                              targetingModel=HH_S5F,
                               regionDefinition=NULL,
                               mutationDefinition=NULL,
                               nproc=1) {
@@ -732,6 +1328,21 @@ expectedMutations <- function(db,
     # Check for valid columns
     check <- checkColumns(db, c(sequenceColumn, germlineColumn))
     if (check != TRUE) { stop(check) }
+    
+    # Check region definition
+    if (!is.null(regionDefinition) & !is(regionDefinition, "RegionDefinition")) {
+        stop(deparse(substitute(regionDefinition)), " is not a valid RegionDefinition object")
+    }
+    
+    # Check mutation definition
+    if (!is.null(mutationDefinition) & !is(mutationDefinition, "MutationDefinition")) {
+        stop(deparse(substitute(mutationDefinition)), " is not a valid MutationDefinition object")
+    }
+    
+    # Check targeting model
+    if (!is(targetingModel, "TargetingModel")) {
+        stop(deparse(substitute(targetingModel)), " is not a valid TargetingModel object")
+    }
     
     # Convert sequence columns to uppercase
     db <- toupperColumns(db, c(sequenceColumn, germlineColumn))
@@ -753,7 +1364,7 @@ expectedMutations <- function(db,
         parallel::clusterExport(cluster, list('db', 'sequenceColumn', 'germlineColumn', 
                                               'regionDefinition','targetingModel',
                                               'calcExpectedMutations','calculateTargeting',
-                                              's2c','c2s','NUCLEOTIDES','HS5FModel',
+                                              's2c','c2s','NUCLEOTIDES','HH_S5F',
                                               'calculateMutationalPaths','CODON_TABLE'),
                                 envir=environment() )
         registerDoParallel(cluster)
@@ -816,7 +1427,7 @@ expectedMutations <- function(db,
 #'                               same length as \code{inputSeq} and positions in 
 #'                               \code{germlineSeq} corresponding to positions with Ns in 
 #'                               \code{inputSeq} will also be assigned an N. 
-#' @param    targetingModel      \link{TargetingModel} object. Default is \link{HS5FModel}.
+#' @param    targetingModel      \link{TargetingModel} object. Default is \link{HH_S5F}.
 #' @param    regionDefinition    \link{RegionDefinition} object defining the regions
 #'                               and boundaries of the Ig sequences.
 #' @param    mutationDefinition  \link{MutationDefinition} object defining replacement
@@ -826,7 +1437,7 @@ expectedMutations <- function(db,
 #'                               
 #' @return   A \code{numeric} vector of the expected frequencies of mutations in the 
 #'           regions in the \code{regionDefinition}. For example, when using the default 
-#'           \link{IMGT_V_NO_CDR3} definition, which defines positions for CDR and 
+#'           \link{IMGT_V} definition, which defines positions for CDR and 
 #'           FWR, the following columns are calculated:
 #'           \itemize{
 #'              \item  \code{EXPECTED_CDR_R}:  number of replacement mutations in CDR1 and 
@@ -844,7 +1455,7 @@ expectedMutations <- function(db,
 #' given sequence and its germline. 
 #' 
 #' Note, only the part of the sequences defined in \code{regionDefinition} are analyzed. 
-#' For example, when using the default \link{IMGT_V_NO_CDR3} definition, mutations in
+#' For example, when using the default \link{IMGT_V} definition, mutations in
 #' positions beyond 312 will be ignored.
 #' 
 #' @seealso  \link{expectedMutations} calls this function.
@@ -863,18 +1474,33 @@ expectedMutations <- function(db,
 #' calcExpectedMutations(in_seq, germ_seq)
 #' 
 #' # Identify only mutations the V segment minus CDR3
-#' calcExpectedMutations(in_seq, germ_seq, regionDefinition=IMGT_V_NO_CDR3)
+#' calcExpectedMutations(in_seq, germ_seq, regionDefinition=IMGT_V)
 #' 
 #' # Define mutations based on hydropathy
-#' calcExpectedMutations(in_seq, germ_seq, regionDefinition=IMGT_V_NO_CDR3,
+#' calcExpectedMutations(in_seq, germ_seq, regionDefinition=IMGT_V,
 #'                       mutationDefinition=HYDROPATHY_MUTATIONS)
 #' 
 #' @export
 calcExpectedMutations <- function(germlineSeq,
                                   inputSeq=NULL,
-                                  targetingModel=HS5FModel,
+                                  targetingModel=HH_S5F,
                                   regionDefinition=NULL,
                                   mutationDefinition=NULL) {
+    # Check region definition
+    if (!is.null(regionDefinition) & !is(regionDefinition, "RegionDefinition")) {
+        stop(deparse(substitute(regionDefinition)), " is not a valid RegionDefinition object")
+    }
+    
+    # Check mutation definition
+    if (!is.null(mutationDefinition) & !is(mutationDefinition, "MutationDefinition")) {
+        stop(deparse(substitute(mutationDefinition)), " is not a valid MutationDefinition object")
+    }
+    
+    # Check targeting model
+    if (!is(targetingModel, "TargetingModel")) {
+        stop(deparse(substitute(targetingModel)), " is not a valid TargetingModel object")
+    }
+    
     # Assign codon table
     codonTable <- if (is.null(mutationDefinition)) { CODON_TABLE } else { mutationDefinition@codonTable }
     
@@ -919,9 +1545,18 @@ calcExpectedMutations <- function(germlineSeq,
 
 calculateTargeting <- function(germlineSeq,
                                inputSeq=NULL,
-                               targetingModel=HS5FModel,
+                               targetingModel=HH_S5F,
                                regionDefinition=NULL) {
+    # Check region definition
+    if (!is.null(regionDefinition) & !is(regionDefinition, "RegionDefinition")) {
+        stop(deparse(substitute(regionDefinition)), " is not a valid RegionDefinition object")
+    }
     
+    # Check targeting model
+    if (!is(targetingModel, "TargetingModel")) {
+        stop(deparse(substitute(targetingModel)), " is not a valid TargetingModel object")
+    }
+
     # If an inputSequence is passed then process the germlineSequence
     # to be the same legth, mask germlineSequence with Ns where inputSequence is also N
     # If not needed then  you may skip this step by passing in inputSequence=NULL 
@@ -1006,6 +1641,11 @@ calculateMutationalPaths <- function(germlineSeq,
                                      inputSeq=NULL,
                                      regionDefinition=NULL,
                                      codonTable=NULL) {    
+    # Check region definition
+    if (!is.null(regionDefinition) & !is(regionDefinition, "RegionDefinition")) {
+        stop(deparse(substitute(regionDefinition)), " is not a valid RegionDefinition object")
+    }
+
     # Set codon table if required
     if (is.null(codonTable)) { codonTable <- CODON_TABLE }
     

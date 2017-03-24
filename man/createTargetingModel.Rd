@@ -59,12 +59,14 @@ A \link{TargetingModel} object.
 \code{createTargetingModel} creates a 5-mer \code{TargetingModel}.
 }
 \examples{
+\donttest{
 # Subset example data to one isotype and sample as a demo
 data(ExampleDb, package="alakazam")
 db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
 
 # Create model using only silent mutations and ignore multiple mutations
 model <- createTargetingModel(db, model="S", multipleMutation="ignore")
+}
 
 }
 \references{
@@ -81,4 +83,3 @@ See \link{TargetingModel} for the return object.
           \link{createMutabilityMatrix}, \link{extendMutabilityMatrix} and 
           \link{createTargetingMatrix} for component steps in building a model.
 }
-

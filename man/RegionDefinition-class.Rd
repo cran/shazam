@@ -2,8 +2,8 @@
 % Please edit documentation in R/RegionDefinitions.R
 \docType{class}
 \name{RegionDefinition-class}
-\alias{RegionDefinition}
 \alias{RegionDefinition-class}
+\alias{RegionDefinition}
 \title{S4 class defining a region definition}
 \description{
 \code{RegionDefinition} defines a common data structure for defining the region
@@ -29,7 +29,7 @@ e.g., \code{c("CDR_R", "CDR_S", "FWR_R", "FWR_S")}.}
 
 \item{\code{citation}}{publication source.}
 }}
+
 \seealso{
 See \link{IMGT_SCHEMES} for a set of predefined \code{RegionDefinition} objects.
 }
-

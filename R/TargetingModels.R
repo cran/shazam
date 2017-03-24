@@ -5,62 +5,93 @@ NULL
 
 #### Data ####
 
-#' Mouse single nucleotide distance matrix.
-#'
-#' Single nucleotide distance matrix of somatic hypermutation targeting based on 
-#' Mus musculus Ig sequence data.
-#'
-#' @format   A symmetric matrix of nucleotide substitution distance scores with 
-#'           row names and column names definition the specific subsitution.
-#' 
-#' @references
-#' \enumerate{
-#'   \item  Smith DS, et al. Di- and trinucleotide target preferences of somatic 
-#'            mutagenesis in normal and autoreactive B cells. 
-#'            J Immunol. 1996 156:2642-52. 
-#' }
-#'
-#' @seealso  See \link{HS1FDistance} for the human 1-mer distance matrix.
-"M1NDistance"
-
-
-#' Human single nucleotide distance matrix.
-#'
-#' Single nucleotide distance matrix of somatic hypermutation targeting based on 
-#' human Ig sequence data.
-#'
-#' @format   A symmetric matrix of nucleotide substitution distance scores with 
-#'           row names and column names definition the specific subsitution.
-#' 
-#' @references
-#' \enumerate{
-#'   \item  Yaari G, et al. Models of somatic hypermutation targeting and substitution based 
-#'            on synonymous mutations from high-throughput immunoglobulin sequencing data. 
-#'            Front Immunol. 2013 4(November):358.
-#' }
-#'
-#' @seealso  See \link{HS5FModel} for the 5-mer model from same publication.
-"HS1FDistance"
-
-
-#' Uniform 5-mer targeting model.
+#' Uniform 5-mer null targeting model.
 #'
 #' A null 5-mer model of somatic hypermutation targeting where all substitution, mutability
 #' and targeting rates are uniformly distributed.
 #'
-#' @format \link{TargetingModel} object.
+#' @format   A \link{TargetingModel} object.
 #' 
-#' @seealso  See \link{HS5FModel} for the human 5-mer model and \link{MRS5NFModel} 
-#'           for the mouse 5-mer model.
-"U5NModel"
+#' @seealso  See \link{HH_S5F} and \link{HKL_S5F} for the human 5-mer targeting models; and 
+#'           \link{MK_RS5NF} for the mouse 5-mer targeting model.
+"U5N"
 
 
-#' Human 5-mer targeting model.
+#' Human heavy chain, silent, 1-mer, functional substitution model.
+#'
+#' 1-mer substitution model of somatic hypermutation based on analysis of silent mutations
+#' in functional heavy chain Ig sequences from Homo sapiens.
+#'
+#' @format   A 4x4 matrix of nucleotide substitution rates. The rates are normalized,
+#'           therefore each row sums up to 1.
+#' 
+#' @references
+#' \enumerate{
+#'   \item  Yaari G, et al. Models of somatic hypermutation targeting and substitution based 
+#'            on synonymous mutations from high-throughput immunoglobulin sequencing data. 
+#'            Front Immunol. 2013 4(November):358.
+#' }
+#' 
+#' @seealso  See \link{HKL_S1F} for the human light chain 1-mer substitution model and 
+#'           \link{MK_RS1NF} for the mouse light chain 1-mer substitution model.
+#'  
+#' @note     \code{HH_S1F} replaces \code{HS1FDistance} in versions of SHazaM prior to 0.1.5.
+"HH_S1F"
+
+
+#' Human kappa and lambda chain, silent, 1-mer, functional substitution model.
+#'
+#' 1-mer substitution model of somatic hypermutation based on analysis of silent mutations
+#' in functional kappa and lambda light chain Ig sequences from Homo sapiens.
+#' 
+#' @format   A 4x4 matrix of nucleotide substitution rates. The rates are normalized,
+#'           therefore each row sums up to 1. 
+#' 
+#' @references
+#' \enumerate{
+#'   \item  Cui A, Di Niro R, Vander Heiden J, Briggs A, Adams K, Gilbert T, O'Connor K,
+#'   Vigneault F, Shlomchik M and Kleinstein S (2016). A Model of Somatic Hypermutation 
+#'   Targeting in Mice Based on High-Throughput Ig Sequencing Data. The Journal of 
+#'   Immunology, 197(9), 3566-3574.
+#'  }
+#' 
+#' @seealso  See \link{HH_S1F} for the human heavy chain 1-mer substitution model and 
+#'           \link{MK_RS1NF} for the mouse light chain 1-mer substitution model.
+#'           
+#' @note     Reported in Table III in Cui et al, 2016.
+"HKL_S1F"
+
+
+#' Mouse kappa chain, replacement and silent, 1-mer, non-functional substitution model.
+#'
+#' 1-mer substitution model of somatic hypermutation based on analysis of replacement and
+#' silent mutations in non-functional kappa light chain Ig sequences from NP-immunized Mus
+#' musculus.
+#'           
+#' @format   A 4x4 matrix of nucleotide substitution rates. The rates are normalized,
+#'           therefore each row sums up to 1. 
+#'           
+#' @references
+#' \enumerate{
+#'   \item  Cui A, Di Niro R, Vander Heiden J, Briggs A, Adams K, Gilbert T, O'Connor K,
+#'   Vigneault F, Shlomchik M and Kleinstein S (2016). A Model of Somatic Hypermutation 
+#'   Targeting in Mice Based on High-Throughput Ig Sequencing Data. The Journal of 
+#'   Immunology, 197(9), 3566-3574.
+#'  }
+#' 
+#' @seealso  See \link{HH_S1F} for the human heavy chain 1-mer substitution model and 
+#'           \link{HKL_S1F} for the human light chain 1-mer substitution model.
+#'
+#' @note     \code{MK_RS1NF} replaces \code{M1NDistance} from versions of SHazaM prior to 0.1.5.
+"MK_RS1NF"
+
+
+#' Human heavy chain, silent, 5-mer, functional targeting model.
 #'
 #' 5-mer model of somatic hypermutation targeting based on analysis of silent mutations
-#' in functional Ig sequences from Homo sapiens.
+#' in functional heavy chain Ig sequences from Homo sapiens.
 #'
-#' @format \link{TargetingModel} object.
+#' @format   A \link{TargetingModel} object.
 #' 
 #' @references
 #' \enumerate{
@@ -69,29 +100,56 @@ NULL
 #'            Front Immunol. 2013 4(November):358.
 #'  }
 #'  
-#' @seealso  See \link{HS1FDistance} for the 1-mer distance matrix from the same 
-#'           publication, \link{MRS5NFModel} for the mouse 5-mer model, and 
-#'           \link{U5NModel} for the uniform 5-mer model.
-"HS5FModel"
+#' @seealso  See \link{HH_S1F} for the 1-mer substitution matrix from the same 
+#'           publication; \link{HKL_S5F} for the human light chain 5-mer targeting model; 
+#'           \link{MK_RS5NF} for the mouse 5-mer targeting model; and \link{U5N} for the 
+#'           uniform 5-mer null targeting model.
+"HH_S5F"
 
 
-#' Mouse 5-mer targeting model.
+#' Human kappa and lambda light chain, silent, 5-mer, functional targeting model.
+#'
+#' 5-mer model of somatic hypermutation targeting based on analysis of silent mutations
+#' in functional kappa and lambda light chain Ig sequences from Homo sapiens.
+#'
+#' @format A \link{TargetingModel} object.
+#' 
+#' @references
+#' \enumerate{
+#'   \item  Cui A, Di Niro R, Vander Heiden J, Briggs A, Adams K, Gilbert T, O'Connor K,
+#'   Vigneault F, Shlomchik M and Kleinstein S (2016). A Model of Somatic Hypermutation 
+#'   Targeting in Mice Based on High-Throughput Ig Sequencing Data. The Journal of 
+#'   Immunology, 197(9), 3566-3574.
+#'  }
+#'  
+#' @seealso  See \link{HH_S5F} for the human heavy chain 5-mer targeting model; 
+#'           \link{MK_RS5NF} for the mouse kappa light chain 5-mer targeting model; 
+#'           and \link{U5N} for the uniform 5-mer null targeting model.
+"HKL_S5F"
+
+
+#' Mouse kappa light chain, replacement and silent, 5-mer, non-functional targeting model.
 #'
 #' 5-mer model of somatic hypermutation targeting based on analysis of replacement and
-#' silent mutations in non-functional IgK from NP-immunized Mus musculus.
+#' silent mutations in non-functional kappa light chain Ig sequences from NP-immunized 
+#' Mus musculus.
 #'
 #' @format \link{TargetingModel} object.
 #' 
 #' @references
 #' \enumerate{
-#'   \item  Cui A, et al. A model of somatic hypermutation targeting in mice based on 
-#'          high-throughput immunoglobulin sequencing data. Under review.
+#'   \item  Cui A, Di Niro R, Vander Heiden J, Briggs A, Adams K, Gilbert T, O'Connor K,
+#'   Vigneault F, Shlomchik M and Kleinstein S (2016). A Model of Somatic Hypermutation 
+#'   Targeting in Mice Based on High-Throughput Ig Sequencing Data. The Journal of 
+#'   Immunology, 197(9), 3566-3574.
 #'  }
 #'  
-#' @seealso  See \link{HS5FModel} for human 5-mer targeting model, \link{U5NModel}
-#'           for the uniform 5-mer model, and \link{M1NDistance} for the mouse 
-#'           1-mer distance matrix.
-"MRS5NFModel"
+#' @seealso  See \link{MK_RS1NF} for the 1-mer substitution matrix from the same
+#'           publication; \link{HH_S5F} for the human heavy chain silent 5-mer 
+#'           functional targeting model; \link{HKL_S5F} for the human light chain 
+#'           silent 5-mer functional targeting model; and \link{U5N} for the 
+#'           uniform 5-mer null targeting model.
+"MK_RS5NF"
 
 
 #### Classes ####
@@ -114,7 +172,10 @@ NULL
 #'                         complete 5-mer of the unmutated nucleotide sequence.
 #' @slot     mutability    Normalized rates of a given 5-mer being mutated. The 
 #'                         mutability model is stored as a numeric vector of length 3125 
-#'                         with mutability rates for each 5-mer.
+#'                         with mutability rates for each 5-mer. Note that "normalized" 
+#'                         means that the mutability rates for the 1024 5-mers that 
+#'                         contain no "N" at any position sums up to 1 (as opposed to 
+#'                         the entire vector summing up to 1).
 #' @slot     targeting     Rate matrix of a given mutation ocurring, defined as 
 #'                         \eqn{mutability * substitution}. The targeting model 
 #'                         is stored as a 5x3125 matrix. Rows define
@@ -179,11 +240,36 @@ setClass("TargetingModel",
 #' @param    minNumMutations   minimum number of mutations required to compute the 5-mer 
 #'                             substitution rates. If the number of mutations for a 5-mer
 #'                             is below this threshold, its substitution rates will be 
-#'                             estimated from neighboring 5-mers. Default is 50.                            
+#'                             estimated from neighboring 5-mers. Default is 50. 
+#'                             Not required if \code{numMutationsOnly=TRUE}. 
+#' @param    numMutationsOnly  when \code{TRUE}, return counting information on the number
+#'                             of mutations for each 5-mer, instead of building a substitution
+#'                             matrix. This option can be used for parameter tuning for 
+#'                             \code{minNumMutations} during preliminary analysis. 
+#'                             Default is \code{FALSE}. Only applies when \code{returnModel} 
+#'                             is set to \code{"5mer"}. The \code{data.frame} returned when
+#'                             this argument is \code{TRUE} can serve as the input for
+#'                             \link{minNumMutationsTune}.                                                       
 #' 
-#' @return   A 4x1024 matrix of column normalized substitution rates for each 5-mer motif with 
-#'           row names defining the center nucleotide, one of \code{c("A", "C", "G", "T")}, 
-#'           and column names defining the 5-mer nucleotide sequence.
+#' @return   For \code{returnModel = "5mer"}: 
+#' 
+#'           When \code{numMutationsOnly} is \code{FALSE}, a 4x1024 matrix of column 
+#'           normalized substitution rates for each 5-mer motif with row names defining 
+#'           the center nucleotide, one of \code{c("A", "C", "G", "T")}, and column names 
+#'           defining the 5-mer nucleotide sequence. 
+#'           
+#'           When \code{numMutationsOnly} is 
+#'           \code{TRUE}, a 1024x4 data frame with each row providing information on 
+#'           counting the number of mutations for a 5-mer. Columns are named 
+#'           \code{fivemer.total}, \code{fivemer.every}, \code{inner3.total}, and
+#'           \code{inner3.every}, corresponding to, respectively,
+#'           the total number of mutations when counted as a 5-mer, 
+#'           whether there is mutation to every other base when counted as a 5-mer,
+#'           the total number of mutations when counted as an inner 3-mer, and
+#'           whether there is mutation to every other base when counted as an inner 3-mer.
+#'           
+#'           For \code{returnModel = "1mer"} or \code{"1mer_raw"}:
+#'           a 4x4 normalized or un-normalized 1-mer substitution matrix respectively.
 #' 
 #' @references
 #' \enumerate{
@@ -193,15 +279,24 @@ setClass("TargetingModel",
 #'  }
 #'
 #' @seealso  \link{extendSubstitutionMatrix}, \link{createMutabilityMatrix}, 
-#'           \link{createTargetingMatrix}, \link{createTargetingModel}
+#'           \link{createTargetingMatrix}, \link{createTargetingModel},
+#'           \link{minNumMutationsTune}.
 #' 
 #' @examples
+#' \donttest{
 #' # Subset example data to one isotype and sample as a demo
 #' data(ExampleDb, package="alakazam")
 #' db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
-#' 
+#'
+#' # Count the number of mutations per 5-mer
+#' subCount <- createSubstitutionMatrix(db, model="S", multipleMutation="independent",
+#'                                      returnModel="5mer", numMutationsOnly=TRUE)
+#'
 #' # Create model using only silent mutations
-#' sub <- createSubstitutionMatrix(db, model="S")
+#' sub <- createSubstitutionMatrix(db, model="S", multipleMutation="independent",
+#'                                 returnModel="5mer", numMutationsOnly=FALSE,
+#'                                 minNumMutations=20)
+#' }
 #' 
 #' @export
 createSubstitutionMatrix <- function(db, model=c("RS", "S"), 
@@ -210,7 +305,8 @@ createSubstitutionMatrix <- function(db, model=c("RS", "S"),
                                      vCallColumn="V_CALL",
                                      multipleMutation=c("independent", "ignore"),
                                      returnModel=c("5mer", "1mer", "1mer_raw"),
-                                     minNumMutations=50)  {
+                                     minNumMutations=50,
+                                     numMutationsOnly=FALSE)  {
     # Evaluate argument choices
     model <- match.arg(model)
     multipleMutation <- match.arg(multipleMutation)
@@ -254,8 +350,8 @@ createSubstitutionMatrix <- function(db, model=c("RS", "S"),
     
     if (model == "S") { # Silent model
         for(index in 1:length(mutations)) {
-            cSeq <-  s2c(db[index,sequenceColumn])
-            cGL  <-  s2c(db[index,germlineColumn])
+            cSeq <-  s2c(db[[sequenceColumn]][index])
+            cGL  <-  s2c(db[[germlineColumn]][index])
             indexMutation <- mutations[[index]]
             v_fam <- v_families[index]
             
@@ -286,8 +382,8 @@ createSubstitutionMatrix <- function(db, model=c("RS", "S"),
         }
     } else if (model == "RS") { # RS model (All mutations)
         for (index in 1:length(mutations)) {
-            cSeq <-  s2c(db[index,sequenceColumn])
-            cGL  <-  s2c(db[index,germlineColumn])
+            cSeq <-  s2c(db[[sequenceColumn]][index])
+            cGL  <-  s2c(db[[germlineColumn]][index])
             indexMutation <- mutations[[index]]
             v_fam <- v_families[index]
             
@@ -339,55 +435,173 @@ createSubstitutionMatrix <- function(db, model=c("RS", "S"),
         return (subMat1mer)
     } 
     
-    # Aggregate mutations from neighboring bases for low frequency fivemers
+    ##### for a given 5mer, count number of mutations
     # fivemer=M; FIVEMER="CCATT"
-    .simplifivemer <- function(fivemer, FIVEMER, Thresh=50) {
-        Nuc=substr(FIVEMER,3,3)
-        Nei=paste(substr(FIVEMER,1,2),substr(FIVEMER,4,5),collapse="",sep="")
-        
-        # If the total number of mutation is greater than Thresh, and there are mutations to every other base
-        if(sum(fivemer[[Nei]][Nuc,])>Thresh && sum(fivemer[[Nei]][Nuc,]==0)==1){
-            return(fivemer[[Nei]][Nuc,]);
+    .simplifivemer <- function(fivemer, FIVEMER, Thresh=50, count=F) {
+      # center
+      Nuc=substr(FIVEMER,3,3)
+      # neighbors
+      Nei=paste(substr(FIVEMER,1,2),substr(FIVEMER,4,5),collapse="",sep="")
+      
+      ### using 5mer
+      # aggregate mutations
+      FIVE.5 = fivemer[[Nei]][Nuc,]
+      # count total number of mutations for a given 5mer
+      fivemer.total = sum(FIVE.5)
+      # are there mutations to every other base?
+      fivemer.every = ( sum(FIVE.5==0)==1 )
+      
+      ### using inner 3mer
+      # aggregate mutations from 5-mers with the same inner 3-mer
+      FIVE.3 = FIVE.5
+      for(i in 1:4){
+        for(j in 1:4){
+          MutatedNeighbor=paste(nuc_chars[i],substring(Nei,2,3),nuc_chars[j],collapse="",sep="")
+          FIVE.3=FIVE.3+fivemer[[MutatedNeighbor]][Nuc,]
         }
-        else{ # Otherwise aggregate mutations from 5-mers with the same inner 3-mer
-            FIVE=fivemer[[Nei]][Nuc,]
-            for(i in 1:4){
-                for(j in 1:4){
-                    MutatedNeighbor=paste(nuc_chars[i],substring(Nei,2,3),nuc_chars[j],collapse="",sep="")
-                    FIVE=FIVE+fivemer[[MutatedNeighbor]][Nuc,]
-                }
-            }
-            
-            # If the total number of mutations is still not enough, aggregate mutations from all 5-mers 
-            # i.e., use 1-mer model
-            if(sum(FIVE) <= Thresh || sum(FIVE==0)!=1 ){
-                FIVE=fivemer[[Nei]][Nuc,]
-                MutatedNeighbors = seqinr::words(4, nuc_chars)
-                for (MutatedNeighbor in MutatedNeighbors) {
-                    FIVE=FIVE+fivemer[[MutatedNeighbor]][Nuc,]
-                }
-            } 
-            
-            return(FIVE)
-        }
+      }
+      # count total number of mutations for inner 3mer
+      inner3.total = sum(FIVE.3)
+      # are there mutations to every other base?
+      inner3.every = ( sum(FIVE.3==0)==1 )
+      
+      ### using 1mer
+      FIVE.1 = FIVE.5
+      MutatedNeighbors = seqinr::words(4, nuc_chars)
+      for (MutatedNeighbor in MutatedNeighbors) {
+        FIVE.1=FIVE.1+fivemer[[MutatedNeighbor]][Nuc,]
+      }
+      
+      if (!count) {
+        # For a 5mer, if the total number of mutations is greater than Thresh, 
+        # and if there are mutations to every other base, compute for the 5mer 
+        if ( fivemer.total > Thresh & fivemer.every ){
+            return(FIVE.5)
+        } else if ( inner3.total > Thresh & inner3.every ) { 
+        # Otherwise aggregate mutations from 5-mers with the same inner 3-mer
+            return(FIVE.3)
+        } else {
+        # If the total number of mutations is still not enough, 
+        # aggregate mutations from all 5-mers (i.e., use 1-mer model)
+            return(FIVE.1)
+        } 
+      }
+      
+      return(data.frame(fivemer.total, fivemer.every,
+                        inner3.total, inner3.every, 
+                        stringsAsFactors=F))
     }
     
-    
-    substitutionModel <- sapply(seqinr::words(5, nuc_chars), function(x) { .simplifivemer(M, x, Thresh=minNumMutations) })
-    
-    # Assign A->A, C->C, G->G, T->T to NA
-    center_nuc <- gsub("..([ACGT])..", "\\1", colnames(substitutionModel))
-    for (i in 1:length(center_nuc)) {
+    # either construct 5mer substition matrix, and normalize (numMutationsOnly = F)
+    if (!numMutationsOnly) {
+      substitutionModel <- sapply(seqinr::words(5, nuc_chars), 
+                                  function(x) { .simplifivemer(M, x, 
+                                                               Thresh = minNumMutations,
+                                                               count = numMutationsOnly) }, simplify=T)
+      # Assign A->A, C->C, G->G, T->T to NA
+      center_nuc <- gsub("..([ACGT])..", "\\1", colnames(substitutionModel))
+      for (i in 1:length(center_nuc)) {
         substitutionModel[center_nuc[i], i] <- NA
+      }
+      
+      # Normalize by column
+      substitutionModel <- apply(substitutionModel, 2, function(x) { x / sum(x, na.rm=TRUE) })
+      substitutionModel[!is.finite(substitutionModel)] <- NA    
+    } else {
+      # or count number of mutations (numMutationsOnly = T), return data frame
+      # need to set simplify to F in sapply() and then use bind_rows; otherwise 
+      # every entry in df would be a list
+      substitutionModel <- sapply(seqinr::words(5, nuc_chars), 
+                                  function(x) { .simplifivemer(M, x, 
+                                                               Thresh = minNumMutations,
+                                                               count = numMutationsOnly) }, simplify=F)
+      substitutionModel = dplyr::bind_rows(substitutionModel)
+      rownames(substitutionModel) = seqinr::words(5, nuc_chars)
     }
-    
-    # Normalize by column
-    substitutionModel <- apply(substitutionModel, 2, function(x) { x / sum(x, na.rm=TRUE) })
-    substitutionModel[!is.finite(substitutionModel)] <- NA
     
     return(substitutionModel)
 }
 
+#' Parameter tuning for minNumMutations
+#' 
+#' \code{minNumMutationsTune} helps with picking a threshold value for \code{minNumMutations}
+#' in \link{createSubstitutionMatrix} by tabulating the number of 5-mers for which 
+#' substitution rates would be computed directly or inferred at various threshold values.
+#' 
+#' @param subCount                 \code{data.frame} returned by \link{createSubstitutionMatrix}
+#'                                 with \code{numMutationsOnly=TRUE}.
+#' @param minNumMutationsRange     a number or a vector indicating the value or range of values
+#'                                 of \code{minNumMutations} to try.
+#' 
+#' @return      A 3xn \code{matrix}, where n is the number of trial values of \code{minNumMutations}
+#'              supplied in \code{minNumMutationsRange}. Each column corresponds to a value
+#'              in \code{minNumMutationsRange}. The rows correspond to the number of 5-mers
+#'              for which substitution rates would be computed directly using the 5-mer itself 
+#'              (\code{"5mer"}), using its inner 3-mer (\code{"3mer"}), and using the central 
+#'              1-mer (\code{"1mer"}), respectively.
+#' 
+#' @details     At a given threshold value of \code{minNumMutations}, for a given 5-mer,
+#'              if the total number of mutations is greater than the threshold and there
+#'              are mutations to every other base, substitution rates are computed directly
+#'              for the 5-mer using its mutations. Otherwise, mutations from 5-mers with 
+#'              the same inner 3-mer as the 5-mer of interest are aggregated. If the number 
+#'              of such mutations is greater than the threshold and there are mutations to 
+#'              every other base, these mutations are used for inferring the substitution 
+#'              rates for the 5-mer of interest; if not, mutations from all 5-mers with the 
+#'              same center nucleotide are aggregated and used for inferring the substitution
+#'              rates for the 5-mer of interest (i.e. the 1-mer model).
+#' 
+#' @references
+#' \enumerate{
+#'   \item  Yaari G, et al. Models of somatic hypermutation targeting and substitution based 
+#'            on synonymous mutations from high-throughput immunoglobulin sequencing data. 
+#'            Front Immunol. 2013 4(November):358.
+#'  }
+#' 
+#' @seealso     See argument \code{numMutationsOnly} in \link{createSubstitutionMatrix} 
+#'              for generating the required input \code{data.frame} \code{subCount}. 
+#'              See argument \code{minNumMutations} in \link{createSubstitutionMatrix}
+#'              for what it does.  
+#' 
+#' @examples
+#' # Subset example data to one isotype and sample as a demo
+#' data(ExampleDb, package="alakazam")
+#' db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
+#'
+#' # Count the number of mutations per 5-mer
+#' subCount <- createSubstitutionMatrix(db, model="S", multipleMutation="independent",
+#'                                      returnModel="5mer", numMutationsOnly=TRUE)
+#' 
+#' # Tune minNumMutations
+#' minNumMutationsTune(subCount, seq(from=10, to=100, by=10))
+#'                                       
+#' @export
+minNumMutationsTune = function(subCount, minNumMutationsRange) {
+  stopifnot( nrow(subCount)==1024 & ncol(subCount)==4 )
+
+  tuneMtx = sapply(minNumMutationsRange, 
+                     function(thresh) {
+                       method.count = c(# as 5mer
+                                        sum( subCount$fivemer.total > thresh & 
+                                             subCount$fivemer.every ),
+                                        # as inner 3mer
+                                        sum( !(subCount$fivemer.total > thresh & 
+                                               subCount$fivemer.every) &
+                                             (subCount$inner3.total > thresh & 
+                                              subCount$inner3.every) ),
+                                        # as 1mer
+                                        sum( !(subCount$fivemer.total > thresh & 
+                                               subCount$fivemer.every) & 
+                                             !(subCount$inner3.total > thresh & 
+                                               subCount$inner3.every) )
+                                       )
+                       names(method.count) = c("5mer", "3mer", "1mer")
+                       stopifnot( sum(method.count)==1024 )
+                       return(method.count)
+                     })
+  colnames(tuneMtx) = minNumMutationsRange
+  return(tuneMtx)
+}
 
 #' Builds a mutability model
 #'
@@ -412,16 +626,23 @@ createSubstitutionMatrix <- function(db, model=c("RS", "S"),
 #' @param    minNumSeqMutations  minimum number of mutations in sequences containing each 5-mer
 #'                               to compute the mutability rates. If the number is smaller 
 #'                               than this threshold, the mutability for the 5-mer will be 
-#'                               inferred. Default is 500.    
-#' @param    numSeqMutationsOnly return only a vector counting the observed number of mutations 
-#'                               in sequences containing each 5-mer. This option can be used for
-#'                               parameter tuning for \code{minNumSeqMutations} during 
-#'                               preliminary analysis. Default is \code{FALSE}.                              
+#'                               inferred. Default is 500. Not required if 
+#'                               \code{numSeqMutationsOnly=TRUE}.   
+#' @param    numSeqMutationsOnly when \code{TRUE}, return only a vector counting the number of 
+#'                               observed mutations in sequences containing each 5-mer. This 
+#'                               option can be used for parameter tuning for \code{minNumSeqMutations} 
+#'                               during preliminary analysis using \link{minNumSeqMutationsTune}. 
+#'                               Default is \code{FALSE}.                              
 #' @param    returnSource        return the sources of 5-mer mutabilities (measured vs.
 #'                               inferred). Default is \code{FALSE}.                          
 #'
-#' @return   A named numeric vector of 1024 normalized mutability rates for each 5-mer 
-#'           motif with names defining the 5-mer nucleotide sequence.
+#' @return   When \code{numSeqMutationsOnly} is \code{FALSE}, a named numeric vector of 1024 
+#'           normalized mutability rates for each 5-mer motif with names defining the 5-mer 
+#'           nucleotide sequence. 
+#'           
+#'           When \code{numSeqMutationsOnly} is \code{TRUE}, a named numeric
+#'           vector of length 1024 counting the number of observed mutations in sequences containing 
+#'           each 5-mer.
 #' 
 #' @references
 #' \enumerate{
@@ -431,16 +652,25 @@ createSubstitutionMatrix <- function(db, model=c("RS", "S"),
 #'  }
 #' 
 #' @seealso  \link{extendMutabilityMatrix}, \link{createSubstitutionMatrix}, 
-#'           \link{createTargetingMatrix}, \link{createTargetingModel}
+#'           \link{createTargetingMatrix}, \link{createTargetingModel},
+#'           \link{minNumSeqMutationsTune}
 #' 
 #' @examples
+#' \donttest{
 #' # Subset example data to one isotype and sample as a demo
 #' data(ExampleDb, package="alakazam")
 #' db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
 #'
 #' # Create model using only silent mutations
 #' sub_model <- createSubstitutionMatrix(db, model="S")
-#' mut_model <- createMutabilityMatrix(db, sub_model, model="S")
+#' mut_model <- createMutabilityMatrix(db, sub_model, model="S", 
+#'                                     minNumSeqMutations=200,
+#'                                     numSeqMutationsOnly=FALSE)
+#' 
+#' # Count the number of mutations in sequences containing each 5-mer
+#' mut_count <- createMutabilityMatrix(db, sub_model, model="S", 
+#'                                    numSeqMutationsOnly=TRUE)
+#' }
 #' 
 #' @export
 createMutabilityMatrix <- function(db, substitutionModel, model=c("RS", "S"),
@@ -494,13 +724,13 @@ createMutabilityMatrix <- function(db, substitutionModel, model=c("RS", "S"),
         COUNT[[index]] <- template
         indexMutation <- mutations[[index]]
         if(!sum(is.na(indexMutation))){
-            cSeq <-  s2c(db[index, sequenceColumn])
-            cGL  <-  s2c(db[index, germlineColumn])
+            cSeq <-  s2c(db[[sequenceColumn]][index])
+            cGL  <-  s2c(db[[germlineColumn]][index])
             positions <- as.numeric(names(indexMutation))
             positions <- positions[positions <= VLENGTH]
             positions <- positions[!is.na(positions)]
             for (position in  positions){
-                wrd5 <- substr(db[index, germlineColumn], position - 2, position + 2)
+                wrd5 <- substr(db[[germlineColumn]][index], position - 2, position + 2)
                 if(!grepl("[^ACGT]", wrd5) & nchar(wrd5) == 5){
                     codonNucs = getCodonPos(position)
                     codonGL = cGL[codonNucs]
@@ -595,11 +825,9 @@ createMutabilityMatrix <- function(db, substitutionModel, model=c("RS", "S"),
     # Filter out 5-mers with low number of observed mutations in the sequences
     NumSeqMutations <- sapply(1:1024,function(i)sum(MutabilityWeights[!is.na(MutabilityMatrix[i,])])) 
     names(NumSeqMutations) = names(Mutability_Mean)
-    Mutability_Mean[NumSeqMutations < minNumSeqMutations] <- NA
+    if (numSeqMutationsOnly) {return(NumSeqMutations)}
     
-    if (numSeqMutationsOnly) {
-        return(NumSeqMutations)
-    }
+    Mutability_Mean[NumSeqMutations <= minNumSeqMutations] <- NA
     
     # Infer mutability for missing 5-mers
     .fillHot <-function(FIVEMER,mutability){
@@ -683,6 +911,74 @@ createMutabilityMatrix <- function(db, substitutionModel, model=c("RS", "S"),
 }
 
 
+#' Parameter tuning for minNumSeqMutations
+#' 
+#' \code{minNumSeqMutationsTune} helps with picking a threshold value for \code{minNumSeqMutations}
+#' in \link{createMutabilityMatrix} by tabulating the number of 5-mers for which 
+#' mutability would be computed directly or inferred at various threshold values.
+#' 
+#' @param mutCount                  a \code{vector} of length 1024 returned by 
+#'                                  \link{createMutabilityMatrix} with \code{numSeqMutationsOnly=TRUE}.
+#' @param minNumSeqMutationsRange   a number or a vector indicating the value or the range of values 
+#'                                  of \code{minNumSeqMutations} to try.
+#' 
+#' @return      A 2xn \code{matrix}, where n is the number of trial values of \code{minNumSeqMutations}
+#'              supplied in \code{minNumSeqMutationsRange}. Each column corresponds to a value
+#'              in \code{minNumSeqMutationsRange}. The rows correspond to the number of 5-mers
+#'              for which mutability would be computed directly (\code{"measured"}) and inferred
+#'              (\code{"inferred"}), respectively.
+#'              
+#' @details     At a given threshold value of \code{minNumSeqMutations}, for a given 5-mer,
+#'              if the total number of mutations is greater than the threshold, mutability 
+#'              is computed directly. Otherwise, mutability is inferred.
+#' 
+#' @references
+#' \enumerate{
+#'   \item  Yaari G, et al. Models of somatic hypermutation targeting and substitution based 
+#'            on synonymous mutations from high-throughput immunoglobulin sequencing data. 
+#'            Front Immunol. 2013 4(November):358.
+#'  }
+#' 
+#' @seealso     See argument \code{numSeqMutationsOnly} in \link{createMutabilityMatrix} 
+#'              for generating the required input \code{vector} \code{mutCount}. 
+#'              See argument \code{minNumSeqMutations} in \link{createMutabilityMatrix}
+#'              for what it does.  
+#' 
+#' @examples
+#' # Subset example data to one isotype and sample as a demo
+#' data(ExampleDb, package="alakazam")
+#' db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
+#'
+#' # Create model using only silent mutations
+#' sub <- createSubstitutionMatrix(db, model="S", multipleMutation="independent",
+#'                                 returnModel="5mer", numMutationsOnly=FALSE,
+#'                                 minNumMutations=20)
+#'
+#' # Count the number of mutations in sequences containing each 5-mer
+#' mutCount <- createMutabilityMatrix(db, substitutionModel = sub,
+#'                                    model="S", multipleMutation="independent",
+#'                                    numSeqMutationsOnly=TRUE)
+#' 
+#' # Tune minNumSeqMutations
+#' minNumSeqMutationsTune(mutCount, seq(from=100, to=300, by=50))
+#'                                       
+#' @export
+minNumSeqMutationsTune = function(mutCount, minNumSeqMutationsRange) {
+  stopifnot( length(mutCount) == 1024 )
+  
+  tuneMtx = sapply(minNumSeqMutationsRange, 
+                     function(thresh) {
+                       method.count = c( sum(mutCount > thresh),
+                                         sum(mutCount <= thresh) )
+                       names(method.count) = c("measured", "inferred")
+                       stopifnot( sum(method.count)==1024 )
+                       return(method.count)
+                     })
+  colnames(tuneMtx) = minNumSeqMutationsRange
+  return(tuneMtx)
+}
+
+
 #' Extends a substitution model to include Ns.
 #' 
 #' \code{extendSubstitutionMatrix} extends a 5-mer nucleotide substitution model 
@@ -754,7 +1050,9 @@ extendSubstitutionMatrix <- function(substitutionModel) {
 #'                            \link{createMutabilityMatrix}.
 #' 
 #' @return   A 3125 vector of normalized mutability rates for each 5-mer motif with 
-#'           names defining the 5-mer nucleotide sequence.
+#'           names defining the 5-mer nucleotide sequence. Note that "normalized" means
+#'           that the mutability rates for the 1024 5-mers that contain no "N" at any
+#'           position sums up to 1 (as opposed to the entire vector summing up to 1).
 #' 
 #' @seealso  \link{createMutabilityMatrix}, \link{extendSubstitutionMatrix}
 #' 
@@ -840,6 +1138,7 @@ extendMutabilityMatrix <- function(mutabilityModel) {
 #'           \link{createTargetingModel}
 #' 
 #' @examples
+#' \donttest{
 #' # Subset example data to one isotype and sample as a demo
 #' data(ExampleDb, package="alakazam")
 #' db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
@@ -854,6 +1153,7 @@ extendMutabilityMatrix <- function(mutabilityModel) {
 #' 
 #' # Create targeting model from substitution and mutability
 #' tar_model <- createTargetingMatrix(sub_model, mut_model)
+#' }
 #' 
 #' @export
 createTargetingMatrix <- function(substitutionModel, mutabilityModel) {
@@ -916,12 +1216,14 @@ createTargetingMatrix <- function(substitutionModel, mutabilityModel) {
 #'           \link{createTargetingMatrix} for component steps in building a model.
 #' 
 #' @examples
+#' \donttest{
 #' # Subset example data to one isotype and sample as a demo
 #' data(ExampleDb, package="alakazam")
 #' db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
 #'
 #' # Create model using only silent mutations and ignore multiple mutations
 #' model <- createTargetingModel(db, model="S", multipleMutation="ignore")
+#' }
 #' 
 #' @export
 createTargetingModel <- function(db, model=c("RS", "S"), sequenceColumn="SEQUENCE_IMGT",
@@ -978,61 +1280,6 @@ createTargetingModel <- function(db, model=c("RS", "S"), sequenceColumn="SEQUENC
 
     return(model_obj)
 }
-
-
-#' Calculates a 5-mer distance matrix from a TargetingModel object
-#' 
-#' \code{calcTargetingDistance} converts the targeting rates in a TargetingModel model 
-#' to a matrix of 5-mer to single-nucleotide mutation distances.
-#' 
-#' @param    model     \link{TargetingModel} object with mutation likelihood information.
-#'                                                
-#' @return   A matrix of distances for each 5-mer motif with rows names defining 
-#'           the center nucleotide and column names defining the 5-mer nucleotide 
-#'           sequence.
-#'           
-#' @details
-#' The targeting model is transformed into a distance matrix by:
-#' \enumerate{
-#'   \item  Converting the likelihood of being mutated \eqn{p=mutability*substitution} to 
-#'          distance \eqn{d=-log10(p)}.
-#'   \item  Dividing this distance by the mean of the distances
-#'   \item  Converting all infinite, no change (e.g., A->A), and NA distances to 
-#'          zero.
-#' }
-#' 
-#' @seealso  Takes as input a \link{TargetingModel} object. See \link{createTargetingModel}
-#'           for building a model.
-#' 
-#' @examples
-#' # Calculate targeting distance of HS5FModel
-#' dist <- calcTargetingDistance(HS5FModel)
-#' 
-#' @export
-calcTargetingDistance <- function(model) {
-    if (is(model, "TargetingModel")) {
-        model <- model@targeting
-    } else if (!is(model, "matrix")) {
-        stop("Input must be either a targeting matrix or TargetingModel object.")
-    }
-    
-    # Take negative log10 of all probabilities
-    model_dist <- -log10(model)
-    # Center distances on 1 (divide by mean)
-    model_dist <- model_dist/mean(model_dist, na.rm=T)
-    # Set infinite values to NA
-    model_dist[!is.finite(model_dist)] <- NA
-    
-    # TODO: the indexing of A-->A etc positions can probably be done smarter/faster
-    # Assign no-change entries to distance 0
-    center_nuc <- gsub("..([ACGTN])..", "\\1", colnames(model_dist))
-    for (i in 1:length(center_nuc)) {
-        model_dist[center_nuc[i], i] <- 0
-    }
-
-    return(model_dist)
-}
-
 
 # Rescales mutability probabilities from a TargetingModel
 # 
@@ -1104,7 +1351,433 @@ removeCodonGaps <- function(matInput) {
 }
 
 
-#### I/O Functions ####
+#' Make a degenerate 5-mer substitution model based on a 1-mer substitution model
+#'
+#' \code{makeDegenerate5merSub} populates substitution rates from a 1-mer substitution model
+#' into 5-mers with corresponding central 1-mers.
+#'
+#' @param    sub1mer             a 4x4 matrix containing (normalized) substitution rates.
+#'                               Row names should correspond to nucleotides to mutate from.
+#'                               Column names should correspond to nucleotides to mutate into.
+#'                               Nucleotides should include "A", "T", "G", and "C" 
+#'                               (case-insensitive).
+#' @param    extended            whether to return the unextended (\code{extended=FALSE}) or 
+#'                               extended (\code{extended=TRUE}) 5-mer substitution model. 
+#'                               Default is \code{FALSE}.
+#'
+#' @return   For \code{extended=FALSE}, a 4x1024 matrix. For \code{extended=TRUE}, a 5x3125 
+#'           matrix.
+#'
+#' @details  As a concrete example, consider a 1-mer substitution model in which substitution
+#'           rates from "A" to "T", "G", and "C" are, respectively, 0.1, 0.6, and 0.3. In the 
+#'           resultant degenerate 5-mer substitution model, all the 5-mers (columns) that have 
+#'           an "A" as their central 1-mer would have substitution rates (rows) of 0.1, 0.6, and 
+#'           0.3 to "T", "G", and "C" respectively. 
+#'           
+#'           When \code{extended=TRUE}, \code{extendSubstitutionMatrix} is called to extend
+#'           the 4x1024 substitution matrix.
+#'  
+#' @seealso  See \link{makeAverage1merSub} for making a 1-mer substitution model by taking
+#'           the average of a 5-mer substitution model. See \link{extendSubstitutionMatrix}
+#'           for extending the substitution matrix.
+#' 
+#' @examples
+#' # Make a degenerate 5-mer model (4x1024) based on HKL_S1F (4x4)
+#' # Note: not to be confused with HKL_S5F@substitution, which is non-degenerate
+#' degenerate5merSub <- makeDegenerate5merSub(sub1mer = HKL_S1F)
+#' 
+#' # Look at a few 5-mers
+#' degenerate5merSub[, c("AAAAT", "AACAT", "AAGAT", "AATAT")]
+#' 
+#' @export
+
+makeDegenerate5merSub = function(sub1mer, extended=FALSE) {
+    # make sure that rownames and colnames of sub1mer are uppercase
+    rownames(sub1mer) = toupper(rownames(sub1mer))
+    colnames(sub1mer) = toupper(colnames(sub1mer))
+    
+    # create 5-mer labels using ATGC
+    nuc_chars <- NUCLEOTIDES[1:4]
+    nuc_words <- seqinr::words(5, nuc_chars)
+    
+    # get center positions of 5mers
+    nuc_centers = sapply(nuc_words, function(x){seqinr::s2c(x)[3]})
+    
+    # initiate 5-mer substitution matrix (4x1024)
+    sub5mer = matrix(NA, nrow=4, ncol=length(nuc_words),
+                     dimnames=list(nuc_chars, nuc_words))
+    
+    # assign values from 1-mer model to 5-mer model
+    for (from in rownames(sub1mer)) {
+        for (to in colnames(sub1mer)) {
+            if (from != to) { # if statement keeps diagonals as NA
+                colIndex = which(nuc_centers == from)
+                sub5mer[to, colIndex] = sub1mer[from, to]
+            }
+        }
+    }
+    stopifnot(dim(sub5mer) == c(4, 1024))
+    
+    # if extended=TRUE, extend
+    if (extended) {
+        sub5mer = extendSubstitutionMatrix(sub5mer)
+        stopifnot(dim(sub5mer) == c(5, 3125))
+    }
+    
+    return(sub5mer)
+}
+
+#' Make a degenerate 5-mer mutability model based on a 1-mer mutability model
+#'
+#' \code{makeDegenerate5merMut} populates mutability rates from a 1-mer mutability model
+#' into 5-mers with corresponding central 1-mers.
+#'
+#' @param    mut1mer             a named vector of length 4 containing (normalized) 
+#'                               mutability rates. Names should correspond to nucleotides, 
+#'                               which should include "A", "T", "G", and "C" 
+#'                               (case-insensitive).
+#' @param    extended            whether to return the unextended (\code{extended=FALSE}) or 
+#'                               extended (\code{extended=TRUE}) 5-mer mutability model. 
+#'                               Default is \code{FALSE}.
+#'
+#' @return   For \code{extended=FALSE}, a vector of length 1024. The vector returned is 
+#'           normalized. For \code{extended=TRUE}, a vector of length 3125. 
+#'
+#' @details  As a concrete example, consider a 1-mer mutability model in which mutability
+#'           rates of "A", "T", "G", and "C" are, respectively, 0.14, 0.23, 0.31, and 0.32. 
+#'           In the resultant degenerate 5-mer mutability model, all the 5-mers that have 
+#'           an "A" as their central 1-mer would have mutability rate of 0.14/256, where 256 is
+#'           the number of such 5-mers. 
+#'           
+#'           When \code{extended=TRUE}, \code{extendMutabilityMatrix} is called to extend the
+#'           mutability vector of length 1024 into a vector of length 3125.
+#'  
+#' @seealso  See \link{makeAverage1merMut} for making a 1-mer mutability model by 
+#'           taking the average of a 5-mer mutability model. See 
+#'           \link{extendMutabilityMatrix} for extending the mutability vector.
+#' 
+#' @examples
+#' # Make a degenerate 5-mer model (length of 1024) based on a 1-mer model
+#' example1merMut <- c(A=0.2, T=0.1, C=0.4, G=0.3)
+#' degenerate5merMut <- makeDegenerate5merMut(mut1mer = example1merMut)
+#' 
+#' # Look at a few 5-mers
+#' degenerate5merMut[c("AAAAT", "AACAT", "AAGAT", "AATAT")]
+#' 
+#' # Normalized
+#' sum(degenerate5merMut)
+#' 
+#' @export
+
+makeDegenerate5merMut = function(mut1mer, extended=FALSE) {
+    # make sure that names of mut1mer are uppercase
+    names(mut1mer) = toupper(names(mut1mer))
+    
+    # create 5-mer labels using ATGCN
+    nuc_chars <- NUCLEOTIDES[1:4]
+    nuc_words <- seqinr::words(5, nuc_chars)
+    
+    # get center positions of 5mers
+    nuc_centers = sapply(nuc_words, function(x){seqinr::s2c(x)[3]})
+    
+    # initiate 5-mer mutability vector (length of 3125)
+    mut5mer = rep(NA, length=length(nuc_words))
+    names(mut5mer) = nuc_words
+    
+    # assign values from 1-mer model to 5-mer model
+    for (center in names(mut1mer)) {
+        index = which(nuc_centers == center)
+        mut5mer[index] = mut1mer[center]
+    } 
+    stopifnot(length(mut5mer) == 1024)
+    
+    # normalize
+    mut5mer = mut5mer / sum(mut5mer, na.rm=T)
+    
+    # if extended=TRUE, extend
+    if (extended) {
+        mut5mer = extendMutabilityMatrix(mut5mer)
+        stopifnot(length(mut5mer) == 3125)
+    }
+    
+    return(mut5mer)
+}
+
+
+#' Make a 1-mer substitution model by averaging over a 5-mer substitution model
+#'
+#' \code{makeAverage1merSub} averages substitution rates in a 5-mer substitution model
+#' to derive a 1-mer substitution model.
+#'
+#' @param    sub5mer             a 4x1024 matrix such as that returned by 
+#'                               \code{createSubstitutionMatrix} and that returned by
+#'                               \code{makeDegenerate5merSub} with \code{extended=FALSE}.
+#'                               Column names should correspond to 5-mers containing the 
+#'                               central 1-mer to mutate from. Row names should correspond to 
+#'                               nucleotides to mutate into. Nucleotides should include 
+#'                               "A", "T", "G", and "C" (case-insensitive).
+#'
+#' @return   A 4x4 matrix with row names representing nucleotides to mutate from and column
+#'           names representing nucleotides to mutate into. Rates are normalized by row. 
+#'
+#' @details  For example, the substitution rate from "A" to "T" in the resultant 1-mer model
+#'           is derived by averaging the substitution rates into a "T" of all the 5-mers that 
+#'           have an "A" as their central 1-mer. 
+#'  
+#' @seealso  See \link{makeDegenerate5merSub} for making a degenerate 5-mer substitution 
+#'           model based on a 1-mer substitution model. 
+#' 
+#' @examples
+#' # Make a degenerate 5-mer model (4x1024) based on HKL_S1F (4x4)
+#' degenerate5merSub <- makeDegenerate5merSub(sub1mer = HKL_S1F)
+#' 
+#' # Now make a 1-mer model by averaging over the degenerate 5-mer model
+#' # Expected to get back HKL_S1F
+#' makeAverage1merSub(sub5mer = degenerate5merSub)
+#' 
+#' @export
+
+makeAverage1merSub = function(sub5mer) {
+    stopifnot(dim(sub5mer) == c(4, 1024))
+    
+    # make sure that rownames and colnames of sub5mer are uppercase
+    rownames(sub5mer) = toupper(rownames(sub5mer))
+    colnames(sub5mer) = toupper(colnames(sub5mer))
+    
+    # get 5-mers and center positions of 5-mers
+    nuc_words = colnames(sub5mer)
+    nuc_centers = sapply(nuc_words, function(x){seqinr::s2c(x)[3]})
+    
+    # create 1-mer labels using ATGC
+    nuc_chars <- NUCLEOTIDES[1:4]
+    
+    # initiate 1-mer substitution matrix (4x4)
+    sub1mer = matrix(NA, nrow=length(nuc_chars), ncol=length(nuc_chars),
+                     dimnames=list(nuc_chars, nuc_chars))
+    
+    # assign values from 5-mer model to 1-mer model
+    for (from in rownames(sub1mer)) {
+        for (to in colnames(sub1mer)) {
+            if (from != to) { # if statement keeps diagonals as NA
+                colIndex = which(nuc_centers == from)
+                sub1mer[from, to] = mean(sub5mer[to, colIndex], na.rm=T)
+            }
+        }
+    }
+    stopifnot(dim(sub1mer) == c(4, 4))
+    
+    # normalize
+    # tricky: apply transposes result; use t() to transpose back 
+    sub1mer = t(apply(sub1mer, 1, function(x){x/sum(x, na.rm=T)}))
+    
+    return(sub1mer)
+}
+
+
+#' Make a 1-mer mutability model by averaging over a 5-mer mutability model
+#'
+#' \code{makeAverage1merMut} averages mutability rates in a 5-mer mutability model
+#' to derive a 1-mer mutability model.
+#'
+#' @param    mut5mer             a named vector of length 1024 such as that returned by 
+#'                               \code{createMutabilityMatrix} and that returned by
+#'                               \code{makeDegenerate5merMut} with \code{extended=FALSE}.
+#'                               Names should correspond to 5-mers made up of "A", "T", 
+#'                               "G", and "C" (case-insensitive). \code{NA} values are 
+#'                               allowed.
+#'
+#' @return   A named vector of length 4 containing normalized mutability rates.
+#'
+#' @details  For example, the mutability rate of "A" in the resultant 1-mer model
+#'           is derived by averaging the mutability rates of all the 5-mers that 
+#'           have an "A" as their central 1-mer, followed by normalization.
+#'  
+#' @seealso  See \link{makeDegenerate5merMut} for making a degenerate 5-mer mutability
+#'           model based on a 1-mer mutability model. 
+#' 
+#' @examples
+#' # Make a degenerate 5-mer model (length of 1024) based on a 1-mer model
+#' example1merMut <- c(A=0.2, T=0.1, C=0.4, G=0.3)
+#' degenerate5merMut <- makeDegenerate5merMut(mut1mer = example1merMut)
+#'  
+#' # Now make a 1-mer model by averaging over the degenerate 5-mer model
+#' # Expected to get back example1merMut
+#' makeAverage1merMut(mut5mer = degenerate5merMut)
+#' 
+#' @export
+
+makeAverage1merMut = function(mut5mer) {
+    stopifnot(length(mut5mer) == 1024)
+    
+    # make sure that names mut5mer are uppercase
+    names(mut5mer) = toupper(names(mut5mer))
+    
+    # get 5-mers and center positions of 5-mers
+    nuc_words = names(mut5mer)
+    nuc_centers = sapply(nuc_words, function(x){seqinr::s2c(x)[3]})
+    
+    # create 1-mer labels using ATGC
+    nuc_chars <- NUCLEOTIDES[1:4]
+    
+    # initiate 1-mer mutability vector (length 4)
+    mut1mer = rep(NA, length=length(nuc_chars))
+    names(mut1mer) = nuc_chars
+    
+    # assign values from 5-mer model to 1-mer model
+    for (center in names(mut1mer)) {
+        index = which(nuc_centers == center)
+        mut1mer[center] = mean(mut5mer[index], na.rm=T)
+    }
+    stopifnot(length(mut1mer) == 4)
+    
+    # normalize
+    mut1mer = mut1mer / sum(mut1mer, na.rm=T)
+    
+    return(mut1mer)
+}
+
+#### Distance Functions ####
+
+#' Calculates a 5-mer distance matrix from a TargetingModel object
+#' 
+#' \code{calcTargetingDistance} converts either the targeting rates in a \code{TargetingModel}
+#'  model to a matrix of 5-mer to single-nucleotide mutation distances, or the substitution 
+#'  rates in a 1-mer substitution model to a symmetric distance matrix.
+#' 
+#' @param    model     \link{TargetingModel} object with mutation likelihood information, or
+#'                     a 4x4 1-mer substitution matrix normalized by row with rownames and 
+#'                     colnames consisting of "A", "T", "G", and "C".
+#' @param    places    decimal places to round distances to.
+#'                                                
+#' @return   For input of \link{TargetingModel}, a matrix of distances for each 5-mer motif with 
+#'           rows names defining the center nucleotide and column names defining the 5-mer 
+#'           nucleotide sequence. For input of 1-mer substitution matrix, a 4x4 symmetric distance
+#'           matrix. 
+#'           
+#' @details
+#' The targeting model is transformed into a distance matrix by:
+#' \enumerate{
+#'   \item  Converting the likelihood of being mutated \eqn{p=mutability*substitution} to 
+#'          distance \eqn{d=-log10(p)}.
+#'   \item  Dividing this distance by the mean of the distances.
+#'   \item  Converting all infinite, no change (e.g., A->A), and NA distances to 
+#'          zero.
+#' }
+#' 
+#' The 1-mer substitution matrix is transformed into a distance matrix by:
+#' \enumerate{
+#'   \item  Symmetrize the 1-mer substitution matrix.
+#'   \item  Converting the rates to distance \eqn{d=-log10(p)}.
+#'   \item  Dividing this distance by the mean of the distances.
+#'   \item  Converting all infinite, no change (e.g., A -> A), and NA distances to 
+#'          zero.
+#' }
+#' 
+#' @seealso  See \link{TargetingModel} for this class of objects and
+#'           \link{createTargetingModel} for building one.
+#' 
+#' @examples
+#' # Calculate targeting distance of HH_S5F
+#' dist <- calcTargetingDistance(HH_S5F)
+#' 
+#' # Calculate targeting distance of HH_S1F
+#' dist <- calcTargetingDistance(HH_S1F)
+#' 
+#' @export
+calcTargetingDistance <- function(model, places=2) {
+  # if model is TargetingModel object, assume 5-mer targeting model
+  # extract targeting matrix
+  if (is(model, "TargetingModel")) {
+    input <- "5mer"
+    model <- model@targeting
+  } else if (is(model, "matrix") & all(dim(model) == c(4, 4))) {
+    # if model is a matrix, assume 1-mer substitution matrix and symmetrize
+    input <- "1mer"
+    model <- symmetrize(model)
+  } else {
+    # anything else: error
+    stop("Input must be either a 4x4 targeting matrix or TargetingModel object.")
+  }
+  
+  # Take negative log10 of all probabilities
+  model_dist <- -log10(model)
+  # Center distances on 1 (divide by mean)
+  model_dist <- model_dist/mean(model_dist, na.rm=T)
+  # Set infinite values to NA
+  model_dist[!is.finite(model_dist)] <- NA
+  
+  # TODO: the indexing of A-->A etc positions can probably be done smarter/faster
+  # Assign no-change entries to distance 0
+  if (input == "5mer") {
+      center_nuc <- gsub("..([ACGTN])..", "\\1", colnames(model_dist))
+      for (i in 1:length(center_nuc)) {
+          model_dist[center_nuc[i], i] <- 0
+      }
+      # Assign 0 to N and 5mers with N in center position 
+      model_dist[,center_nuc=="N"] <- 0
+      model_dist["N",] <- 0
+  } else if (input == "1mer") {
+      diag(model_dist) <- 0
+      model_dist <- rbind(model_dist, matrix(0, 3, 4))
+      model_dist <- cbind(model_dist, matrix(0, 7, 3))
+      colnames(model_dist)[5:7] <- rownames(model_dist)[5:7] <- c("N", "-", ".")
+  }
+  
+  # Round
+  model_dist <- round(model_dist, places)
+  
+  return(model_dist)
+}
+
+# (From G Yaari)
+# Symmetrize a non-symmetric, 1-mer substitution matrix
+# 
+# \code{symmetrize} makes a 1-mer substitution matrix symmetric by minimizing the 
+# rss between it and a symmetric matrix.
+# 
+# @param    sub1mer     a 4x4 matrix normalized by row. Each row sums up to 1 and 
+#                       reflects substitution probabilities for each nucleotide. 
+#                       Rownames and colnames are "A","C","G", and "T".
+#
+# @return   a 4x4 symmetrix matrix with \code{NA}s on the diagonal.
+# 
+# @details  The input 1-mer substitution matrix is approximated by a symmetric matrix 
+#           both with respect to time (e.g. C->T = T->C), and with respect to strand 
+#           (e.g. C->T = G->A). The symmetric matrix has three free parameters that 
+#           are estimated by minimizing the sum of squares between this matrix and 
+#           the input matrix. The fitted matrix was normalized to ensure that each 
+#           row sums up to 1.
+#
+symmetrize <- function(sub1mer) {
+  rownames(sub1mer) <- toupper(rownames(sub1mer))
+  colnames(sub1mer) <- toupper(colnames(sub1mer))
+  
+  # check that rows sum up to 1
+  stopifnot(all.equal(rowSums(sub1mer), rep(1, 4), 
+                      check.names=FALSE, tolerance=0.055))
+  
+  .minDist <- function(Pars, subMtx) {
+    (Pars[1] - subMtx["A", "C"])^2 + (Pars[1] - subMtx["C", "A"])^2 + 
+    (Pars[1] - subMtx["G", "T"])^2 + (Pars[1] - subMtx["T", "G"])^2 +
+    (Pars[2] - subMtx["A", "G"])^2 + (Pars[2] - subMtx["G", "A"])^2 + 
+    (Pars[2] - subMtx["C", "T"])^2 + (Pars[2] - subMtx["T", "C"])^2 +
+    (Pars[3] - subMtx["A", "T"])^2 + (Pars[3] - subMtx["T", "A"])^2 + 
+    (Pars[3] - subMtx["C", "G"])^2 + (Pars[3] - subMtx["G", "C"])^2
+  }
+  
+  pars <- optim(par=rep(0, 3), fn=.minDist, subMtx=sub1mer)$par
+  pars <- pars/sum(pars)
+  symmetric_substitution <- sub1mer
+  symmetric_substitution["A", 2:4] <- pars
+  symmetric_substitution["C", c(1, 4, 3)] <- pars
+  symmetric_substitution["G", c(4, 1, 2)] <- pars
+  symmetric_substitution["T", c(3, 2, 1)] <- pars
+  
+  # NAs on diagonal instead of 0 so that calcTargetingDistance works with 1-mer model
+  diag(symmetric_substitution) <- NA
+  return(symmetric_substitution)
+}
+
 
 #' Write targeting model distances to a file
 #' 
@@ -1129,14 +1802,18 @@ removeCodonGaps <- function(matInput) {
 #' @examples
 #' \dontrun{
 #' # Write HS5F targeting model to working directory as hs5f.tab
-#' writeTargetingModel(HS5FModel, "hs5f.tab") 
+#' writeTargetingModel(HH_S5F, "hh_s5f.tsv") 
 #' }
 #' 
 #' @export
 writeTargetingDistance <- function(model, file) {
+    if (!is(model, "TargetingModel")) {
+        stop(deparse(substitute(model)), " is not a valid TargetingModel object")
+    }
+    
     to_write <- as.data.frame(calcTargetingDistance(model))
     to_write[is.na(to_write)] <- 0
-    write.table(to_write, file, quote=FALSE, sep="\t")
+    write.table(to_write, file, quote=FALSE, sep="\t", col.names=NA, row.names=TRUE)
 }
 
 
@@ -1178,16 +1855,16 @@ writeTargetingDistance <- function(model, file) {
 #' 
 #' @examples
 #' # Plot one nucleotide in circular style
-#' plotMutability(HS5FModel, "C")
+#' plotMutability(HH_S5F, "C")
 #' 
 #' # Plot two nucleotides in barchart style
-#' plotMutability(HS5FModel, c("G", "T"), style="bar")
+#' plotMutability(HH_S5F, c("G", "T"), style="bar")
 #' 
 #' @export
 plotMutability <- function(model, nucleotides=c("A", "C", "G", "T"),
                            style=c("hedgehog", "bar"), size=1, silent=FALSE, 
                            ...) {
-    # model=HS5FModel
+    # model=HH_S5F
     # nucleotides=c("C")
     # nucleotides=c("A", "C", "G", "T")
     # style="hedgehog"
@@ -1206,12 +1883,12 @@ plotMutability <- function(model, nucleotides=c("A", "C", "G", "T"),
     
     # Set base plot settings
     base_theme <- theme_bw() +
-        theme(panel.margin=grid::unit(0, "lines"),
+        theme(panel.spacing=grid::unit(0, "lines"),
               panel.background=element_blank()) +
         theme(axis.text=element_text(margin=grid::unit(0, "lines"))) +
         theme(text=element_text(size=10*size),
               title=element_text(size=10*size),
-              legend.margin=grid::unit(0, "lines"),
+              legend.spacing=grid::unit(0, "lines"),
               legend.background=element_blank())
 
     # Scaling and layout parameters
@@ -1402,6 +2079,192 @@ plotMutability <- function(model, nucleotides=c("A", "C", "G", "T"),
     invisible(plot_list)
 }
 
+
+#' Visualize parameter tuning for minNumMutations and minNumSeqMutations
+#'
+#' Visualize results from \link{minNumMutationsTune} and \link{minNumSeqMutationsTune}
+#' 
+#' @param    tuneMtx             a \code{matrix} or a \code{list} of matrices produced by either 
+#'                               \link{minNumMutationsTune} or \link{minNumSeqMutationsTune}.
+#'                               In the case of a list, it is assumed that each matrix corresponds
+#'                               to a sample and that all matrices in the list were produced using
+#'                               the same set of trial values of \code{minNumMutations} or 
+#'                               \code{minNumSeqMutations}.
+#' @param    thresh              a number or a vector of indicating the value or the range of values
+#'                               of \code{minNumMutations} or \code{minNumSeqMutations} to plot. 
+#'                               Should correspond to the columns of \code{tuneMtx}.
+#' @param    criterion           one of \code{"5mer"}, \code{"3mer"}, \code{"1mer"}, or \code{"3mer+1mer"} 
+#'                               (for \code{tuneMtx} produced by \link{minNumMutationsTune}), or either 
+#'                               \code{"measured"} or \code{"inferred"} (for \code{tuneMtx} produced by 
+#'                               \link{minNumSeqMutationsTune}).                
+#' @param    pchs                point types to pass on to \link{plot}.
+#' @param    ltys                line types to pass on to \link{plot}.
+#' @param    cols                colors to pass on to \link{plot}.                             
+#' @param    plotLegend          whether to plot legend. Default is \code{TRUE}. Only applicable 
+#'                               if \code{tuneMtx} is a named list with names of the matrices 
+#'                               corresponding to the names of the samples.
+#' @param    legendPos           position of legend to pass on to \link{legend}. Can be either a
+#'                               numeric vector specifying x-y coordinates, or one of 
+#'                               \code{"topright"}, \code{"center"}, etc. Default is \code{"topright"}.
+#' @param    legendHoriz         whether to make legend horizontal. Default is \code{FALSE}.
+#' @param    legendCex           numeric values by which legend should be magnified relative to 1.
+#' 
+#' @details  For \code{tuneMtx} produced by \link{minNumMutationsTune}, for each sample, depending on
+#'           \code{criterion}, the numbers of 5-mers for which substitution rates are directly computed
+#'           (\code{"5mer"}), inferred based on inner 3-mers (\code{"3mer"}), inferred based on 
+#'           central 1-mers (\code{"1mer"}), or inferred based on inner 3-mers and central 1-mers
+#'           (\code{"3mer+1mer"}) are plotted on the y-axis against values of \code{minNumMutations} 
+#'           on the x-axis.
+#' 
+#'           For \code{tuneMtx} produced by \link{minNumSeqMutationsTune}, for each sample, depending on
+#'           \code{criterion}, the numbers of 5-mers for which mutability rates are directly measured
+#'           (\code{"measured"}) or inferred (\code{"inferred"}) are plotted on the y-axis against values
+#'           of \code{minNumSeqMutations} on the x-axis.
+#'           
+#'           Note that legends will be plotted only if \code{tuneMtx} is a supplied as a named \code{list}
+#'           of matrices, ideally with names of each \code{matrix} corresponding to those of the samples 
+#'           based on which the matrices were produced, even if \code{plotLegend=TRUE}.
+#' 
+#' @seealso  See \link{minNumMutationsTune} and \link{minNumSeqMutationsTune} for generating 
+#'           \code{tuneMtx}. 
+#' 
+#' @examples
+#' # Subset example data to one isotype and sample as demos
+#' data(ExampleDb, package="alakazam")
+#' db <- subset(ExampleDb, ISOTYPE == "IgA")
+#' 
+#' tuneMtx = list()
+#' for (i in 1:length(unique(db$SAMPLE))) {
+#'     # Get data corresponding to current sample
+#'     curDb = db[db$SAMPLE==unique(db$SAMPLE)[i], ]
+#'     
+#'     # Count the number of mutations per 5-mer
+#'     subCount = createSubstitutionMatrix(db=curDb, model="S", multipleMutation="independent",
+#'                                         returnModel="5mer", numMutationsOnly=TRUE)
+#'     
+#'     # Tune over minNumMutations = 5..50
+#'     subTune = minNumMutationsTune(subCount, seq(from=5, to=50, by=5))
+#'     
+#'     tuneMtx = c(tuneMtx, list(subTune))
+#' }
+#'
+#' # Name tuneMtx after sample names 
+#' names(tuneMtx) = unique(db$SAMPLE)
+#' 
+#' # plot with legend for both samples for a subset of minNumMutations values
+#' plotTune(tuneMtx, thresh=c(5,15,25,40), criterion="3mer",
+#'          pchs=16:17, ltys=1:2, cols=2:3, 
+#'          plotLegend=TRUE, legendPos=c(5, 100))
+#' 
+#' # plot for only 1 sample for all the minNumMutations values (no legend)
+#' plotTune(tuneMtx[[1]], thresh=seq(from=5, to=50, by=5), criterion="3mer")
+#' 
+#' @export
+plotTune = function(tuneMtx, thresh, 
+                    criterion=c("5mer", "3mer", "1mer", "3mer+1mer", 
+                                "measured", "inferred"), 
+                    pchs = 1, ltys = 2, cols = 1,
+                    plotLegend = TRUE, legendPos = "topright", 
+                    legendHoriz = FALSE, legendCex = 1) {
+  
+  stopifnot(length(criterion)==1)
+  stopifnot(is.matrix(tuneMtx) | is.list(tuneMtx))
+  
+  ### extract plot data into plotMtx
+  # if tuneMtx is just a matrix
+  if (criterion=="3mer+1mer") {
+    criterion.for.data = c("")
+  } else {
+    criterion.for.data = criterion
+  }
+  
+  if (!is.list(tuneMtx)) {
+    if (criterion!="3mer+1mer") {
+      plotMtx = matrix(tuneMtx[criterion, as.character(thresh)], nrow=1)
+    } else {
+      plotMtx = matrix(colSums(tuneMtx[c("3mer", "1mer"), as.character(thresh)]), nrow=1)
+    }
+  } else {
+  # if tuneMtx is a named list of matrices (e.g. corresponding to multiple samples)  
+    if (criterion!="3mer+1mer") {
+      plotMtx = do.call(base::rbind, 
+                        lapply(tuneMtx, 
+                               function(mtx){mtx[criterion, as.character(thresh)]}))
+    } else {
+      plotMtx = do.call(base::rbind, 
+                        lapply(tuneMtx, 
+                               function(mtx){colSums(mtx[c("3mer", "1mer"), 
+                                                         as.character(thresh)])}))
+    }
+    rownames(plotMtx) = names(tuneMtx)
+  }
+  # sanity check: there should not be any NA
+  stopifnot(!any(is.na(plotMtx)))
+  
+  ### if number of pchs/ltys/cols provided does not match number of samples expected
+  # expand into vector with repeating values (otherwise legend would break)
+  if (length(pchs)!=nrow(plotMtx)) {pchs = rep(pchs, length.out=nrow(plotMtx))}
+  if (length(ltys)!=nrow(plotMtx)) {ltys = rep(ltys, length.out=nrow(plotMtx))}
+  if (length(cols)!=nrow(plotMtx)) {cols = rep(cols, length.out=nrow(plotMtx))}
+  
+  
+  ### axis labels
+  if (criterion %in% c("5mer", "3mer", "1mer", "3mer+1mer")) {
+    xlab.name = "Minimum # mutations per 5-mer to\ndirectly compute 5-mer substitution rates"
+    # cannot use switch because variable names cannot start with number
+    ylab.name = "# 5-mers for which substitution rates are\n"
+    if (criterion=="5mer") {
+      ylab.name = paste(ylab.name, "directly computed")
+    } else if (criterion=="3mer") {
+      ylab.name = paste(ylab.name, "inferred based on inner 3-mers")
+    } else if (criterion=="1mer") {
+      ylab.name = paste(ylab.name, "inferred based on central 1-mers")
+    } else if (criterion=="3mer+1mer") {
+      ylab.name = paste(ylab.name, "inferred based on 3- and 1-mers")
+    }
+  } else if (criterion %in% c("measured", "inferred")) {
+    xlab.name = "Minimum # mutations in sequences containing each 5-mer\nto directly compute mutability"
+    ylab.name = paste("# 5-mers for which mutability is", criterion)
+  }
+  
+  ### plot
+  # bottom, left, top, right
+  par(mar=c(6, 6, 4, 2) + 0.1)
+  for (i in 1:nrow(plotMtx)) {
+    if (i==1) {
+      plot(x=thresh, y=plotMtx[i, ], 
+           ylim=range(plotMtx),
+           xaxt="n", xlab="", ylab="",
+           cex.axis=1.5, type="b", lwd=1.5,
+           pch=pchs[i], lty=ltys[i], col=cols[i])
+      axis(side=1, at=thresh, cex.axis=1.5)
+      mtext(side=1, text=xlab.name, line=4, cex=1.2)
+      mtext(side=2, text=ylab.name, line=3, cex=1.2)
+    } else {
+      points(x=thresh, y=plotMtx[i, ],
+             type="b", lwd=1.5,
+             pch=pchs[i], lty=ltys[i], col=cols[i])
+    }
+  }
+  
+  ### legend (even if plotLegend=T, only plotted if tuneMtx is a named list)
+  if ( !is.null(rownames(plotMtx)) & plotLegend ) {
+    # if legendPos specified as xy coordinates
+    if (is.numeric(legendPos) & length(legendPos)==2) {
+      legend(x=legendPos[1], y=legendPos[2], 
+             legend = c("Sample", rownames(plotMtx)),
+             horiz = legendHoriz, cex = legendCex,
+             pch=c(NA, pchs), lty=c(NA, ltys), col=c(NA, cols))
+    } else {
+    # if legendPos specified as "center", "topright", etc.  
+      legend(legendPos, 
+             legend = c("Sample", rownames(plotMtx)),
+             horiz = legendHoriz, cex = legendCex,
+             pch=c(NA, pchs), lty=c(NA, ltys), col=c(NA, cols))
+    }
+  }
+  
+}
 
 #### Original BASELINe functions ####
 

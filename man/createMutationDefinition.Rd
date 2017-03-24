@@ -41,4 +41,3 @@ md <- createMutationDefinition("Hydropathy", classes)
 \seealso{
 See \link{MutationDefinition} for the return object.
 }
-

@@ -44,8 +44,8 @@ along with tools to build these mutability and substitution models from data.
 \itemize{
   \item  \link{createTargetingModel}:     Build a 5-mer targeting model.
   \item  \link{plotMutability}:           Plot 5-mer mutability rates.
-  \item  \link{HS5FModel}:                Human 5-mer SHM targeting model.
-  \item  \link{MRS5NFModel}:              Mouse 5-mer SHM targeting model.
+  \item  \link{HH_S5F}:                Human 5-mer SHM targeting model.
+  \item  \link{MK_RS5NF}:              Mouse 5-mer SHM targeting model.
 }
 }
 
@@ -81,27 +81,32 @@ models. This information is particularly useful in understanding and
 defining clonal relationships.
              
 \itemize{
+  \item  \link{findThreshold}:            Identify clonal assignment threshold based on 
+                                          distances to nearest neighbors.
   \item  \link{distToNearest}:            Tune clonal assignment thresholds by calculating 
-                                          distances to nearest-neighbors.
+                                          distances to nearest neighbors.
   \item  \link{calcTargetingDistance}:    Construct a nucleotide distance matrix from a 
                                           5-mer targeting model.
 }
 }
+
 \references{
 \enumerate{
   \item  Hershberg U, et al. Improved methods for detecting selection by mutation 
            analysis of Ig V region sequences. 
            Int Immunol. 2008 20(5):683-94.
   \item  Uduman M, et al. Detecting selection in immunoglobulin sequences. 
-           Nucleic Acids Res. 2011 39(Web Server issue):W499-504.
+           Nucleic Acids Res. 2011 39(Web Server issue):W499-504. (Corrections at 
+           http://selection.med.yale.edu/baseline/correction/) 
   \item  Yaari G, et al. Quantifying selection in high-throughput immunoglobulin 
            sequencing data sets. 
            Nucleic Acids Res. 2012 40(17):e134.
   \item  Yaari G, et al. Models of somatic hypermutation targeting and substitution based 
            on synonymous mutations from high-throughput immunoglobulin sequencing data. 
            Front Immunol. 2013 4:358.
-  \item  Cui A, et al. A model of somatic hypermutation targeting in mice based on 
-           high-throughput immunoglobulin sequencing data. Under review.
+  \item  Cui A, Di Niro R, Vander Heiden J, Briggs A, Adams K, Gilbert T, O'Connor K,
+         Vigneault F, Shlomchik M and Kleinstein S (2016). A Model of Somatic Hypermutation 
+         Targeting in Mice Based on High-Throughput Ig Sequencing Data. The Journal of 
+         Immunology, 197(9), 3566-3574.
  }
 }
-

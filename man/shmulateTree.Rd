@@ -4,7 +4,7 @@
 \alias{shmulateTree}
 \title{Simulate mutations in a lineage tree}
 \usage{
-shmulateTree(sequence, graph, targetingModel = HS5FModel, field = NULL,
+shmulateTree(sequence, graph, targetingModel = HH_S5F, field = NULL,
   exclude = NULL, junctionWeight = NULL)
 }
 \arguments{
@@ -15,7 +15,7 @@ vertex annotations, whose edges are to be recreated.}
 
 \item{targetingModel}{5-mer \link{TargetingModel} object to be used for computing 
 probabilities of mutations at each position. Defaults to
-\link{HS5FModel}.}
+\link{HH_S5F}.}
 
 \item{field}{annotation to use for both unweighted path length exclusion and
 consideration as the MRCA node. If \code{NULL} do not exclude 
@@ -60,13 +60,12 @@ shmulateTree(sequence, graph)
 # Simulate using the mouse 5-mer targeting model
 # Exclude nodes without a sample identifier
 # Add 20\% mutation rate to the trunk
-shmulateTree(sequence, graph, targetingModel=MRS5NFModel,
+shmulateTree(sequence, graph, targetingModel=MK_RS5NF,
              field="SAMPLE", exclude=NA, junctionWeight=0.2)
  
 }
 \seealso{
 See \link{shmulateSeq} for imposing mutations on a single sequence. 
-          See \link{HS5FModel} and \link{MRS5NFModel} for predefined 
+          See \link{HH_S5F} and \link{MK_RS5NF} for predefined 
           \link{TargetingModel} objects.
 }
-

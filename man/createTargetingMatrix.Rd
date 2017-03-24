@@ -30,6 +30,7 @@ Targeting rates are calculated by multiplying the normalized mutability rate by 
 normalized substitution rates for each individual 5-mer.
 }
 \examples{
+\donttest{
 # Subset example data to one isotype and sample as a demo
 data(ExampleDb, package="alakazam")
 db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
@@ -44,6 +45,7 @@ mut_model <- extendMutabilityMatrix(mut_model)
 
 # Create targeting model from substitution and mutability
 tar_model <- createTargetingMatrix(sub_model, mut_model)
+}
 
 }
 \references{
@@ -58,4 +60,3 @@ tar_model <- createTargetingMatrix(sub_model, mut_model)
           \link{createMutabilityMatrix}, \link{extendMutabilityMatrix}, 
           \link{createTargetingModel}
 }
-

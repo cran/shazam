@@ -1,3 +1,94 @@
+Version 0.1.5: March 23, 2017
+-------------------------------------------------------------------------------
+
+General:
+
++ License changed to Creative Commons Attribution-ShareAlike 4.0 International
+  (CC BY-SA 4.0).
+
+Selection Analysis:
+
++ Fixed a bug in p-value calculation in `summarizeBaseline()`. The returned 
+  p-value can now be either positive or negative. Its magnitude (without the 
+  sign) should be interpreted as per normal. Its sign indicates the direction 
+  of the seLicense chalection detected. A positive p-value indicates positive selection, 
+  whereas a negative p-value indicates negative selection.
++ Added `editBaseline()` to exported functions, and a corresponding section 
+  in the vignette. 
++ Fixed a bug in counting the total number of observed mutations when performing
+  a local test for codon-by-codon selection analysis in `calcBaseline()`.
+
+Targeting Models:
+
++ Added `numMutationsOnly` argument to `createSubstitutionMatrix()`, enabling
+  parameter tuning for `minNumMutations`.  
++ Added functions `minNumMutationsTune()` and `minNumSeqMutationsTune()` to 
+  tune for parameters `minNumMutations` and `minNumSeqMutations` in functions 
+  `createSubstitutionMatrix()` and `createMutabilityMatrix()` respectively. 
+  Also added function `plotTune()` which helps visualize parameter tuning using
+  the abovementioned two new functions. 
++ Added human kappa and lambda light chain, silent, 5-mer, functional targeting
+  model (`HKL_S5F`).
++ Renamed `HS5FModel` as `HH_S5F`, `MRS5NFModel` as `MK_RS5NF`, and `U5NModel` 
+  as `U5N`.
++ Added human heavy chain, silent, 1-mer, functional substitution model (`HH_S1F`),
+  human kappa and lambda light chain, silent, 1-mer, functional substitution model 
+  (`HKL_S1F`), and mouse kappa light chain, replacement and silent, 1-mer, 
+  non-functional substitution model (`MK_RS1NF`).
++ Added `makeDegenerate5merSub` and `makeDegenerate5merMut` which make degenerate
+  5-mer substitution and mutability models respectively based on the 1-mer models. 
+  Also added `makeAverage1merSub` and `makeAverage1merMut` which make 1-mer 
+  substitution and mutability models respectively by averaging over the 5-mer models. 
+
+Mutation Profiling:
+
++ Added `returnRaw` argument to `calcObservedMutations()`, which if true returns 
+  the positions of point mutations and their corresponding mutation types, as 
+  opposed to counts of mutations (hence "raw"). 
++ Added new functions `slideWindowSeq()` and `slideWindowDb()` which implement 
+  a sliding window approach towards filtering a single sequence or sequences in
+  a data.frame which contain(s) equal to or more than a given number of mutations 
+  in a given number of consecutive nucleotides.
++ Added new function `slideWindowTune()` which allows for parameter tuning for
+  using `slideWindowSeq()` and `slideWindowDb()`.
++ Added new function `slideWindowTunePlot()` which visualizes parameter tuning 
+  by `slideWindowTune()`.
+  
+Distance Calculation:
+
++ Fixed a bug in `distToNearest` wherein `normalize="length"` for 5-mer models
+  was resulting in distances normalized by junction length squared instead of
+  raw junction length.
++ Fixed a bug in `distToNearest` wherein `symmetry="min"` was calculating the 
+  minimum of the total distance between two sequences instead of the minimum
+  distance at each mutated position.
++ Added `findThreshold` function to infer clonal distance threshold from 
+  nearest neighbor distances returned by `distToNearest`.
++ Renamed the `length` option for the `normalize` argument of `distToNearest`
+  to `len` so it matches Change-O.
++ Deprecated the `HS1FDistance` and `M1NDistance` distance models, which have 
+  been renamed to `hs1f_compat` and `m1n_compat` in the `model` argument of
+  `distToNearest`. These deprecated models should be used for compatibility 
+  with DefineClones in Change-O v0.3.3. These models have been replaced by 
+  replaced by `hh_s1f` and `mk_rs1nf`, which are supported by Change-O v0.3.4. 
++ Renamed the `hs5f` model in `distToNearest` to `hh_s5f`.
++ Added support for `MK_RS5NF` models to `distToNearest`.
++ Updated `calcTargetingDistance()` to enable calculation of a symmetric distance
+  matrix given a 1-mer substitution matrix normalized by row, such as `HH_S1F`.
++ Added a Gaussian mixture model (GMM) approach for threshold determination to 
+  `findThreshold`. The previous smoothed density method is available via the 
+  `method="density"` argument and the new GMM method is available via
+  `method="gmm"`.
++ Added the functions `plotGmmThreshold` and `plotDensityThreshold` to plot 
+  the threshold detection results from `findThreshold` for the `"gmm"` and
+  `"density"` methods, respectively.
+
+Region Definition:
+
++ Deleted `IMGT_V_NO_CDR3` and `IMGT_V_BY_REGIONS_NO_CDR3`. Updated `IMGT_V` 
+  and `IMGT_V_BY_REGIONS` so that neither includes CDR3 now.
+
+
 Version 0.1.4:  August 5, 2016
 -------------------------------------------------------------------------------
 

@@ -4,37 +4,54 @@
 \alias{calcTargetingDistance}
 \title{Calculates a 5-mer distance matrix from a TargetingModel object}
 \usage{
-calcTargetingDistance(model)
+calcTargetingDistance(model, places = 2)
 }
 \arguments{
-\item{model}{\link{TargetingModel} object with mutation likelihood information.}
+\item{model}{\link{TargetingModel} object with mutation likelihood information, or
+a 4x4 1-mer substitution matrix normalized by row with rownames and 
+colnames consisting of "A", "T", "G", and "C".}
+
+\item{places}{decimal places to round distances to.}
 }
 \value{
-A matrix of distances for each 5-mer motif with rows names defining 
-          the center nucleotide and column names defining the 5-mer nucleotide 
-          sequence.
+For input of \link{TargetingModel}, a matrix of distances for each 5-mer motif with 
+          rows names defining the center nucleotide and column names defining the 5-mer 
+          nucleotide sequence. For input of 1-mer substitution matrix, a 4x4 symmetric distance
+          matrix.
 }
 \description{
-\code{calcTargetingDistance} converts the targeting rates in a TargetingModel model 
-to a matrix of 5-mer to single-nucleotide mutation distances.
+\code{calcTargetingDistance} converts either the targeting rates in a \code{TargetingModel}
+ model to a matrix of 5-mer to single-nucleotide mutation distances, or the substitution 
+ rates in a 1-mer substitution model to a symmetric distance matrix.
 }
 \details{
 The targeting model is transformed into a distance matrix by:
 \enumerate{
   \item  Converting the likelihood of being mutated \eqn{p=mutability*substitution} to 
          distance \eqn{d=-log10(p)}.
-  \item  Dividing this distance by the mean of the distances
+  \item  Dividing this distance by the mean of the distances.
   \item  Converting all infinite, no change (e.g., A->A), and NA distances to 
+         zero.
+}
+
+The 1-mer substitution matrix is transformed into a distance matrix by:
+\enumerate{
+  \item  Symmetrize the 1-mer substitution matrix.
+  \item  Converting the rates to distance \eqn{d=-log10(p)}.
+  \item  Dividing this distance by the mean of the distances.
+  \item  Converting all infinite, no change (e.g., A -> A), and NA distances to 
          zero.
 }
 }
 \examples{
-# Calculate targeting distance of HS5FModel
-dist <- calcTargetingDistance(HS5FModel)
+# Calculate targeting distance of HH_S5F
+dist <- calcTargetingDistance(HH_S5F)
+
+# Calculate targeting distance of HH_S1F
+dist <- calcTargetingDistance(HH_S1F)
 
 }
 \seealso{
-Takes as input a \link{TargetingModel} object. See \link{createTargetingModel}
-          for building a model.
+See \link{TargetingModel} for this class of objects and
+          \link{createTargetingModel} for building one.
 }
-

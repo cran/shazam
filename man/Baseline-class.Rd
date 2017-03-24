@@ -2,8 +2,8 @@
 % Please edit documentation in R/Baseline.R
 \docType{class}
 \name{Baseline-class}
-\alias{Baseline}
 \alias{Baseline-class}
+\alias{Baseline}
 \title{S4 class defining a BASELINe (selection) object}
 \description{
 \code{Baseline} defines a common data structure the results of selection
@@ -56,7 +56,12 @@ defined region (e.g. "CDR" and "FWR"). Matrices have dimensions
 \code{c} = number of columns = length of the PDF (default 4001).}
 
 \item{\code{stats}}{\code{data.frame} of BASELINe statistics, 
-including: selection strength (Sigma), 95\% confidence 
-intervals, and P values.}
+including: mean selection strength (mean Sigma), 95\% confidence 
+intervals, and p-values with positive signs for the presence of 
+positive selection and/or p-values with negative signs for the
+presence of negative selection.}
 }}
 
+\seealso{
+See \link{summarizeBaseline} for more information on \code{@stats}.
+}

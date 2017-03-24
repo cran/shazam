@@ -32,4 +32,3 @@ ext_model <- extendSubstitutionMatrix(sub_model)
 \seealso{
 \link{createSubstitutionMatrix}, \link{extendMutabilityMatrix}
 }
-

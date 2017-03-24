@@ -74,8 +74,8 @@ baseline <- calcBaseline(db,
                          sequenceColumn="SEQUENCE_IMGT",
                          germlineColumn="GERMLINE_IMGT_D_MASK", 
                          testStatistic="focused",
-                         regionDefinition=IMGT_V_NO_CDR3,
-                         targetingModel=HS5FModel,
+                         regionDefinition=IMGT_V,
+                         targetingModel=HH_S5F,
                          nproc=1)
  
 # Grouping the PDFs by sample and isotype annotations
@@ -95,4 +95,3 @@ plotBaselineSummary(grouped, "SAMPLE", "ISOTYPE", facetBy="group")
 Takes as input either a \link{Baseline} object returned by \link{groupBaseline} 
           or a data.frame returned from \link{summarizeBaseline}.
 }
-

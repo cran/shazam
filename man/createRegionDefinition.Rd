@@ -32,4 +32,3 @@ createRegionDefinition()
 \seealso{
 See \link{RegionDefinition} for the return object.
 }
-

@@ -36,8 +36,8 @@ baseline <- calcBaseline(db,
                          sequenceColumn="SEQUENCE_IMGT",
                          germlineColumn="GERMLINE_IMGT_D_MASK", 
                          testStatistic="focused",
-                         regionDefinition=IMGT_V_NO_CDR3,
-                         targetingModel=HS5FModel,
+                         regionDefinition=IMGT_V,
+                         targetingModel=HH_S5F,
                          nproc=1)
 
 # Group PDFs by the sample identifier
@@ -51,10 +51,10 @@ testBaseline(grouped, groupBy="SAMPLE")
 \enumerate{
   \item  Yaari G, et al. Quantifying selection in high-throughput immunoglobulin 
            sequencing data sets. 
-           Nucleic Acids Res. 2012 40(17):e134.
+           Nucleic Acids Res. 2012 40(17):e134. 
+           (Corretions at http://selection.med.yale.edu/baseline/correction/)
  }
 }
 \seealso{
 To generate the \link{Baseline} input object see \link{groupBaseline}.
 }
-

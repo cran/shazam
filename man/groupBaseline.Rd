@@ -49,8 +49,8 @@ baseline <- calcBaseline(db,
                          sequenceColumn="SEQUENCE_IMGT",
                          germlineColumn="GERMLINE_IMGT_D_MASK", 
                          testStatistic="focused",
-                         regionDefinition=IMGT_V_NO_CDR3,
-                         targetingModel=HS5FModel,
+                         regionDefinition=IMGT_V,
+                         targetingModel=HH_S5F,
                          nproc=1)
                          
 # Group PDFs by sample
@@ -74,7 +74,8 @@ plotBaselineDensity(grouped3, idColumn="SAMPLE", colorElement="group",
 \enumerate{
   \item  Yaari G, et al. Quantifying selection in high-throughput immunoglobulin 
            sequencing data sets. 
-           Nucleic Acids Res. 2012 40(17):e134.
+           Nucleic Acids Res. 2012 40(17):e134. 
+           (Corrections at http://selection.med.yale.edu/baseline/correction/)
  }
 }
 \seealso{
@@ -82,4 +83,3 @@ To generate the baseline object see \link{calcBaseline}.
           To calculate BASELINe statistics, such as the mean selection strength
           and the 95\% confidence interval, see \link{summarizeBaseline}.
 }
-

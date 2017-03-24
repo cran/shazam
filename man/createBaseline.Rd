@@ -22,7 +22,7 @@ and boundaries of the Ig sequences.}
 
 \item{testStatistic}{\code{character} indicating the statistical framework 
 used to test for selection. For example, \code{"local"} or 
-\code{"focused"} or \code{"imbalance"}.}
+\code{"focused"} or \code{"imbalanced"}.}
 
 \item{regions}{\code{character} vector defining the regions the BASELINe 
 analysis was carried out on. For \code{"CDR"} and \code{"FWR"} 
@@ -56,8 +56,10 @@ defined region (e.g. "CDR" and "FWR"). Matrices have dimensions
 \code{c} = number of columns = length of the PDF (default 4001).}
 
 \item{stats}{\code{data.frame} of BASELINe statistics, 
-including: selection strength (Sigma), 95\% confidence 
-intervals, and P values.}
+including: mean selection strength (mean Sigma), 95\% confidence 
+intervals, and p-values with positive signs for the presence of 
+positive selection and/or p-values with negative signs for the
+presence of negative selection.}
 }
 \value{
 A \code{Baseline} object.
@@ -99,4 +101,3 @@ createBaseline()
 \seealso{
 See \link{Baseline} for the return object.
 }
-

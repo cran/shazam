@@ -6,7 +6,8 @@
 \usage{
 observedMutations(db, sequenceColumn = "SEQUENCE_IMGT",
   germlineColumn = "GERMLINE_IMGT_D_MASK", frequency = FALSE,
-  regionDefinition = NULL, mutationDefinition = NULL, nproc = 1)
+  combine = FALSE, regionDefinition = NULL, mutationDefinition = NULL,
+  nproc = 1)
 }
 \arguments{
 \item{db}{\code{data.frame} containing sequence data.}
@@ -19,6 +20,12 @@ the germline or reference sequence.}
 
 \item{frequency}{\code{logical} indicating whether or not to calculate
 mutation frequencies. Default is \code{FALSE}.}
+
+\item{combine}{\code{logical} indicating whether for each sequence should
+the mutation counts for the different regions (CDR, FWR) and 
+mutation types be combined and return one value of 
+count/frequency per sequence instead of 
+multiple values. Default is \code{FALSE}.}
 
 \item{regionDefinition}{\link{RegionDefinition} object defining the regions
 and boundaries of the Ig sequences. If NULL, mutations 
@@ -38,7 +45,7 @@ cluster has already been set the call function with
 A modified \code{db} \code{data.frame} with observed mutation counts for each 
           sequence listed. The columns names are dynamically created based on the
           regions in the \code{regionDefinition}. For example, when using the
-          \link{IMGT_V_NO_CDR3} definition, which defines positions for CDR and
+          \link{IMGT_V} definition, which defines positions for CDR and
           FWR, the following columns are added:
           \itemize{
             \item  \code{OBSERVED_CDR_R}:  number of replacement mutations in CDR1 and 
@@ -49,6 +56,24 @@ A modified \code{db} \code{data.frame} with observed mutation counts for each
                                            FWR2 and FWR3 of the V-segment.
             \item  \code{OBSERVED_FWR_S}:  number of silent mutations in FWR1, FWR2 and
                                            FWR3 of the V-segment.
+          }
+          If \code{frequency=TRUE}, R and S mutation frequencies are
+          calculated over the number of non-N positions in the speficied regions.
+          \itemize{
+            \item  \code{MU_FREQ_CDR_R}:  frequency of replacement mutations in CDR1 and 
+                                           CDR2 of the V-segment.
+            \item  \code{MU_FREQ_CDR_S}:  frequency of silent mutations in CDR1 and CDR2 
+                                           of the V-segment.
+            \item  \code{MU_FREQ_FWR_R}:  frequency of replacement mutations in FWR1, 
+                                           FWR2 and FWR3 of the V-segment.
+            \item  \code{MU_FREQ_FWR_S}:  frequency of silent mutations in FWR1, FWR2 and
+                                           FWR3 of the V-segment.
+          } 
+          If \code{frequency=TRUE} and \code{combine=TRUE}, the mutations and non-N positions
+          are aggregated and a single \code{MU_FREQ} value is returned
+          \itemize{
+            \item  \code{MU_FREQ}:  frequency of replacement and silent mutations in the 
+                                     specified region
           }
 }
 \description{
@@ -81,15 +106,14 @@ db_obs <- observedMutations(db, sequenceColumn="SEQUENCE_IMGT",
 # With mutations only considered replacement if charge changes
 db_obs <- observedMutations(db, sequenceColumn="SEQUENCE_IMGT",
                             germlineColumn="GERMLINE_IMGT_D_MASK",
-                            regionDefinition=IMGT_V_NO_CDR3,
+                            regionDefinition=IMGT_V,
                             mutationDefinition=CHARGE_MUTATIONS,
                             nproc=1)
                      
 }
 \seealso{
-\link{calcObservedMutations} is called by this function to get the list of mutations 
+\link{calcObservedMutations} is called by this function to get the number of mutations 
 in each sequence grouped by the \link{RegionDefinition}. 
 See \link{IMGT_SCHEMES} for a set of predefined \link{RegionDefinition} objects.
 See \link{expectedMutations} for calculating expected mutation frequencies.
 }
-

@@ -5,40 +5,40 @@ data(ExampleDb, package="alakazam")
 
 ## ---- eval=TRUE, warning=FALSE, results="hide"---------------------------
 # Collapse clonal groups into single sequences
-clones <- collapseClones(ExampleDb, regionDefinition=IMGT_V_NO_CDR3, nproc=1)
+clones <- collapseClones(ExampleDb, regionDefinition=IMGT_V, nproc=1)
 
 ## ---- eval=TRUE, warning=FALSE, results="hide"---------------------------
 # Count observed mutations and append OBSERVED columns to the output
 observed <- observedMutations(clones, 
                               sequenceColumn="CLONAL_SEQUENCE",
-                              regionDefinition=IMGT_V_NO_CDR3, nproc=1)
+                              regionDefinition=IMGT_V, nproc=1)
 # Count observed mutations and append EXPECTED columns to the output
 expected <- expectedMutations(observed, 
                               sequenceColumn="CLONAL_SEQUENCE",
-                              targetingModel=HS5FModel,
-                              regionDefinition=IMGT_V_NO_CDR3, nproc=1)
+                              targetingModel=HH_S5F,
+                              regionDefinition=IMGT_V, nproc=1)
 
 ## ---- eval=TRUE, warning=FALSE, results="hide"---------------------------
 # Calculate selection scores using the output from expectedMutations
 baseline <- calcBaseline(expected, testStatistic="focused", 
-                         regionDefinition=IMGT_V_NO_CDR3, nproc=1)
+                         regionDefinition=IMGT_V, nproc=1)
 
 ## ---- eval=TRUE, warning=FALSE, results="hide"---------------------------
 # Calculate selection scores from scratch on subset
 baseline <- calcBaseline(ExampleDb, testStatistic="focused", 
-                         regionDefinition=IMGT_V_NO_CDR3, nproc=1)
+                         regionDefinition=IMGT_V, nproc=1)
 
 # Subset the original data to switched isotypes
 db_sub <- subset(ExampleDb, ISOTYPE %in% c("IgA", "IgG"))
 # Calculate selection scores from scratch on subset
 baseline_sub <- calcBaseline(db_sub, testStatistic="focused", 
-                             regionDefinition=IMGT_V_NO_CDR3, nproc=1)
+                             regionDefinition=IMGT_V, nproc=1)
 
 ## ---- eval=FALSE, warning=FALSE, results="hide"--------------------------
 #  # Calculate selection on charge class with the mouse 5-mer model
 #  baseline <- calcBaseline(ExampleDb, testStatistic="focused",
-#                           regionDefinition=IMGT_V_NO_CDR3,
-#                           targetingModel=MRS5NFModel,
+#                           regionDefinition=IMGT_V,
+#                           targetingModel=MK_RS5NFModel,
 #                           targetingModel=CHARGE_MUTATIONS,
 #                           nproc=1)
 
@@ -79,4 +79,24 @@ plotBaselineSummary(grouped_2, "SAMPLE", "ISOTYPE", facetBy="group")
 # Plot selection PDFs for a subset of the data
 plotBaselineDensity(grouped_2, "ISOTYPE", groupColumn="SAMPLE", colorElement="group", 
                     colorValues=sample_colors, sigmaLimits=c(-1, 1))
+
+## ---- eval=FALSE, warning=FALSE, results="hide"--------------------------
+#  # Get indices of rows corresponding to IgA in the field "db"
+#  # These are the same indices also in the matrices in the fileds "numbOfSeqs",
+#  # "binomK", "binomN", "binomP", and "pdfs"
+#  # In this example, there is one row of IgA for each sample
+#  dbIgMIndex <- which(grouped_2@db$ISOTYPE == "IgA")
+#  
+#  grouped_2 <- editBaseline(grouped_2, "db", grouped_2@db[-dbIgMIndex, ])
+#  grouped_2 <- editBaseline(grouped_2, "numbOfSeqs", grouped_2@numbOfSeqs[-dbIgMIndex, ])
+#  grouped_2 <- editBaseline(grouped_2, "binomK", grouped_2@binomK[-dbIgMIndex, ])
+#  grouped_2 <- editBaseline(grouped_2, "binomN", grouped_2@binomN[-dbIgMIndex, ])
+#  grouped_2 <- editBaseline(grouped_2, "binomP", grouped_2@binomP[-dbIgMIndex, ])
+#  grouped_2 <- editBaseline(grouped_2, "pdfs",
+#                           lapply(grouped_2@pdfs, function(pdfs) {pdfs[-dbIgMIndex, ]} ))
+#  
+#  # The indices corresponding to IgA are slightly different in the field "stats"
+#  # In this example, there is one row of IgA for each sample and for each region
+#  grouped_2 <- editBaseline(grouped_2, "stats",
+#                            grouped_2@stats[grouped_2@stats$ISOTYPE!="IgA", ])
 

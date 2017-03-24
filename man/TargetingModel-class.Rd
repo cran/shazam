@@ -2,8 +2,8 @@
 % Please edit documentation in R/TargetingModels.R
 \docType{class}
 \name{TargetingModel-class}
-\alias{TargetingModel}
 \alias{TargetingModel-class}
+\alias{TargetingModel}
 \title{S4 class defining a targeting model}
 \description{
 \code{TargetingModel} defines a common data structure for mutability, substitution and
@@ -31,7 +31,10 @@ complete 5-mer of the unmutated nucleotide sequence.}
 
 \item{\code{mutability}}{Normalized rates of a given 5-mer being mutated. The 
 mutability model is stored as a numeric vector of length 3125 
-with mutability rates for each 5-mer.}
+with mutability rates for each 5-mer. Note that "normalized" 
+means that the mutability rates for the 1024 5-mers that 
+contain no "N" at any position sums up to 1 (as opposed to 
+the entire vector summing up to 1).}
 
 \item{\code{targeting}}{Rate matrix of a given mutation ocurring, defined as 
 \eqn{mutability * substitution}. The targeting model 
@@ -40,7 +43,7 @@ the mutated nucleotide at the center of each 5-mer, one of
 \code{c("A", "C", "G", "T", "N")}, and columns define the complete 5-mer 
 of the unmutated nucleotide sequence.}
 }}
+
 \seealso{
 See \link{createTargetingModel} building models from sequencing data.
 }
-

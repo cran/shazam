@@ -37,8 +37,8 @@
 #' \itemize{
 #'   \item  \link{createTargetingModel}:     Build a 5-mer targeting model.
 #'   \item  \link{plotMutability}:           Plot 5-mer mutability rates.
-#'   \item  \link{HS5FModel}:                Human 5-mer SHM targeting model.
-#'   \item  \link{MRS5NFModel}:              Mouse 5-mer SHM targeting model.
+#'   \item  \link{HH_S5F}:                Human 5-mer SHM targeting model.
+#'   \item  \link{MK_RS5NF}:              Mouse 5-mer SHM targeting model.
 #' }
 #'
 #' @section  Quantification of selection pressure:
@@ -70,8 +70,10 @@
 #' defining clonal relationships.
 #'              
 #' \itemize{
+#'   \item  \link{findThreshold}:            Identify clonal assignment threshold based on 
+#'                                           distances to nearest neighbors.
 #'   \item  \link{distToNearest}:            Tune clonal assignment thresholds by calculating 
-#'                                           distances to nearest-neighbors.
+#'                                           distances to nearest neighbors.
 #'   \item  \link{calcTargetingDistance}:    Construct a nucleotide distance matrix from a 
 #'                                           5-mer targeting model.
 #' }
@@ -84,15 +86,18 @@
 #'            analysis of Ig V region sequences. 
 #'            Int Immunol. 2008 20(5):683-94.
 #'   \item  Uduman M, et al. Detecting selection in immunoglobulin sequences. 
-#'            Nucleic Acids Res. 2011 39(Web Server issue):W499-504.
+#'            Nucleic Acids Res. 2011 39(Web Server issue):W499-504. (Corrections at 
+#'            http://selection.med.yale.edu/baseline/correction/) 
 #'   \item  Yaari G, et al. Quantifying selection in high-throughput immunoglobulin 
 #'            sequencing data sets. 
 #'            Nucleic Acids Res. 2012 40(17):e134.
 #'   \item  Yaari G, et al. Models of somatic hypermutation targeting and substitution based 
 #'            on synonymous mutations from high-throughput immunoglobulin sequencing data. 
 #'            Front Immunol. 2013 4:358.
-#'   \item  Cui A, et al. A model of somatic hypermutation targeting in mice based on 
-#'            high-throughput immunoglobulin sequencing data. Under review.
+#'   \item  Cui A, Di Niro R, Vander Heiden J, Briggs A, Adams K, Gilbert T, O'Connor K,
+#'          Vigneault F, Shlomchik M and Kleinstein S (2016). A Model of Somatic Hypermutation 
+#'          Targeting in Mice Based on High-Throughput Ig Sequencing Data. The Journal of 
+#'          Immunology, 197(9), 3566-3574.
 #'  }
 #' 
 #' @import   ggplot2
@@ -118,16 +123,21 @@
 #' @importFrom  foreach     foreach %dopar% registerDoSEQ
 #' @importFrom  igraph      V E as_adjacency_matrix graph_from_data_frame
 #'                          vertex_attr set_vertex_attr
+#' @importFrom  kedd        h.ucv
+#' @importFrom  KernSmooth  bkde
 #' @importFrom  lazyeval    interp
 #' @importFrom  scales      log2_trans log10_trans trans_breaks trans_format
 #'                          math_format percent scientific
 #' @importFrom  tidyr       gather gather_ spread spread_
 #' @importFrom  iterators   icount
 #' @importFrom  SDMTools    wt.sd
+#' @importFrom  scales      log2_trans log10_trans trans_breaks trans_format
+#'                          math_format percent scientific pretty_breaks
 #' @importFrom  seqinr      c2s s2c words translate
 #' @importFrom  stats       na.omit setNames ecdf sd cor cov median mad
 #'                          approx convolve weighted.mean p.adjust
-#'                          dbeta pbeta qbeta rbeta
+#'                          dbeta pbeta qbeta rbeta optim
+#'                          dnorm pnorm runif
 #' @importFrom  stringi     stri_dup stri_flatten stri_join stri_length
 #'                          stri_count_boundaries stri_count_regex 
 #'                          stri_extract_all_regex stri_extract_first_regex  
@@ -136,6 +146,41 @@ NULL
 
 
 #### Sysdata ####
+
+# Deprecated (v0.1.4) mouse single nucleotide distance matrix
+#
+# Single nucleotide distance matrix of somatic hypermutation targeting based on 
+# Mus musculus Ig sequence data.
+#
+# @format   A symmetric matrix of nucleotide substitution distance scores with 
+#           row names and column names definition the specific subsitution.
+# 
+# @references
+# \enumerate{
+#   \item  Smith DS, et al. Di- and trinucleotide target preferences of somatic 
+#            mutagenesis in normal and autoreactive B cells. 
+#            J Immunol. 1996 156:2642-52. 
+# }
+#
+# M1N_Compat
+
+
+# Deprecated (v0.1.4) Human single nucleotide distance matrix.
+#
+# Single nucleotide distance matrix of somatic hypermutation targeting based on 
+# human Ig sequence data.
+#
+# @format   A symmetric matrix of nucleotide substitution distance scores with 
+#           row names and column names definition the specific subsitution.
+# 
+# @references
+# \enumerate{
+#   \item  Yaari G, et al. Models of somatic hypermutation targeting and substitution based 
+#            on synonymous mutations from high-throughput immunoglobulin sequencing data. 
+#            Front Immunol. 2013 4(November):358.
+# }
+#
+# HS1F_Compat
 
 # Ordered nucleotide character set
 # NUCLEOTIDES <- c("A", "C", "G", "T", "N", "-", ".")
@@ -168,5 +213,5 @@ NULL
 # BAYESIAN_FITTED
 
 # Add built-in variables to global variables environment
-utils::globalVariables(c("M1NDistance", "HS1FDistance", 
-                         "U5NModel", "HS5FModel", "MRS5NFModel"), package="shazam")
+utils::globalVariables(c("HH_S1F", "HKL_S1F", "MK_RS1NF",
+                         "HH_S5F", "HKL_S5F", "MK_RS5NF", "U5N"), package="shazam")
