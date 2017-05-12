@@ -12,7 +12,7 @@ clones <- collapseClones(ExampleDb, regionDefinition=IMGT_V, nproc=1)
 observed <- observedMutations(clones, 
                               sequenceColumn="CLONAL_SEQUENCE",
                               regionDefinition=IMGT_V, nproc=1)
-# Count observed mutations and append EXPECTED columns to the output
+# Count expected mutations and append EXPECTED columns to the output
 expected <- expectedMutations(observed, 
                               sequenceColumn="CLONAL_SEQUENCE",
                               targetingModel=HH_S5F,
@@ -38,8 +38,8 @@ baseline_sub <- calcBaseline(db_sub, testStatistic="focused",
 #  # Calculate selection on charge class with the mouse 5-mer model
 #  baseline <- calcBaseline(ExampleDb, testStatistic="focused",
 #                           regionDefinition=IMGT_V,
-#                           targetingModel=MK_RS5NFModel,
-#                           targetingModel=CHARGE_MUTATIONS,
+#                           targetingModel=MK_RS5NF,
+#                           mutationDefinition=CHARGE_MUTATIONS,
 #                           nproc=1)
 
 ## ---- eval=TRUE, warning=FALSE, results="hide"---------------------------

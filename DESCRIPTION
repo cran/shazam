@@ -1,7 +1,7 @@
 Package: shazam
 Type: Package
-Version: 0.1.5
-Date: 2017-03-23
+Version: 0.1.6
+Date: 2017-05-12
 Authors@R: c(person("Mohamed", "Uduman", role=c("aut"), 
                     email="mohamed.uduman@yale.edu"),
              person("Gur", "Yaari", role=c("aut"), 
@@ -34,17 +34,17 @@ LazyData: true
 BuildVignettes: true
 VignetteBuilder: knitr
 Depends: R (>= 3.1.2), ggplot2 (>= 2.0.0)
-Imports: alakazam (>= 0.2.6), ape, data.table (>= 1.9.4), doParallel,
-        dplyr, foreach, graphics, grid, igraph, iterators, kedd,
-        KernSmooth, methods, lazyeval, parallel, SDMTools, scales,
-        seqinr, stats, stringi, tidyr, utils
+Imports: alakazam (>= 0.2.6), ape, doParallel, dplyr (>= 0.5.0),
+        foreach, graphics, grid, igraph, iterators, kedd, KernSmooth,
+        methods, lazyeval, parallel, SDMTools, scales, seqinr, stats,
+        stringi, tidyr, utils
 Suggests: knitr, rmarkdown, testthat
 Collate: 'Shazam.R' 'RegionDefinitions.R' 'Baseline.R' 'Core.R'
         'DistToNearest.R' 'MutationDefinitions.R' 'MutationProfiling.R'
         'Shmulate.R' 'TargetingModels.R'
 RoxygenNote: 6.0.1
 NeedsCompilation: no
-Packaged: 2017-03-23 21:17:41 UTC; jason
+Packaged: 2017-05-12 23:04:59 UTC; jason
 Author: Mohamed Uduman [aut],
   Gur Yaari [aut],
   Namita Gupta [aut],
@@ -56,4 +56,4 @@ Author: Mohamed Uduman [aut],
   Steven Kleinstein [aut, cph]
 Maintainer: Jason Vander Heiden <jason.vanderheiden@yale.edu>
 Repository: CRAN
-Date/Publication: 2017-03-24 06:25:49 UTC
+Date/Publication: 2017-05-12 23:27:54 UTC

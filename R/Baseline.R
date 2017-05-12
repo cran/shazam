@@ -381,7 +381,7 @@ calcBaseline <- function(db,
                          mutationDefinition=NULL,
                          calcStats=FALSE,
                          nproc=1) {
-    # Hack for visibility of data.table and foreach index variables
+    # Hack for visibility of foreach index variable
     idx <- NULL
     
     # Evaluate argument choices
@@ -832,27 +832,39 @@ calcBaselineBinomialPdf <- function (x=3,
 #' }
 #' @export
 groupBaseline <- function(baseline, groupBy, nproc=1) {
-    # Hack for visibility of data.table and foreach index variables
-    idx <- yidx <- .I <- NULL
+    # Hack for visibility of foreach index variables
+    i=NULL
     
     # Ensure that the nproc does not exceed the number of cores/CPUs available
     nproc <- min(nproc, getnproc())
     
-    # Convert the db (data.frame) to a data.table & set keys
-    # This is an efficient way to get the groups of CLONES, instead of doing dplyr
-    dt <- data.table(baseline@db)
-    # Get the group indexes
-    groupByFormatted <- paste(groupBy, collapse=",", sep=",")
-    dt <- dt[, list(yidx=list(.I)), by=groupByFormatted]
-    groups <- dt[, yidx] 
-    df <- as.data.frame(dt)    
+    # Get indices of unique combinations of field(s) specified by groupBy
+    # unique groups
+    # crucial to use data.frame and assign colnames (esp. when groupBy has length 1)
+    uniqueGroups <- data.frame(unique(baseline@db[, groupBy]))
+    colnames(uniqueGroups) <- groupBy 
+    rownames(uniqueGroups) <- NULL
+    # indices
+    # crucial to have simplify=FALSE 
+    # (otherwise won't return a list if uniqueClones has length 1)
+    uniqueGroupsIdx <- sapply(1:nrow(uniqueGroups), function(i){
+        curGroup <- data.frame(uniqueGroups[i, ])
+        colnames(curGroup) <- groupBy
+        # match for each field
+        curIdx <- sapply(groupBy, function(coln){
+            baseline@db[, coln]==curGroup[, coln]
+        }, simplify=FALSE)
+        curIdx <- do.call(rbind, curIdx)
+        # intersect to get match across fields 
+        curIdx <- which(colSums(curIdx)==length(groupBy))
+    }, simplify=FALSE)
     
     # If user wants to paralellize this function and specifies nproc > 1, then
     # initialize and register slave R processes/clusters & 
     # export all nesseary environment variables, functions and packages.  
     if (nproc > 1){        
         cluster <- parallel::makeCluster(nproc, type = "PSOCK")
-        parallel::clusterExport( cluster, list('baseline', 'groups',
+        parallel::clusterExport( cluster, list('baseline', 'uniqueGroupsIdx',
                                                'break2chunks', 'PowersOfTwo', 
                                                'convolutionPowersOfTwo', 
                                                'convolutionPowersOfTwoByTwos', 
@@ -872,7 +884,7 @@ groupBaseline <- function(baseline, groupBy, nproc=1) {
     cat("Grouping BASELINe probability density functions...\n")
     
     # Number of total groups
-    numbOfTotalGroups <- length(groups)
+    numbOfTotalGroups <- length(uniqueGroupsIdx)
     list_pdfs <- list()
     regions <- baseline@regions
     
@@ -889,9 +901,11 @@ groupBaseline <- function(baseline, groupBy, nproc=1) {
         
         # Group (convolute) all the PDFS and get one single PDF
         list_region_pdfs  <-
-            foreach(idx=iterators::icount(numbOfTotalGroups)) %dopar% {
+            foreach(i=1:numbOfTotalGroups) %dopar% {
+                idx <- uniqueGroupsIdx[[i]]
+                
                 # Get a matrix (r=numb of sequences/groups * c=4001(i,e. the length of the PDFS))
-                matrix_GroupPdfs <- (baseline@pdfs[[region]])[groups[[idx]], , drop=FALSE]
+                matrix_GroupPdfs <- (baseline@pdfs[[region]])[idx, , drop=FALSE]
                 
                 # A list version of 
                 list_GroupPdfs <- 
@@ -903,7 +917,7 @@ groupBaseline <- function(baseline, groupBy, nproc=1) {
                 # Determine the number of sequences that went into creating each of the PDFs
                 # If running groupBaseline for the first time after calcBaseline, then
                 # each PDF should have a numbOfSeqs=1. 
-                numbOfSeqs_region <- baseline@numbOfSeqs[groups[[idx]], region]
+                numbOfSeqs_region <- baseline@numbOfSeqs[idx, region]
                 numbOfSeqs_region <- numbOfSeqs_region[numbOfSeqs_region > 0]
                 if(any(numbOfSeqs_region>0)) { 
                     names(numbOfSeqs_region) <- 1:length(numbOfSeqs_region) 
@@ -1045,12 +1059,8 @@ groupBaseline <- function(baseline, groupBy, nproc=1) {
     #colnames(numbOfSeqs) <- paste0("NUMB_SEQUENCES_", colnames(numbOfSeqs))
     
     # Create the db, which will now contain the group information
-    db <- df[, groupBy]
-    #db <- cbind( df[,groupBy], numbOfSeqs)
-    if(!class(db)=="data.frame") { 
-        db <- as.data.frame(db) 
-        colnames(db)[1] <- groupBy
-    }
+    stopifnot(is.data.frame(uniqueGroups))
+    db <- uniqueGroups
     
     # Create a Baseline object with the above results to return
     baseline <- createBaseline(description="",
@@ -1130,7 +1140,7 @@ groupBaseline <- function(baseline, groupBy, nproc=1) {
 #'                      
 #' @export
 summarizeBaseline <- function(baseline, returnType=c("baseline", "df"), nproc=1) {
-    # Hack for visibility of data.table and foreach index variables
+    # Hack for visibility of foreach index variable
     idx <- NULL
     
     # Check arguments
@@ -1780,7 +1790,7 @@ plotBaselineSummary <- function(baseline, idColumn, groupColumn=NULL, groupColor
     
     # Plot
     if (!silent) { 
-        p1
+        plot(p1)
     } else {
         invisible(p1)
     }
