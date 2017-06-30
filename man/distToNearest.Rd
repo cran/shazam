@@ -8,7 +8,7 @@ distToNearest(db, sequenceColumn = "JUNCTION", vCallColumn = "V_CALL",
   jCallColumn = "J_CALL", model = c("ham", "aa", "hh_s1f", "hh_s5f",
   "mk_rs1nf", "mk_rs5nf", "m1n_compat", "hs1f_compat"), normalize = c("len",
   "none"), symmetry = c("avg", "min"), first = TRUE, nproc = 1,
-  fields = NULL, cross = NULL, mst = FALSE)
+  fields = NULL, cross = NULL, mst = FALSE, progress = FALSE)
 }
 \arguments{
 \item{db}{data.frame containing sequence data.}
@@ -45,6 +45,8 @@ overlapping gene calls.}
 
 \item{mst}{if \code{TRUE}, return comma-separated branch lengths from minimum 
 spanning tree.}
+
+\item{progress}{if \code{TRUE} print a progress bar.}
 }
 \value{
 Returns a modified \code{db} data.frame with nearest neighbor distances in the 

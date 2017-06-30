@@ -31,6 +31,7 @@ At a given threshold value of \code{minNumSeqMutations}, for a given 5-mer,
              is computed directly. Otherwise, mutability is inferred.
 }
 \examples{
+\donttest{
 # Subset example data to one isotype and sample as a demo
 data(ExampleDb, package="alakazam")
 db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
@@ -47,7 +48,7 @@ mutCount <- createMutabilityMatrix(db, substitutionModel = sub,
 
 # Tune minNumSeqMutations
 minNumSeqMutationsTune(mutCount, seq(from=100, to=300, by=50))
-                                      
+}                                      
 }
 \references{
 \enumerate{

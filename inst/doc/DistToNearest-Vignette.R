@@ -40,10 +40,10 @@ plot(p2)
 
 ## ---- eval=TRUE, warning=FALSE, fig.width=7------------------------------
 # Find threshold using gmm method
-output <- findThreshold(dist_ham$DIST_NEAREST, method="gmm", cutEdge=0.9)
+output <- findThreshold(dist_ham$DIST_NEAREST, method="gmm", model="gamma-gamma")
 
 # Plot distance histogram, Gaussian fits, and optimum threshold
-plot(output, binwidth=0.02, title="GMM Method")
+plot(output, binwidth=0.02, title="GMM Method: gamma-gamma")
 
 # Print threshold
 print(output)

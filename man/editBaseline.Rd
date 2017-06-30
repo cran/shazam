@@ -24,6 +24,12 @@ A \code{Baseline} object with the field of choice updated.
 data(ExampleDb, package="alakazam")
 db <- subset(ExampleDb, ISOTYPE \%in\% c("IgA", "IgG") & SAMPLE == "+7d")
 
+# Collapse clones
+db <- collapseClones(db, sequenceColumn="SEQUENCE_IMGT",
+                     germlineColumn="GERMLINE_IMGT_D_MASK",
+                     method="thresholdedFreq", minimumFrequency=0.6,
+                     includeAmbiguous=FALSE, breakTiesStochastic=FALSE)
+                     
 # Calculate BASELINe
 baseline <- calcBaseline(db, 
                          sequenceColumn="SEQUENCE_IMGT",
@@ -31,10 +37,11 @@ baseline <- calcBaseline(db,
                          testStatistic="focused",
                          regionDefinition=IMGT_V,
                          targetingModel=HH_S5F,
-                         nproc = 1)
+                         nproc=1)
+                         
 # Edit the field "description"
-baseline <- editBaseline(baseline, field_name = "description", 
-                         value = "+7d IgA & IgG")
+baseline <- editBaseline(baseline, field_name="description", 
+                         value="+7d IgA & IgG")
                                                   
 }
 \seealso{

@@ -271,6 +271,11 @@ setClass("TargetingModel",
 #'           For \code{returnModel = "1mer"} or \code{"1mer_raw"}:
 #'           a 4x4 normalized or un-normalized 1-mer substitution matrix respectively.
 #' 
+#' @details  \strong{Caution: The targeting model functions do NOT support ambiguous 
+#'           characters in their inputs. You MUST make sure that your input and germline
+#'           sequences do NOT contain ambiguous characters (especially if they are
+#'           clonal consensuses returned from \code{collapseClones}).}
+#' 
 #' @references
 #' \enumerate{
 #'   \item  Yaari G, et al. Models of somatic hypermutation targeting and substitution based 
@@ -366,14 +371,17 @@ createSubstitutionMatrix <- function(db, model=c("RS", "S"),
                 muCodonPos = {position-1}%%3+1
                 seqAtMutation <- codonSeq[muCodonPos]
                 glAtMutation <- codonGL[muCodonPos]
-                if( !any(codonGL=="N") & !any(codonSeq=="N") ){
+                if (!any(codonGL=="N") & !any(codonSeq=="N")) {
                     codonPermutate <- matrix(rep(codonGL,3),ncol=3,byrow=T)
                     codonPermutate[,muCodonPos] <- canMutateTo(glAtMutation)[-4]
                     codonPermutate <- apply(codonPermutate,1,paste,collapse="")
                     codonPermutate <- matrix( c( codonPermutate, rep(c2s(codonGL),3) ), ncol=2, byrow=F)
+                    # not intended to be used where input sequences have 
+                    # ambiguous characters; it assumes that only 1 entry (R/S/Stop/na) from
+                    # mutationType is non-zero/1
                     muType <- mutationTypeOptimized(codonPermutate)
-                    if(!length(grep("N",wrd))){
-                        if( sum(muType=="S") == length(muType) ){
+                    if (!length(grep("N",wrd))) {
+                        if (sum(muType=="S") == length(muType) ){
                             substitutionList[[v_fam]][[wrd]][glAtMutation,seqAtMutation] <- (substitutionList[[v_fam]][[wrd]][glAtMutation,seqAtMutation] + 1)
                         }
                     }
@@ -643,6 +651,11 @@ minNumMutationsTune = function(subCount, minNumMutationsRange) {
 #'           When \code{numSeqMutationsOnly} is \code{TRUE}, a named numeric
 #'           vector of length 1024 counting the number of observed mutations in sequences containing 
 #'           each 5-mer.
+#' 
+#' @details  \strong{Caution: The targeting model functions do NOT support ambiguous 
+#'           characters in their inputs. You MUST make sure that your input and germline
+#'           sequences do NOT contain ambiguous characters (especially if they are 
+#'           clonal consensuses returned from \code{collapseClones}).}
 #' 
 #' @references
 #' \enumerate{
@@ -945,6 +958,7 @@ createMutabilityMatrix <- function(db, substitutionModel, model=c("RS", "S"),
 #'              for what it does.  
 #' 
 #' @examples
+#' \donttest{
 #' # Subset example data to one isotype and sample as a demo
 #' data(ExampleDb, package="alakazam")
 #' db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
@@ -961,7 +975,7 @@ createMutabilityMatrix <- function(db, substitutionModel, model=c("RS", "S"),
 #' 
 #' # Tune minNumSeqMutations
 #' minNumSeqMutationsTune(mutCount, seq(from=100, to=300, by=50))
-#'                                       
+#' }                                      
 #' @export
 minNumSeqMutationsTune = function(mutCount, minNumSeqMutationsRange) {
   stopifnot( length(mutCount) == 1024 )
@@ -1057,6 +1071,7 @@ extendSubstitutionMatrix <- function(substitutionModel) {
 #' @seealso  \link{createMutabilityMatrix}, \link{extendSubstitutionMatrix}
 #' 
 #' @examples
+#' \donttest{
 #' # Subset example data to one isotype and sample as a demo
 #' data(ExampleDb, package="alakazam")
 #' db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
@@ -1065,6 +1080,7 @@ extendSubstitutionMatrix <- function(substitutionModel) {
 #' sub_model <- createSubstitutionMatrix(db, model="S")
 #' mut_model <- createMutabilityMatrix(db, sub_model, model="S")
 #' ext_model <- extendMutabilityMatrix(mut_model)
+#' }
 #' 
 #' @export
 extendMutabilityMatrix <- function(mutabilityModel) {
@@ -1201,6 +1217,11 @@ createTargetingMatrix <- function(substitutionModel, mutabilityModel) {
 #' @param    modelCitation       publication source.
 #' 
 #' @return   A \link{TargetingModel} object.
+#' 
+#' @details  \strong{Caution: The targeting model functions do NOT support ambiguous 
+#'           characters in their inputs. You MUST make sure that your input and germline
+#'           sequences do NOT contain ambiguous characters (especially if they are
+#'           clonal consensuses returned from \code{collapseClones}).}
 #' 
 #' @references
 #' \enumerate{
@@ -1807,10 +1828,6 @@ symmetrize <- function(sub1mer) {
 #' 
 #' @export
 writeTargetingDistance <- function(model, file) {
-    if (!is(model, "TargetingModel")) {
-        stop(deparse(substitute(model)), " is not a valid TargetingModel object")
-    }
-    
     to_write <- as.data.frame(calcTargetingDistance(model))
     to_write[is.na(to_write)] <- 0
     write.table(to_write, file, quote=FALSE, sep="\t", col.names=NA, row.names=TRUE)
@@ -2271,8 +2288,17 @@ canMutateTo <- function(nuc) {
 
 
 # Compute the mutations types
+# matOfCodons: nx2; n=pairs of codons; 1st col=codonTo, 2nd col=codonFrom
+# NOTE: this function is not intended to be used where input sequences have 
+#       ambiguous characters; it assumes that only 1 entry (R/S/Stop/na) from
+#       mutationType is non-zero/1
 mutationTypeOptimized <- function(matOfCodons) {
-    apply(matOfCodons, 1, function(x) { mutationType(x[2], x[1]) })
+    # mutType: 4xn; rows: R/S/Stop/na
+    mutType = apply(matOfCodons, 1, function(x) { mutationType(x[2], x[1]) })
+    idx = apply(mutType, 2, function(y){which(y>0)[1]})
+    mutType = rownames(mutType)[idx]
+    mutType[which(mutType=="na")] = NA
+    return(mutType)
 }
 
 
@@ -2310,7 +2336,15 @@ analyzeMutations2NucUri <- function(in_matrix) {
             codonSeq[is.na(codonSeq)] <- "N"
             GLcodons =  apply(matrix(codonGL,length_mutations,3,byrow=TRUE),1,c2s)
             Seqcodons =   apply(codonSeq,2,c2s)
-            mutationInfo = apply(rbind(GLcodons , Seqcodons),2,function(x){mutationType(c2s(x[1]),c2s(x[2]))})
+            mutationInfo = apply(rbind(GLcodons , Seqcodons),2,function(x){
+                # not intended to be used where input sequences have 
+                # ambiguous characters; it assumes that only 1 entry (R/S/Stop/na) from
+                # mutationType is non-zero/1
+                mutType = mutationType(c2s(x[1]),c2s(x[2]))
+                mutType = names(mutType)[which(mutType>0)]
+                if (mutType=="na") {mutType=NA}
+                return(mutType)
+                })
             names(mutationInfo) = mutationPos
         }
         if (any(!is.na(mutationInfo))) {

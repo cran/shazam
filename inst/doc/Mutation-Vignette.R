@@ -18,7 +18,7 @@ db_obs <- observedMutations(db, sequenceColumn="SEQUENCE_IMGT",
                             nproc=1)
 # Show new mutation count columns
 db_obs %>% 
-    select(SEQUENCE_ID, starts_with("OBSERVED_")) %>%
+    select(SEQUENCE_ID, starts_with("MU_COUNT_")) %>%
     head(n=4)
 
 # Calculate R and S mutation frequencies
@@ -29,7 +29,7 @@ db_obs <- observedMutations(db_obs, sequenceColumn="SEQUENCE_IMGT",
                             nproc=1)
 # Show new mutation frequency columns
 db_obs %>% 
-    select(SEQUENCE_ID, starts_with("MU_")) %>%
+    select(SEQUENCE_ID, starts_with("MU_FREQ_")) %>%
     head(n=4)
 
 ## ---- eval=TRUE----------------------------------------------------------
@@ -42,7 +42,7 @@ db_obs <- observedMutations(db, sequenceColumn="SEQUENCE_IMGT",
                             nproc=1)
 # Show new mutation frequency columns
 db_obs %>% 
-    select(SEQUENCE_ID, starts_with("MU_")) %>%
+    select(SEQUENCE_ID, starts_with("MU_FREQ_")) %>%
     head(n=4)
 
 ## ---- eval=TRUE, warning=FALSE-------------------------------------------
@@ -62,7 +62,7 @@ db_obs_v <- observedMutations(db, sequenceColumn="SEQUENCE_IMGT",
                               nproc=1)
 # Show new FWR mutation columns
 db_obs_v %>% 
-    select(SEQUENCE_ID, starts_with("OBSERVED_FWR")) %>%
+    select(SEQUENCE_ID, starts_with("MU_COUNT_FWR")) %>%
     head(n=4)
 
 # Calculate aggregate CDR and FWR V-segment R and S mutation frequencies
@@ -73,7 +73,7 @@ db_obs_v <- observedMutations(db_obs_v, sequenceColumn="SEQUENCE_IMGT",
                               nproc=1)
 # Show new CDR and FWR mutation frequency columns
 db_obs_v %>% 
-    select(SEQUENCE_ID, starts_with("MU_")) %>%
+    select(SEQUENCE_ID, starts_with("MU_FREQ_")) %>%
     head(n=4)
 
 ## ---- eval=TRUE, warning=FALSE-------------------------------------------
@@ -99,7 +99,7 @@ db_obs_ch <- observedMutations(db, sequenceColumn="SEQUENCE_IMGT",
                                nproc=1)
 # Show new charge mutation frequency columns
 db_obs_ch %>% 
-    select(SEQUENCE_ID, starts_with("MU_")) %>%
+    select(SEQUENCE_ID, starts_with("MU_FREQ_")) %>%
     head(n=4)
 
 ## ---- eval=TRUE, warning=FALSE-------------------------------------------

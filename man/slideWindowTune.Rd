@@ -15,8 +15,8 @@ slideWindowTune(db, sequenceColumn = "SEQUENCE_IMGT",
 
 \item{germlineColumn}{name of the column containing IMGT-gapped germline sequences.}
 
-\item{dbMutList}{if supplied, this should be a list of \code{data.frame}s returned 
-as \code{$pos} of the nested list produced by 
+\item{dbMutList}{if supplied, this should be a list consisting of \code{data.frame}s 
+returned as \code{$pos} in the nested list produced by 
 \link{calcObservedMutations} with \code{returnRaw=TRUE}; otherwise, 
 \link{calcObservedMutations} is called on columns \code{sequenceColumn}
 and \code{germlineColumn} of \code{db}. Default is \code{NULL}.}

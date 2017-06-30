@@ -21,6 +21,7 @@ A 3125 vector of normalized mutability rates for each 5-mer motif with
 with 5-mers that include Ns by averaging over all corresponding 5-mers without Ns.
 }
 \examples{
+\donttest{
 # Subset example data to one isotype and sample as a demo
 data(ExampleDb, package="alakazam")
 db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
@@ -29,6 +30,7 @@ db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
 sub_model <- createSubstitutionMatrix(db, model="S")
 mut_model <- createMutabilityMatrix(db, sub_model, model="S")
 ext_model <- extendMutabilityMatrix(mut_model)
+}
 
 }
 \seealso{

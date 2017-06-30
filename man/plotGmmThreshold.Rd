@@ -21,7 +21,7 @@ be set automatically.}
 \item{xmax}{maximum limit for plotting the x-axis. If \code{NULL} the limit will 
 be set automatically.}
 
-\item{breaks}{number of breaks o show on the x-axis. If \code{NULL} the breaks will 
+\item{breaks}{number of breaks to show on the x-axis. If \code{NULL} the breaks will 
 be set automatically.}
 
 \item{binwidth}{binwidth for the histogram. If \code{NULL} the binwidth 
@@ -54,7 +54,7 @@ db <- subset(ExampleDb, SAMPLE == "-1h")
 db <- distToNearest(db, model="ham", normalize="len", nproc=1)
 
 # To find the threshold cut, call findThreshold function for "gmm" method.
-output <- findThreshold(db$DIST_NEAREST, method="gmm")
+output <- findThreshold(db$DIST_NEAREST, method="gmm", model="norm-norm", cutoff="opt")
 print(output)
 
 # Plot results

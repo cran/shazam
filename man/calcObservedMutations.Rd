@@ -4,18 +4,16 @@
 \alias{calcObservedMutations}
 \title{Count the number of observed mutations in a sequence.}
 \usage{
-calcObservedMutations(inputSeq, germlineSeq, frequency = FALSE,
-  regionDefinition = NULL, mutationDefinition = NULL, returnRaw = FALSE)
+calcObservedMutations(inputSeq, germlineSeq, regionDefinition = NULL,
+  mutationDefinition = NULL, ambiguousMode = c("eitherOr", "and"),
+  returnRaw = FALSE, frequency = FALSE)
 }
 \arguments{
-\item{inputSeq}{input sequence.}
+\item{inputSeq}{input sequence. IUPAC ambiguous characters for DNA are 
+supported.}
 
-\item{germlineSeq}{germline sequence.}
-
-\item{frequency}{\code{logical} indicating whether or not to calculate
-mutation frequencies. The denominator used is the number of bases
-that are non-N in both the input and the germline sequences.
-Default is \code{FALSE}.}
+\item{germlineSeq}{germline sequence. IUPAC ambiguous characters for DNA 
+are supported.}
 
 \item{regionDefinition}{\link{RegionDefinition} object defining the regions
 and boundaries of the Ig sequences. Note, only the part of
@@ -27,78 +25,172 @@ and silent mutation criteria. If \code{NULL} then
 replacement and silent are determined by exact 
 amino acid identity.}
 
-\item{returnRaw}{return the positions of point mutations and their corresponding
-mutation types, as opposed to counts of mutations.
-Also returns the number of non-N bases used as the denominator when
-calculating frequency. Default is \code{FALSE}.}
+\item{ambiguousMode}{whether to consider ambiguous characters as 
+\code{"either or"} or \code{"and"} when determining and 
+counting the type(s) of mutations. Applicable only if
+\code{inputSeq} and/or \code{germlineSeq} 
+contain(s) ambiguous characters. One of 
+\code{c("eitherOr", "and")}. Default is \code{"eitherOr"}.}
+
+\item{returnRaw}{return the positions of point mutations and their 
+corresponding mutation types, as opposed to counts of 
+mutations across positions. Also returns the number of 
+bases used as the denominator when calculating frequency. 
+Default is \code{FALSE}.}
+
+\item{frequency}{\code{logical} indicating whether or not to calculate
+mutation frequencies. The denominator used is the number 
+of bases that are not one of "N", "-", or "." in either 
+the input or the germline sequences. If set, this 
+overwrites \code{returnRaw}. Default is \code{FALSE}.}
 }
 \value{
-For \code{returnRaw=FALSE}, an \code{array} with the number of replacement (R) 
-          and silent(S) mutations. For \code{returnRaw=TRUE}, a list containing a data 
-          frame (\code{$pos}) whose columns (\code{position}, \code{type}, and \code{region}) 
-          indicate the position, mutation type (R or S), and region of each mutation; and a 
-          vector (\code{$nonN}) indicating the number of non-N bases in regions defined by
-          \code{regionDefinition}.
+For \code{returnRaw=FALSE}, an \code{array} with the numbers of replacement (R) 
+          and silent (S) mutations. 
+          
+          For \code{returnRaw=TRUE}, a list containing 
+          \itemize{
+               \item \code{$pos}: A data frame whose columns (\code{position}, \code{R}, 
+                     \code{S}, and \code{region}) indicate, respecitively, the nucleotide 
+                     position, the number of R mutations at that position, the number of S 
+                     mutations at that position, and the region in which that nucleotide
+                     is in.
+               \item \code{$nonN}: A vector indicating the number of bases in regions 
+                     defined by \code{regionDefinition} (excluding non-triplet overhang, 
+                     if any) that are not one of "N", "-", or "." in either the 
+                     \code{inputSeq} or \code{germlineSeq}.
+          }
+          
+          For \code{frequency=TRUE}, regardless of \code{returnRaw}, an \code{array} 
+          with the frequencies of replacement (R) and silent (S) mutations.
 }
 \description{
-\code{calcObservedMutations} determines all the mutations in a given input seqeunce compared
-to its germline sequence.
+\code{calcObservedMutations} determines all the mutations in a given input seqeunce 
+compared to its germline sequence.
 }
 \details{
-Each mutation is considered independently in the germline context. Note, only the part of 
-\code{inputSeq} defined in \code{regionDefinition} is analyzed. For example, when using 
-the default \link{IMGT_V} definition, then mutations in positions beyond 
-312 will be ignored. 
+Each mutation is considered independently in the germline context. If specified, only 
+the part of \code{inputSeq} defined in \code{regionDefinition} is analyzed. For example, 
+when using the default \link{IMGT_V} definition, then mutations in positions beyond 
+312 will be ignored. Additionally, non-triplet overhang at the sequence end is ignored.
 
-Note that only replacement (R) and silent (S) mutations are included in the 
-results. Stop mutations and mutations such as the case in which NNN in the germline
-sequence is observed as NNC in the input sequence are excluded. In other words,
-a result that is \code{NA} or zero indicates absence of R and S mutations, not 
-necessarily all types of mutations, such as the excluded ones mentioned above.
+Only replacement (R) and silent (S) mutations are included in the results. Excluded are: 
+\itemize{
+     \item Stop mutations
+     \item Mutations occurring in codons where one or both of the observed and the 
+           germline involve(s) one or more of "N", "-", or ".".
+           
+           E.g.: the case in which NNN in the germline sequence is observed as NNC in 
+           the input sequence.
 }
+In other words, a result that is \code{NA} or zero indicates absence of R and S mutations, 
+not necessarily all types of mutations, such as the excluded ones mentioned above.
+
+\code{NA} is also returned if \code{inputSeq} or \code{germlineSeq} is shorter than 3
+nucleotides.
+}
+\section{Ambiguous characters}{
+
+When there are ambiguous characters present, the user could choose how mutations involving
+ambiguous characters are counted through \code{ambiguousMode}. The two available modes 
+are \code{"eitherOr"} and \code{"and"}. 
+\itemize{
+     \item With \code{"eitherOr"}, ambiguous characters are each expanded but only 
+           1 mutation is recorded. When determining the type of mutation, the 
+           priority for different types of mutations, in decreasing order, is as follows:
+           no mutation, replacement mutation, silent mutation, and stop mutation. 
+           
+           When counting the number of non-N, non-dash, and non-dot positions, each
+           position is counted only once, regardless of the presence of ambiguous
+           characters.
+           
+           As an example, consider the case where \code{germlineSeq} is \code{"TST"} and
+           \code{inputSeq} is \code{"THT"}. Expanding \code{"H"} at position 2 in 
+           \code{inputSeq} into \code{"A"}, \code{"C"}, and \code{"T"}, as well as 
+           expanding \code{"S"} at position 2 in \code{germlineSeq} into \code{"C"} and 
+           \code{"G"}, one gets:
+           
+           \itemize{
+                \item \code{"TCT"} (germline) to \code{"TAT"} (observed): replacement
+                \item \code{"TCT"} (germline) to \code{"TCT"} (observed): no mutation
+                \item \code{"TCT"} (germline) to \code{"TTT"} (observed): replacement 
+                \item \code{"TGT"} (germline) to \code{"TAT"} (observed): replacement 
+                \item \code{"TGT"} (germline) to \code{"TCT"} (observed): replacement
+                \item \code{"TGT"} (germline) to \code{"TTT"} (observed): replacement
+           }
+           
+           Because "no mutation" takes priority over replacement mutation, the final 
+           mutation count returned for this example is \code{NA} (recall that only R and 
+           S mutations are returned). The number of non-N, non-dash, and non-dot 
+           positions is 3.
+           
+     \item With \code{"and"}, ambiguous characters are each expanded and mutation(s)
+           from all expansions are recorded.
+           
+           When counting the number of non-N, non-dash, and non-dot positions, if a 
+           position contains ambiguous character(s) in \code{inputSeq} and/or 
+           \code{germlineSeq}, the count at that position is taken to be the total 
+           number of combinations of germline and observed codons after expansion.
+           
+           Using the same example from above, the final result returned for this example
+           is that there are 5 R mutations at position 2. The number of non-N, non-dash,
+           and non-dot positions is 8, since there are 6 combinations stemming from 
+           position 2 after expanding the germline codon (\code{"TST"}) and the observed 
+           codon (\code{"THT"}).
+}
+}
+
 \examples{
 # Use an entry in the example data for input and germline sequence
 data(ExampleDb, package="alakazam")
-in_seq <- ExampleDb[100, "SEQUENCE_IMGT"]
-germ_seq <-  ExampleDb[100, "GERMLINE_IMGT_D_MASK"]
+in_seq <- ExampleDb[["SEQUENCE_IMGT"]][100]
+germ_seq <-  ExampleDb[["GERMLINE_IMGT_D_MASK"]][100]
 
 # Identify all mutations in the sequence
-ex1_raw = calcObservedMutations(in_seq, germ_seq, returnRaw=TRUE)
+ex1_raw <- calcObservedMutations(in_seq, germ_seq, returnRaw=TRUE)
 # Count all mutations in the sequence
-ex1_count = calcObservedMutations(in_seq, germ_seq, returnRaw=FALSE)
-ex1_freq = calcObservedMutations(in_seq, germ_seq, returnRaw=FALSE, frequency=TRUE)
+ex1_count <- calcObservedMutations(in_seq, germ_seq, returnRaw=FALSE)
+ex1_freq <- calcObservedMutations(in_seq, germ_seq, returnRaw=FALSE, frequency=TRUE)
 # Compare this with ex1_count
-table(ex1_raw$pos$region, ex1_raw$pos$type)
+table(ex1_raw$pos$region, ex1_raw$pos$R)[, "1"]
+table(ex1_raw$pos$region, ex1_raw$pos$S)[, "1"]
 # Compare this with ex1_freq
-table(ex1_raw$pos$region, ex1_raw$pos$type) / ex1_raw$nonN
+table(ex1_raw$pos$region, ex1_raw$pos$R)[, "1"]/ex1_raw$nonN
+table(ex1_raw$pos$region, ex1_raw$pos$S)[, "1"]/ex1_raw$nonN
 
 # Identify only mutations the V segment minus CDR3
-ex2_raw = calcObservedMutations(in_seq, germ_seq, 
+ex2_raw <- calcObservedMutations(in_seq, germ_seq, 
                                 regionDefinition=IMGT_V, returnRaw=TRUE)
 # Count only mutations the V segment minus CDR3
-ex2_count = calcObservedMutations(in_seq, germ_seq, 
+ex2_count <- calcObservedMutations(in_seq, germ_seq, 
                                   regionDefinition=IMGT_V, returnRaw=FALSE)
-ex2_freq = calcObservedMutations(in_seq, germ_seq, 
+ex2_freq <- calcObservedMutations(in_seq, germ_seq, 
                                  regionDefinition=IMGT_V, returnRaw=FALSE,
                                  frequency=TRUE)
 # Compare this with ex2_count
-table(ex2_raw$pos$region, ex2_raw$pos$type)                                 
+table(ex2_raw$pos$region, ex2_raw$pos$R)[, "1"]
+table(ex2_raw$pos$region, ex2_raw$pos$S)[, "1"]                              
 # Compare this with ex2_freq
-table(ex2_raw$pos$region, ex2_raw$pos$type) / ex2_raw$nonN                                        
+table(ex2_raw$pos$region, ex2_raw$pos$R)[, "1"]/ex2_raw$nonN     
+table(ex2_raw$pos$region, ex2_raw$pos$S)[, "1"]/ex2_raw$nonN                                       
 
 # Identify mutations by change in hydropathy class
-ex3_raw = calcObservedMutations(in_seq, germ_seq, regionDefinition=IMGT_V,
-                                mutationDefinition=HYDROPATHY_MUTATIONS, returnRaw=TRUE)
+ex3_raw <- calcObservedMutations(in_seq, germ_seq, regionDefinition=IMGT_V,
+                                mutationDefinition=HYDROPATHY_MUTATIONS, 
+                                returnRaw=TRUE)
 # Count mutations by change in hydropathy class
-ex3_count = calcObservedMutations(in_seq, germ_seq, regionDefinition=IMGT_V,
-                                  mutationDefinition=HYDROPATHY_MUTATIONS, returnRaw=FALSE)
-ex3_freq = calcObservedMutations(in_seq, germ_seq, regionDefinition=IMGT_V,
-                                 mutationDefinition=HYDROPATHY_MUTATIONS, returnRaw=FALSE, 
-                                 frequency=TRUE)
+ex3_count <- calcObservedMutations(in_seq, germ_seq, regionDefinition=IMGT_V,
+                                  mutationDefinition=HYDROPATHY_MUTATIONS, 
+                                  returnRaw=FALSE)
+ex3_freq <- calcObservedMutations(in_seq, germ_seq, regionDefinition=IMGT_V,
+                                 mutationDefinition=HYDROPATHY_MUTATIONS, 
+                                 returnRaw=FALSE, frequency=TRUE)
 # Compre this with ex3_count
-table(ex3_raw$pos$region, ex3_raw$pos$type)                                        
+table(ex3_raw$pos$region, ex3_raw$pos$R)[, "1"]
+table(ex3_raw$pos$region, ex3_raw$pos$S)[, "1"]
 # Compare this with ex3_freq
-table(ex3_raw$pos$region, ex3_raw$pos$type) / ex3_raw$nonN                                        
+table(ex3_raw$pos$region, ex3_raw$pos$R)[, "1"]/ex3_raw$nonN                                        
+table(ex3_raw$pos$region, ex3_raw$pos$S)[, "1"]/ex3_raw$nonN                                        
                                 
 }
 \seealso{

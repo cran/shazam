@@ -4,8 +4,10 @@
 \alias{findThreshold}
 \title{Find distance threshold}
 \usage{
-findThreshold(data, method = c("gmm", "density"), cutEdge = 0.9,
-  cross = NULL, subsample = NULL)
+findThreshold(data, method = c("gmm", "density"), edge = 0.9,
+  cross = NULL, subsample = NULL, model = c("gamma-gamma", "gamma-norm",
+  "norm-gamma", "norm-norm"), cutoff = c("optimal", "intersect", "user"),
+  sen = NULL, spc = NULL, progress = FALSE)
 }
 \arguments{
 \item{data}{numeric vector containing nearest neighbor distances.}
@@ -14,41 +16,60 @@ findThreshold(data, method = c("gmm", "density"), cutEdge = 0.9,
 One of \code{"gmm"} or \code{"density"}. See Details for methodological
 descriptions.}
 
-\item{cutEdge}{upper range (a fraction of the data density) to rule initialization of 
-Gaussian fit parameters. Default value is equal to 90% of the entries.
-Applies only to the \code{"gmm"} method.}
+\item{edge}{upper range as a fraction of the data density to rule initialization of 
+Gaussian fit parameters. Default value is 90% of the entries (0.9).
+Applies only when \code{method="density"}. .}
 
 \item{cross}{supplementary nearest neighbor distance vector output from \link{distToNearest} 
 for initialization of the Gaussian fit parameters. 
-Applies only to the \code{"gmm"} method.}
+Applies only when \code{method="gmm"}.}
 
 \item{subsample}{number of distances to subsample for speeding up bandwidth inference.
-Applies only to the \code{"density"} method. If \code{NULL} no subsampling
-is performed. As bandwith inferrence is computationally expensive, subsampling
-is recommended for large data sets.}
+If \code{NULL} no subsampling is performed. As bandwith inferrence 
+is computationally expensive, subsampling is recommended for large data sets.
+Applies only when \code{method="density"}.}
+
+\item{model}{allows the user to choose among four possible combinations of fitting curves: 
+\code{"norm-norm"}, \code{"norm-gamma"}, \code{"gamma-norm"}, 
+and \code{"gamma-gamma"}. Applies only when \code{method="gmm"}.}
+
+\item{cutoff}{method to use for threshold selection: the optimal threshold \code{"opt"}, 
+the intersection point of the two fitted curves \code{"intersect"}, or 
+a value defined by user for one of the sensitivity or specificity \code{"user"}.
+Applies only when \code{method="gmm"}.}
+
+\item{sen}{sensitivity required. Applies only when \code{method="gmm"} and \code{cutoff="user"}.}
+
+\item{spc}{specificity required. Applies only when \code{method="gmm"} and \code{cutoff="user"}.}
+
+\item{progress}{if \code{TRUE} print a progress bar.}
 }
 \value{
 \itemize{
-  \item \code{"gmm"} method:      Returns a \link{GmmThreshold} object including the optimum 
-                                  \code{threshold} and the Gaussian fit parameters.
+  \item \code{"gmm"} method:      Returns a \link{GmmThreshold} object including the  
+                                  \code{threshold} and the function fit parameters, i.e.
+                                  mixing weight, mean, and standard deviation of a Normal distribution, or 
+                                  mixing weight, shape and scale of a Gamma distribution.
   \item \code{"density"} method:  Returns a \link{DensityThreshold} object including the optimum 
                                   \code{threshold} and the density fit parameters.
 }
 }
 \description{
-\code{findThreshold} automtically determines and optimal threshold for clonal assignment of
+\code{findThreshold} automtically determines an optimal threshold for clonal assignment of
 Ig sequences using a vector of nearest neighbor distances. It provides two alternative methods 
-using either a Guassian Mixture Model fit (\code{method="gmm"}) or kernel density 
+using either a Gamma/Guassian Mixture Model fit (\code{method="gmm"}) or kernel density 
 fit (\code{method="density"}).
 }
 \details{
 \itemize{ 
-  \item \code{"gmm"}:     Performs a Gaussian Mixture Model (GMM) procedure, 
-                          including the Expectation Maximization (EM) algorithm, for learning 
-                          the parameters  of two univariate Gaussians which fit the bimodal 
-                          distribution entries. Retrieving the fit parameters, it then calculates
-                          the optimum threshold, where the average of the sensitivity plus 
-                          specificity reaches its maximum.
+  \item \code{"gmm"}:     Performs a maximum-likelihood fitting procedure, for learning 
+                          the parameters of two mixture univariate, either Gamma or Gaussian, distributions 
+                          which fit the bimodal distribution entries. Retrieving the fit parameters, 
+                          it then calculates the optimum threshold \code{method="optimal"}, where the 
+                          average of the sensitivity plus specificity reaches its maximum. In addition, 
+                          the \code{findThreshold} function is also able 
+                          to calculate the intersection point (\code{method="intersect"}) of the two fitted curves 
+                          and allows the user to invoke its value as the cut-off point, instead of optimal point.
   \item \code{"density"}: Fits a binned approximation to the ordinary kernel density estimate
                           to the nearest neighbor distances after determining the optimal
                           bandwidth for the density estimate via least-squares cross-validation of 
@@ -66,17 +87,21 @@ db <- subset(ExampleDb, SAMPLE == "-1h")
 # Use nucleotide Hamming distance and normalize by junction length
 db <- distToNearest(db, model="ham", normalize="len", nproc=1)
                             
-# Find threshold using the "gmm" method
-output <- findThreshold(db$DIST_NEAREST, method="gmm")
+# Find threshold using the "gmm" method with optimal threshold
+output <- findThreshold(db$DIST_NEAREST, method="gmm", model="norm-norm", cutoff="opt")
+plot(output, binwidth=0.02, title=paste0(output@model, "   loglk=", output@loglk))
 print(output)
-# Plot "gmm" method results
-plot(output, binwidth=0.02)
 
-# Find threshold using the "density" method 
-output <- findThreshold(db$DIST_NEAREST, method="density")
+# Find threshold using the "gmm" method with user defined specificity
+output <- findThreshold(db$DIST_NEAREST, method="gmm", model="norm-norm", 
+                        cutoff="user", spc=0.99)
+plot(output, binwidth=0.02, title=paste0(output@model, "   loglk=", output@loglk))
 print(output)
-# Plot "density" method results
+
+# Find threshold using the "density" method and plot the results
+output <- findThreshold(db$DIST_NEAREST, method="density")
 plot(output)
+print(output)
 }
 }
 \seealso{

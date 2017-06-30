@@ -30,19 +30,36 @@ It includes parameters of two Gaussian fits and threshold cut.
 \describe{
 \item{\code{x}}{input distance vector with NA or infinite values removed.}
 
-\item{\code{omega1}}{first Gaussain mixing proportion.}
+\item{\code{model}}{first-second fit functions.}
 
-\item{\code{omega2}}{second Gaussain mixing proportion.}
+\item{\code{cutoff}}{type of threshold cut.}
 
-\item{\code{mu1}}{first Gaussian mean.}
+\item{\code{a1}}{mixing weight of the first curve.}
 
-\item{\code{mu2}}{second Gaussain mean.}
+\item{\code{b1}}{second parameter of the first curve. Either the mean of a Normal 
+distribution or shape of a Gamma distribution.}
 
-\item{\code{sigma1}}{first Gaussain standard deviation.}
+\item{\code{c1}}{third parameter of the first curve. Either the standard deviation of a 
+Normal distribution or scale of a Gamma distribution.}
 
-\item{\code{sigma2}}{second Gaussain standard deviation.}
+\item{\code{a2}}{mixing weight of the second curve.}
 
-\item{\code{threshold}}{optimum threshold cut.}
+\item{\code{b2}}{second parameter of the second curve. Either the mean of a Normal 
+distribution or shape of a Gamma distribution.}
+
+\item{\code{c2}}{third parameter of the second curve. Either the standard deviation 
+of a Normal distribution or scale of a Gamma distribution.}
+
+\item{\code{loglk}}{log-likelihood of the fit.}
+
+\item{\code{threshold}}{threshold.}
+
+\item{\code{sensitivity}}{sensitivity.}
+
+\item{\code{specificity}}{specificity.}
+
+\item{\code{pvalue}}{p-value from Hartigans' dip statistic (HDS) test. 
+Values less than 0.05 indicate significant bimodality.}
 }}
 
 \seealso{

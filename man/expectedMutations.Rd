@@ -41,13 +41,13 @@ A modified \code{db} \code{data.frame} with expected mutation frequencies
           definition, which defines positions for CDR and FWR, the following columns are
           added:  
           \itemize{
-            \item  \code{EXPECTED_CDR_R}:  number of replacement mutations in CDR1 and 
+            \item  \code{MU_EXPECTED_CDR_R}:  number of replacement mutations in CDR1 and 
                                            CDR2 of the V-segment.
-            \item  \code{EXPECTED_CDR_S}:  number of silent mutations in CDR1 and CDR2 
+            \item  \code{MU_EXPECTED_CDR_S}:  number of silent mutations in CDR1 and CDR2 
                                            of the V-segment.
-            \item  \code{EXPECTED_FWR_R}:  number of replacement mutations in FWR1, 
+            \item  \code{MU_EXPECTED_FWR_R}:  number of replacement mutations in FWR1, 
                                            FWR2 and FWR3 of the V-segment.
-            \item  \code{EXPECTED_FWR_S}:  number of silent mutations in FWR1, FWR2 and
+            \item  \code{MU_EXPECTED_FWR_S}:  number of silent mutations in FWR1, FWR2 and
                                            FWR3 of the V-segment.
           }
 }

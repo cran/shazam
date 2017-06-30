@@ -109,7 +109,9 @@
 #'                          pairwiseDist pairwiseEqual seqDist seqEqual
 #'                          isValidAASeq translateStrings gridPlot
 #'                          getMRCA getPathLengths tableEdges
+#'                          IUPAC_DNA
 #' @importFrom  ape         mst
+#' @importFrom  diptest     dip.test
 #' @importFrom  doParallel  registerDoParallel
 #' @importFrom  dplyr       do n desc funs %>%
 #'                          as_data_frame data_frame data_frame_
@@ -125,6 +127,8 @@
 #' @importFrom  kedd        h.ucv
 #' @importFrom  KernSmooth  bkde
 #' @importFrom  lazyeval    interp
+#' @importFrom  MASS        fitdistr
+#' @importFrom  progress    progress_bar
 #' @importFrom  scales      log2_trans log10_trans trans_breaks trans_format
 #'                          math_format percent scientific
 #' @importFrom  tidyr       gather gather_ spread spread_
@@ -135,8 +139,8 @@
 #' @importFrom  seqinr      c2s s2c words translate
 #' @importFrom  stats       na.omit setNames ecdf sd cor cov median mad
 #'                          approx convolve weighted.mean p.adjust
-#'                          dbeta pbeta qbeta rbeta optim
-#'                          dnorm pnorm runif
+#'                          dbeta pbeta qbeta rbeta optim optimize
+#'                          dnorm pnorm runif dgamma pgamma uniroot na.exclude
 #' @importFrom  stringi     stri_dup stri_flatten stri_join stri_length
 #'                          stri_count_boundaries stri_count_regex 
 #'                          stri_extract_all_regex stri_extract_first_regex  

@@ -215,6 +215,12 @@ createBaseline <- function(description="",
 #' data(ExampleDb, package="alakazam")
 #' db <- subset(ExampleDb, ISOTYPE %in% c("IgA", "IgG") & SAMPLE == "+7d")
 #' 
+#' # Collapse clones
+#' db <- collapseClones(db, sequenceColumn="SEQUENCE_IMGT",
+#'                      germlineColumn="GERMLINE_IMGT_D_MASK",
+#'                      method="thresholdedFreq", minimumFrequency=0.6,
+#'                      includeAmbiguous=FALSE, breakTiesStochastic=FALSE)
+#'                      
 #' # Calculate BASELINe
 #' baseline <- calcBaseline(db, 
 #'                          sequenceColumn="SEQUENCE_IMGT",
@@ -222,10 +228,11 @@ createBaseline <- function(description="",
 #'                          testStatistic="focused",
 #'                          regionDefinition=IMGT_V,
 #'                          targetingModel=HH_S5F,
-#'                          nproc = 1)
+#'                          nproc=1)
+#'                          
 #' # Edit the field "description"
-#' baseline <- editBaseline(baseline, field_name = "description", 
-#'                          value = "+7d IgA & IgG")
+#' baseline <- editBaseline(baseline, field_name="description", 
+#'                          value="+7d IgA & IgG")
 #'                                                   
 #' @export
 editBaseline <- function(baseline, field_name, value) {
@@ -255,10 +262,17 @@ editBaseline <- function(baseline, field_name, value) {
 #' @seealso  For calculating the BASELINe summary statistics see \link{summarizeBaseline}.
 #' 
 #' @examples
+#' \donttest{
 #' # Subset example data
 #' data(ExampleDb, package="alakazam")
 #' db <- subset(ExampleDb, ISOTYPE %in% c("IgA", "IgG") & SAMPLE == "+7d")
 #' 
+#' # Collapse clones
+#' db <- collapseClones(db, sequenceColumn="SEQUENCE_IMGT",
+#'                      germlineColumn="GERMLINE_IMGT_D_MASK",
+#'                      method="thresholdedFreq", minimumFrequency=0.6,
+#'                      includeAmbiguous=FALSE, breakTiesStochastic=FALSE)
+#'                      
 #' # Calculate BASELINe
 #' baseline <- calcBaseline(db, 
 #'                          sequenceColumn="SEQUENCE_IMGT",
@@ -266,14 +280,14 @@ editBaseline <- function(baseline, field_name, value) {
 #'                          testStatistic="focused",
 #'                          regionDefinition=IMGT_V,
 #'                          targetingModel=HH_S5F,
-#'                          nproc = 1)
+#'                          nproc=1)
 #' 
 #' # Grouping the PDFs by the isotype and sample annotations.
 #' grouped <- groupBaseline(baseline, groupBy=c("SAMPLE", "ISOTYPE"))
 #' 
 #' # Get a data.frame of the summary statistics
 #' getBaselineStats(grouped)
-#' 
+#' }
 #' @export
 getBaselineStats <- function(baseline) {
     return(baseline@stats)
@@ -319,11 +333,17 @@ getBaselineStats <- function(baseline) {
 #' Calculates the BASELINe posterior probability density function (PDF) for 
 #' sequences in the provided \code{db}. 
 #'          
+#' \strong{Note}: Individual sequences within clonal groups are not, strictly speaking, 
+#' independent events and it is generally appropriate to only analyze selection 
+#' pressures on an effective sequence for each clonal group. For this reason,
+#' it is strongly recommended that the input \code{db} contains one effective 
+#' sequence per clone. Effective clonal sequences can be obtained by calling 
+#' the \link{collapseClones} function.
+#'                   
 #' If the \code{db} does not contain the 
-#' required columns to calculate the PDFs (namely OBSERVED & EXPECTED mutations)
+#' required columns to calculate the PDFs (namely MU_COUNT & MU_EXPECTED)
 #' then the function will:
 #'   \enumerate{
-#'   \item  Collapse the sequences by the CLONE column (if present).
 #'   \item  Calculate the numbers of observed mutations.
 #'   \item  Calculate the expected frequencies of mutations and modify the provided 
 #'          \code{db}. The modified \code{db} will be included as part of the 
@@ -358,14 +378,20 @@ getBaselineStats <- function(baseline) {
 #'          See \link{plotBaselineSummary} and \link{plotBaselineDensity} for plotting results.
 #' 
 #' @examples
-#' # Subset example data
+#' # Load and subset example data
 #' data(ExampleDb, package="alakazam")
-#' db <- subset(ExampleDb, ISOTYPE %in% c("IgA", "IgG") & SAMPLE == "+7d")
+#' db <- subset(ExampleDb, ISOTYPE == "IgG" & SAMPLE == "+7d")
+#' 
+#' # Collapse clones
+#' db <- collapseClones(db, sequenceColumn="SEQUENCE_IMGT",
+#'                      germlineColumn="GERMLINE_IMGT_D_MASK",
+#'                      method="thresholdedFreq", minimumFrequency=0.6,
+#'                      includeAmbiguous=FALSE, breakTiesStochastic=FALSE)
 #'  
 #' # Calculate BASELINe
 #' baseline <- calcBaseline(db, 
-#'                          sequenceColumn="SEQUENCE_IMGT",
-#'                          germlineColumn="GERMLINE_IMGT_D_MASK", 
+#'                          sequenceColumn="CLONAL_SEQUENCE",
+#'                          germlineColumn="CLONAL_GERMLINE", 
 #'                          testStatistic="focused",
 #'                          regionDefinition=IMGT_V,
 #'                          targetingModel=HH_S5F,
@@ -373,8 +399,8 @@ getBaselineStats <- function(baseline) {
 #'                          
 #' @export
 calcBaseline <- function(db,
-                         sequenceColumn="SEQUENCE_IMGT",
-                         germlineColumn="GERMLINE_IMGT_D_MASK",
+                         sequenceColumn="CLONAL_SEQUENCE",
+                         germlineColumn="CLONAL_GERMLINE",
                          testStatistic=c("local", "focused", "imbalanced"),
                          regionDefinition=NULL,
                          targetingModel=HH_S5F,
@@ -411,20 +437,21 @@ calcBaseline <- function(db,
     
     # Ensure that the nproc does not exceed the number of cores/CPUs available
     nproc <- min(nproc, getnproc())
-    # nproc_arg will be passeed to any function that has the nproc argument
+    # nproc_arg will be passed to any function that has the nproc argument
     # If the cluster is already being set by the parent function then 
     # this will be set to 'cluster', that way the child function does not close
     # the connections and reset the cluster.
-    nproc_arg <- nproc
+    #nproc_arg <- nproc
     
     # If user wants to paralellize this function and specifies nproc > 1, then
     # initialize and register slave R processes/clusters & 
     # export all nesseary environment variables, functions and packages.  
     if (nproc > 1) {        
-        cluster <- parallel::makeCluster(nproc, type= "PSOCK")
+        cluster <- parallel::makeCluster(nproc, type="PSOCK")
         parallel::clusterExport(cluster, list('db',
                                               'sequenceColumn', 'germlineColumn', 
-                                              'regionDefinition',
+                                              'testStatistic', 'regionDefinition',
+                                              'targetingModel', 'mutationDefinition','calcStats',
                                               'break2chunks', 'PowersOfTwo', 
                                               'convolutionPowersOfTwo', 
                                               'convolutionPowersOfTwoByTwos', 
@@ -434,37 +461,37 @@ calcBaseline <- function(db,
                                               'calcBaselineHelper',
                                               'c2s', 's2c', 'words', 'translate',
                                               'calcBaselineBinomialPdf','CONST_I',
-                                              'BAYESIAN_FITTED','calcClonalConsensus',
+                                              'BAYESIAN_FITTED',
                                               'calcObservedMutations','NUCLEOTIDES',
+                                              'NUCLEOTIDES_AMBIGUOUS', 'IUPAC2nucs',
+                                              'makeNullRegionDefinition',
                                               'getCodonPos','getContextInCodon',
                                               'mutationType','translateCodonToAminoAcid',
                                               'AMINO_ACIDS','binMutationsByRegion',
                                               'collapseMatrixToVector','calcExpectedMutations',
                                               'calculateTargeting','HH_S5F','calculateMutationalPaths',
-                                              'CODON_TABLE'
-        ), 
+                                              'CODON_TABLE'), 
         envir=environment() )    
         registerDoParallel(cluster, cores=nproc)
-        nproc_arg <- cluster
+        #nproc_arg <- cluster
     } else if (nproc == 1) {
         # If needed to run on a single core/cpu then, regsiter DoSEQ 
         # (needed for 'foreach' in non-parallel mode)
         registerDoSEQ()
     }
     
-    # If db does not contain the required columns to calculate the PDFs (namely OBSERVED 
-    # & EXPECTED mutations), then the function will:
-    #          1. Collapse the sequences by the CLONE column (if present)
-    #          2. Calculate the numbers of observed mutations
-    #          3. Calculate the expected frequencies of mutations    
+    # If db does not contain the required columns to calculate the PDFs (namely MU_COUNT 
+    # & MU_EXPECTED mutations), then the function will:
+    #          1. Calculate the numbers of observed mutations
+    #          2. Calculate the expected frequencies of mutations    
     # After that BASELINe prob. densities can be calcualted per sequence. 
     if (is.null(regionDefinition)) {
         rd_labels <- makeNullRegionDefinition()@labels
-        observedColumns <- paste0("OBSERVED_", rd_labels)
-        expectedColumns <- paste0("EXPECTED_", rd_labels)
+        observedColumns <- paste0("MU_COUNT_", rd_labels)
+        expectedColumns <- paste0("MU_EXPECTED_", rd_labels)
     } else {
-        observedColumns <- paste0("OBSERVED_", regionDefinition@labels)
-        expectedColumns <- paste0("EXPECTED_", regionDefinition@labels)
+        observedColumns <- paste0("MU_COUNT_", regionDefinition@labels)
+        expectedColumns <- paste0("MU_EXPECTED_", regionDefinition@labels)
     }
     
     if (!all(c(observedColumns, expectedColumns) %in% colnames(db))) {
@@ -474,24 +501,13 @@ calcBaseline <- function(db,
                          " columns need to be present in the db"))
         }
         
-        # Collapse the sequences by the CLONE column (if present)
-        if ("CLONE" %in% colnames(db)) {                       
-            db <- collapseClones(db, 
-                                  cloneColumn="CLONE", 
-                                  sequenceColumn=sequenceColumn,
-                                  germlineColumn=germlineColumn,
-                                  expandedDb=FALSE, 
-                                  nproc=nproc_arg)
-            sequenceColumn="CLONAL_SEQUENCE"
-            germlineColumn="CLONAL_GERMLINE"
-        }
-        
         # Calculate the numbers of observed mutations
         db <- observedMutations(db,
                                 sequenceColumn=sequenceColumn,
                                 germlineColumn=germlineColumn,
                                 regionDefinition=regionDefinition,
                                 mutationDefinition=mutationDefinition,
+                                frequency=FALSE, combine=FALSE,
                                 nproc=0)
         
         # Calculate the expected frequencies of mutations
@@ -511,9 +527,9 @@ calcBaseline <- function(db,
     
     # Number of sequences (used in foreach)
     totalNumbOfSequences <- nrow(db)
-    # The column indexes of the OBSERVED_ and EXPECTED_
-    cols_observed <- grep( paste0("OBSERVED_"),  colnames(db) ) 
-    cols_expected <- grep( paste0("EXPECTED_"),  colnames(db) ) 
+    # The column indexes of the MU_COUNT_ and MU_EXPECTED_
+    cols_observed <- grep( paste0("MU_COUNT_"),  colnames(db) ) 
+    cols_expected <- grep( paste0("MU_EXPECTED_"),  colnames(db) ) 
     
     # Exporting additional environment variables and functions needed to run foreach 
     if( nproc!=1 ) {
@@ -542,8 +558,8 @@ calcBaseline <- function(db,
         list_region_pdfs <- 
             foreach(idx=iterators::icount(totalNumbOfSequences)) %dopar% {                
                 calcBaselineHelper( 
-                    observed = db[idx, cols_observed],
-                    expected = db[idx, cols_expected],
+                    observed = db[cols_observed][idx,],
+                    expected = db[cols_expected][idx,],
                     region = region,
                     testStatistic = testStatistic,
                     regionDefinition = regionDefinition
@@ -673,37 +689,37 @@ calcBaselineHelper  <- function(observed,
     
     # local test statistic
     if (testStatistic == "local") { 
-        obsX_Index <- grep( paste0("OBSERVED_", region,"_R"),  names(observed) )
+        obsX_Index <- grep( paste0("MU_COUNT_", region,"_R"),  names(observed) )
         # important to have "_" after region
         # otherwise this might happen (leading to bugs in results):
         # region = codon_1
         # expect grep to find only codon_1_S and codon_1_R
         # in fact, however, codon_10_S, codon_10_R, codon_101_S, codon_101_R are matched
-        obsN_Index <- grep( paste0("OBSERVED_", region, "_"),  names(observed) )
+        obsN_Index <- grep( paste0("MU_COUNT_", region, "_"),  names(observed) )
         
-        expX_Index <- grep( paste0("EXPECTED_", region,"_R"),  names(expected) )
+        expX_Index <- grep( paste0("MU_EXPECTED_", region,"_R"),  names(expected) )
         # important to have "_" after region
-        expN_Index <- grep( paste0("EXPECTED_", region, "_"),  names(expected) )       
+        expN_Index <- grep( paste0("MU_EXPECTED_", region, "_"),  names(expected) )       
     }
     
     # focused test statistic
     if (testStatistic == "focused") { 
-        obsX_Index <- grep( paste0("OBSERVED_", region,"_R"),  names(observed) )
+        obsX_Index <- grep( paste0("MU_COUNT_", region,"_R"),  names(observed) )
         obsN_Index <- 
             grep( 
                 paste0( 
-                    "OBSERVED_", region, "|", 
-                    "OBSERVED_", regions[regions!=region], "_S"
+                    "MU_COUNT_", region, "|", 
+                    "MU_COUNT_", regions[regions!=region], "_S"
                 ),
                 names(observed) 
             )
         
-        expX_Index <- grep( paste0("EXPECTED_", region,"_R"),  names(expected) )
+        expX_Index <- grep( paste0("MU_EXPECTED_", region,"_R"),  names(expected) )
         expN_Index <- 
             grep( 
                 paste0( 
-                    "EXPECTED_", region, "|", 
-                    "EXPECTED_",  regions[regions!=region], "_S"
+                    "MU_EXPECTED_", region, "|", 
+                    "MU_EXPECTED_",  regions[regions!=region], "_S"
                 ),
                 names(expected) 
             )        
@@ -711,11 +727,11 @@ calcBaselineHelper  <- function(observed,
     
     # imbalanced test statistic
     if (testStatistic == "imbalanced") { 
-        obsX_Index <- grep( paste0("OBSERVED_", region),  names(observed) )
-        obsN_Index <- grep( "OBSERVED_",names(observed))  
+        obsX_Index <- grep( paste0("MU_COUNT_", region),  names(observed) )
+        obsN_Index <- grep( "MU_COUNT_",names(observed))  
         
-        expX_Index <- grep( paste0("EXPECTED_", region),  names(expected) )
-        expN_Index <-   grep( "EXPECTED_",names(expected)) 
+        expX_Index <- grep( paste0("MU_EXPECTED_", region),  names(expected) )
+        expN_Index <-   grep( "MU_EXPECTED_",names(expected)) 
         
     }
     
@@ -802,9 +818,15 @@ calcBaselineBinomialPdf <- function (x=3,
 #' @examples  
 #' \donttest{
 #' # Subset example data from alakazam
-#' library(alakazam)
-#' db <- subset(ExampleDb, ISOTYPE %in% c("IgA", "IgG"))
-#'                  
+#' data(ExampleDb, package="alakazam")
+#' db <- subset(ExampleDb, ISOTYPE %in% c("IgM", "IgG"))
+#' 
+#' # Collapse clones
+#' db <- collapseClones(db, sequenceColumn="SEQUENCE_IMGT",
+#'                      germlineColumn="GERMLINE_IMGT_D_MASK",
+#'                      method="thresholdedFreq", minimumFrequency=0.6,
+#'                      includeAmbiguous=FALSE, breakTiesStochastic=FALSE)
+#'
 #' # Calculate BASELINe
 #' baseline <- calcBaseline(db, 
 #'                          sequenceColumn="SEQUENCE_IMGT",
@@ -816,24 +838,28 @@ calcBaselineBinomialPdf <- function (x=3,
 #'                          
 #' # Group PDFs by sample
 #' grouped1 <- groupBaseline(baseline, groupBy="SAMPLE")
-#' plotBaselineDensity(grouped1, idColumn="SAMPLE", colorElement="group", 
+#' sample_colors <- c("-1h"="steelblue", "+7d"="firebrick")
+#' plotBaselineDensity(grouped1, idColumn="SAMPLE", colorValues=sample_colors, 
 #'                     sigmaLimits=c(-1, 1))
 #'  
 #' # Group PDFs by both sample (between variable) and isotype (within variable)
 #' grouped2 <- groupBaseline(baseline, groupBy=c("SAMPLE", "ISOTYPE"))
+#' isotype_colors <- c("IgM"="darkorchid", "IgD"="firebrick", 
+#'                     "IgG"="seagreen", "IgA"="steelblue")
 #' plotBaselineDensity(grouped2, idColumn="SAMPLE", groupColumn="ISOTYPE",
-#'                     colorElement="group", colorValues=IG_COLORS,
+#'                     colorElement="group", colorValues=isotype_colors,
 #'                     sigmaLimits=c(-1, 1))
 #' 
 #' # Collapse previous isotype (within variable) grouped PDFs into sample PDFs
 #' grouped3 <- groupBaseline(grouped2, groupBy="SAMPLE")
-#' plotBaselineDensity(grouped3, idColumn="SAMPLE", colorElement="group",
+#' sample_colors <- c("-1h"="steelblue", "+7d"="firebrick")
+#' plotBaselineDensity(grouped3, idColumn="SAMPLE", colorValues=sample_colors,
 #'                     sigmaLimits=c(-1, 1))
 #' }
 #' @export
 groupBaseline <- function(baseline, groupBy, nproc=1) {
     # Hack for visibility of foreach index variables
-    i=NULL
+    i <- NULL
     
     # Ensure that the nproc does not exceed the number of cores/CPUs available
     nproc <- min(nproc, getnproc())
@@ -1119,10 +1145,17 @@ groupBaseline <- function(baseline, groupBy, nproc=1) {
 #' }
 #' 
 #' @examples
+#' \donttest{
 #' # Subset example data
 #' data(ExampleDb, package="alakazam")
-#' db <- subset(ExampleDb, ISOTYPE %in% c("IgA", "IgG") & SAMPLE == "+7d")
+#' db <- subset(ExampleDb, ISOTYPE == "IgG")
 #' 
+#' # Collapse clones
+#' db <- collapseClones(db, sequenceColumn="SEQUENCE_IMGT",
+#'                      germlineColumn="GERMLINE_IMGT_D_MASK",
+#'                      method="thresholdedFreq", minimumFrequency=0.6,
+#'                      includeAmbiguous=FALSE, breakTiesStochastic=FALSE)
+#'                      
 #' # Calculate BASELINe
 #' baseline <- calcBaseline(db, 
 #'                          sequenceColumn="SEQUENCE_IMGT",
@@ -1132,12 +1165,12 @@ groupBaseline <- function(baseline, groupBy, nproc=1) {
 #'                          targetingModel=HH_S5F,
 #'                          nproc = 1)
 #' 
-#' # Grouping the PDFs by the sample and isotype annotations
-#' grouped <- groupBaseline(baseline, groupBy=c("SAMPLE", "ISOTYPE"))
+#' # Grouping the PDFs by the sample annotation
+#' grouped <- groupBaseline(baseline, groupBy="SAMPLE")
 #' 
 #' # Get a data.frame of the summary statistics
 #' stats <- summarizeBaseline(grouped, returnType="df")
-#'                      
+#' }                     
 #' @export
 summarizeBaseline <- function(baseline, returnType=c("baseline", "df"), nproc=1) {
     # Hack for visibility of foreach index variable
@@ -1242,10 +1275,17 @@ summarizeBaseline <- function(baseline, returnType=c("baseline", "df"), nproc=1)
 #'  }
 #' 
 #' @examples
+#' \donttest{
 #' # Subset example data
 #' data(ExampleDb, package="alakazam")
 #' db <- subset(ExampleDb, ISOTYPE == "IgG")
-#' 
+#'
+#' # Collapse clones
+#' db <- collapseClones(db, sequenceColumn="SEQUENCE_IMGT",
+#'                      germlineColumn="GERMLINE_IMGT_D_MASK",
+#'                      method="thresholdedFreq", minimumFrequency=0.6,
+#'                      includeAmbiguous=FALSE, breakTiesStochastic=FALSE)
+#'                      
 #' # Calculate BASELINe
 #' baseline <- calcBaseline(db, 
 #'                          sequenceColumn="SEQUENCE_IMGT",
@@ -1260,7 +1300,7 @@ summarizeBaseline <- function(baseline, returnType=c("baseline", "df"), nproc=1)
 #' 
 #' # Perform test on sample PDFs
 #' testBaseline(grouped, groupBy="SAMPLE")
-#' 
+#' }
 #' @export
 testBaseline <- function(baseline, groupBy) {
     ## DEBUG
@@ -1382,10 +1422,13 @@ baselinePValue <- function (base, length_sigma=4001, max_sigma=20){
 
 # Compute p-value of two BASELINe PDFs
 #
-# @param   base1  first selection PDF
-# @param   base2  second selection PDF
+# @param   base1  first selection PDF; must be a numeric vector
+# @param   base2  second selection PDF; must be a numeric vector
 # @return  Two-sided p-value that base1 and base2 differ.
 baseline2DistPValue <-function(base1, base2) {
+    # NOTE: make sure to supply 2 vectors (not 1-row data.frames) when
+    #       calling this function directly
+    
     ## Debug
     # base1=grouped@pdfs[["CDR"]][1, ]; base2=grouped@pdfs[["FWR"]][1, ]
     
@@ -1471,10 +1514,17 @@ baseline2DistPValue <-function(base1, base2) {
 #' @seealso  Takes as input a \link{Baseline} object returned from \link{groupBaseline}.
 #' 
 #' @examples
+#' \donttest{
 #' # Subset example data
 #' data(ExampleDb, package="alakazam")
-#' db <- subset(ExampleDb, ISOTYPE %in% c("IgA", "IgG") & SAMPLE == "-1h")
+#' db <- subset(ExampleDb, ISOTYPE %in% c("IgM", "IgG"))
 #' 
+#' # Collapse clones
+#' db <- collapseClones(db, sequenceColumn="SEQUENCE_IMGT",
+#'                      germlineColumn="GERMLINE_IMGT_D_MASK",
+#'                      method="thresholdedFreq", minimumFrequency=0.6,
+#'                      includeAmbiguous=FALSE, breakTiesStochastic=FALSE)
+#'                      
 #' # Calculate BASELINe
 #' baseline <- calcBaseline(db, 
 #'                          sequenceColumn="SEQUENCE_IMGT",
@@ -1489,13 +1539,15 @@ baseline2DistPValue <-function(base1, base2) {
 #' 
 #' # Plot density faceted by region with custom isotype colors
 #' isotype_colors <- c("IgM"="darkorchid", "IgD"="firebrick", 
-#'                   "IgG"="seagreen", "IgA"="steelblue")
+#'                     "IgG"="seagreen", "IgA"="steelblue")
 #' plotBaselineDensity(grouped, "SAMPLE", "ISOTYPE", colorValues=isotype_colors, 
 #'                     colorElement="group", sigmaLimits=c(-1, 1))
 #'
 #' # Facet by isotype instead of region
+#' sample_colors <- c("-1h"="steelblue", "+7d"="firebrick")
 #' plotBaselineDensity(grouped, "SAMPLE", "ISOTYPE", facetBy="group",
-#'                     sigmaLimits=c(-1, 1))
+#'                     colorValues=sample_colors, sigmaLimits=c(-1, 1))
+#' }
 #' 
 #' @export
 plotBaselineDensity <- function(baseline, idColumn, groupColumn=NULL, colorElement=c("id", "group"), 
@@ -1676,10 +1728,17 @@ plotBaselineDensity <- function(baseline, idColumn, groupColumn=NULL, colorEleme
 #'           or a data.frame returned from \link{summarizeBaseline}.
 #' 
 #' @examples
+#' \donttest{
 #' # Subset example data
 #' data(ExampleDb, package="alakazam")
-#' db <- subset(ExampleDb, ISOTYPE %in% c("IgA", "IgG") & SAMPLE == "+7d")
+#' db <- subset(ExampleDb, ISOTYPE %in% c("IgM", "IgG"))
 #' 
+#' # Collapse clones
+#' db <- collapseClones(db, sequenceColumn="SEQUENCE_IMGT",
+#'                      germlineColumn="GERMLINE_IMGT_D_MASK",
+#'                      method="thresholdedFreq", minimumFrequency=0.6,
+#'                      includeAmbiguous=FALSE, breakTiesStochastic=FALSE)
+#'                      
 #' # Calculate BASELINe
 #' baseline <- calcBaseline(db, 
 #'                          sequenceColumn="SEQUENCE_IMGT",
@@ -1700,6 +1759,7 @@ plotBaselineDensity <- function(baseline, idColumn, groupColumn=NULL, colorEleme
 #' 
 #' # Facet by group instead of region
 #' plotBaselineSummary(grouped, "SAMPLE", "ISOTYPE", facetBy="group")
+#' }
 #' 
 #' @export
 plotBaselineSummary <- function(baseline, idColumn, groupColumn=NULL, groupColors=NULL, 

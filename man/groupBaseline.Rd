@@ -41,9 +41,15 @@ samples. This is accomplished through a fast numerical convolution technique.
  
 \donttest{
 # Subset example data from alakazam
-library(alakazam)
-db <- subset(ExampleDb, ISOTYPE \%in\% c("IgA", "IgG"))
-                 
+data(ExampleDb, package="alakazam")
+db <- subset(ExampleDb, ISOTYPE \%in\% c("IgM", "IgG"))
+
+# Collapse clones
+db <- collapseClones(db, sequenceColumn="SEQUENCE_IMGT",
+                     germlineColumn="GERMLINE_IMGT_D_MASK",
+                     method="thresholdedFreq", minimumFrequency=0.6,
+                     includeAmbiguous=FALSE, breakTiesStochastic=FALSE)
+
 # Calculate BASELINe
 baseline <- calcBaseline(db, 
                          sequenceColumn="SEQUENCE_IMGT",
@@ -55,18 +61,22 @@ baseline <- calcBaseline(db,
                          
 # Group PDFs by sample
 grouped1 <- groupBaseline(baseline, groupBy="SAMPLE")
-plotBaselineDensity(grouped1, idColumn="SAMPLE", colorElement="group", 
+sample_colors <- c("-1h"="steelblue", "+7d"="firebrick")
+plotBaselineDensity(grouped1, idColumn="SAMPLE", colorValues=sample_colors, 
                     sigmaLimits=c(-1, 1))
  
 # Group PDFs by both sample (between variable) and isotype (within variable)
 grouped2 <- groupBaseline(baseline, groupBy=c("SAMPLE", "ISOTYPE"))
+isotype_colors <- c("IgM"="darkorchid", "IgD"="firebrick", 
+                    "IgG"="seagreen", "IgA"="steelblue")
 plotBaselineDensity(grouped2, idColumn="SAMPLE", groupColumn="ISOTYPE",
-                    colorElement="group", colorValues=IG_COLORS,
+                    colorElement="group", colorValues=isotype_colors,
                     sigmaLimits=c(-1, 1))
 
 # Collapse previous isotype (within variable) grouped PDFs into sample PDFs
 grouped3 <- groupBaseline(grouped2, groupBy="SAMPLE")
-plotBaselineDensity(grouped3, idColumn="SAMPLE", colorElement="group",
+sample_colors <- c("-1h"="steelblue", "+7d"="firebrick")
+plotBaselineDensity(grouped3, idColumn="SAMPLE", colorValues=sample_colors,
                     sigmaLimits=c(-1, 1))
 }
 }

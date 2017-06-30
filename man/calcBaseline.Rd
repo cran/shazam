@@ -4,11 +4,10 @@
 \alias{calcBaseline}
 \title{Calculate the BASELINe PDFs}
 \usage{
-calcBaseline(db, sequenceColumn = "SEQUENCE_IMGT",
-  germlineColumn = "GERMLINE_IMGT_D_MASK", testStatistic = c("local",
-  "focused", "imbalanced"), regionDefinition = NULL,
-  targetingModel = HH_S5F, mutationDefinition = NULL, calcStats = FALSE,
-  nproc = 1)
+calcBaseline(db, sequenceColumn = "CLONAL_SEQUENCE",
+  germlineColumn = "CLONAL_GERMLINE", testStatistic = c("local", "focused",
+  "imbalanced"), regionDefinition = NULL, targetingModel = HH_S5F,
+  mutationDefinition = NULL, calcStats = FALSE, nproc = 1)
 }
 \arguments{
 \item{db}{\code{data.frame} containing sequence data and annotations.}
@@ -56,11 +55,17 @@ functions (PDFs) for sequences in the given Change-O \code{data.frame}.
 Calculates the BASELINe posterior probability density function (PDF) for 
 sequences in the provided \code{db}. 
          
+\strong{Note}: Individual sequences within clonal groups are not, strictly speaking, 
+independent events and it is generally appropriate to only analyze selection 
+pressures on an effective sequence for each clonal group. For this reason,
+it is strongly recommended that the input \code{db} contains one effective 
+sequence per clone. Effective clonal sequences can be obtained by calling 
+the \link{collapseClones} function.
+                  
 If the \code{db} does not contain the 
-required columns to calculate the PDFs (namely OBSERVED & EXPECTED mutations)
+required columns to calculate the PDFs (namely MU_COUNT & MU_EXPECTED)
 then the function will:
   \enumerate{
-  \item  Collapse the sequences by the CLONE column (if present).
   \item  Calculate the numbers of observed mutations.
   \item  Calculate the expected frequencies of mutations and modify the provided 
          \code{db}. The modified \code{db} will be included as part of the 
@@ -79,14 +84,20 @@ than two regions are defined the \code{local} test statistic will be used.
 For further information on the frame of these tests see Uduman et al. (2011).
 }
 \examples{
-# Subset example data
+# Load and subset example data
 data(ExampleDb, package="alakazam")
-db <- subset(ExampleDb, ISOTYPE \%in\% c("IgA", "IgG") & SAMPLE == "+7d")
+db <- subset(ExampleDb, ISOTYPE == "IgG" & SAMPLE == "+7d")
+
+# Collapse clones
+db <- collapseClones(db, sequenceColumn="SEQUENCE_IMGT",
+                     germlineColumn="GERMLINE_IMGT_D_MASK",
+                     method="thresholdedFreq", minimumFrequency=0.6,
+                     includeAmbiguous=FALSE, breakTiesStochastic=FALSE)
  
 # Calculate BASELINe
 baseline <- calcBaseline(db, 
-                         sequenceColumn="SEQUENCE_IMGT",
-                         germlineColumn="GERMLINE_IMGT_D_MASK", 
+                         sequenceColumn="CLONAL_SEQUENCE",
+                         germlineColumn="CLONAL_GERMLINE", 
                          testStatistic="focused",
                          regionDefinition=IMGT_V,
                          targetingModel=HH_S5F,

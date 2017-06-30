@@ -61,6 +61,12 @@ When \code{numSeqMutationsOnly} is \code{FALSE}, a named numeric vector of 1024
 \code{createMutabilityMatrix} builds a 5-mer nucleotide mutability model by counting 
 the number of mutations occuring in the center position for all 5-mer motifs.
 }
+\details{
+\strong{Caution: The targeting model functions do NOT support ambiguous 
+          characters in their inputs. You MUST make sure that your input and germline
+          sequences do NOT contain ambiguous characters (especially if they are 
+          clonal consensuses returned from \code{collapseClones}).}
+}
 \examples{
 \donttest{
 # Subset example data to one isotype and sample as a demo

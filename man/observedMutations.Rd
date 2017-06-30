@@ -5,27 +5,20 @@
 \title{Calculate observed numbers of mutations}
 \usage{
 observedMutations(db, sequenceColumn = "SEQUENCE_IMGT",
-  germlineColumn = "GERMLINE_IMGT_D_MASK", frequency = FALSE,
-  combine = FALSE, regionDefinition = NULL, mutationDefinition = NULL,
-  nproc = 1)
+  germlineColumn = "GERMLINE_IMGT_D_MASK", regionDefinition = NULL,
+  mutationDefinition = NULL, ambiguousMode = c("eitherOr", "and"),
+  frequency = FALSE, combine = FALSE, nproc = 1)
 }
 \arguments{
 \item{db}{\code{data.frame} containing sequence data.}
 
 \item{sequenceColumn}{\code{character} name of the column containing input 
-sequences.}
+sequences. IUPAC ambiguous characters for DNA are 
+supported.}
 
 \item{germlineColumn}{\code{character} name of the column containing 
-the germline or reference sequence.}
-
-\item{frequency}{\code{logical} indicating whether or not to calculate
-mutation frequencies. Default is \code{FALSE}.}
-
-\item{combine}{\code{logical} indicating whether for each sequence should
-the mutation counts for the different regions (CDR, FWR) and 
-mutation types be combined and return one value of 
-count/frequency per sequence instead of 
-multiple values. Default is \code{FALSE}.}
+the germline or reference sequence. IUPAC ambiguous 
+characters for DNA are supported.}
 
 \item{regionDefinition}{\link{RegionDefinition} object defining the regions
 and boundaries of the Ig sequences. If NULL, mutations 
@@ -35,6 +28,22 @@ are counted for entire sequence.}
 and silent mutation criteria. If \code{NULL} then 
 replacement and silent are determined by exact 
 amino acid identity.}
+
+\item{ambiguousMode}{whether to consider ambiguous characters as 
+\code{"either or"} or \code{"and"} when determining and 
+counting the type(s) of mutations. Applicable only if
+\code{sequenceColumn} and/or \code{germlineColumn} 
+contain(s) ambiguous characters. One of 
+\code{c("eitherOr", "and")}. Default is \code{"eitherOr"}.}
+
+\item{frequency}{\code{logical} indicating whether or not to calculate
+mutation frequencies. Default is \code{FALSE}.}
+
+\item{combine}{\code{logical} indicating whether for each sequence should
+the mutation counts for the different regions (CDR, FWR) and 
+mutation types be combined and return one value of 
+count/frequency per sequence instead of 
+multiple values. Default is \code{FALSE}.}
 
 \item{nproc}{number of cores to distribute the operation over. If the 
 cluster has already been set the call function with 
@@ -48,13 +57,13 @@ A modified \code{db} \code{data.frame} with observed mutation counts for each
           \link{IMGT_V} definition, which defines positions for CDR and
           FWR, the following columns are added:
           \itemize{
-            \item  \code{OBSERVED_CDR_R}:  number of replacement mutations in CDR1 and 
+            \item  \code{MU_COUNT_CDR_R}:  number of replacement mutations in CDR1 and 
                                            CDR2 of the V-segment.
-            \item  \code{OBSERVED_CDR_S}:  number of silent mutations in CDR1 and CDR2 
+            \item  \code{MU_COUNT_CDR_S}:  number of silent mutations in CDR1 and CDR2 
                                            of the V-segment.
-            \item  \code{OBSERVED_FWR_R}:  number of replacement mutations in FWR1, 
+            \item  \code{MU_COUNT_FWR_R}:  number of replacement mutations in FWR1, 
                                            FWR2 and FWR3 of the V-segment.
-            \item  \code{OBSERVED_FWR_S}:  number of silent mutations in FWR1, FWR2 and
+            \item  \code{MU_COUNT_FWR_S}:  number of silent mutations in FWR1, FWR2 and
                                            FWR3 of the V-segment.
           }
           If \code{frequency=TRUE}, R and S mutation frequencies are
@@ -81,9 +90,9 @@ A modified \code{db} \code{data.frame} with observed mutation counts for each
 sequence in the input \code{data.frame}.
 }
 \details{
-Mutation count are determined by comparing the input sequences (in the column specified 
+Mutation counts are determined by comparing the input sequences (in the column specified 
 by \code{sequenceColumn}) to the germline sequence (in the column specified by 
-\code{germlineColumn}). 
+\code{germlineColumn}). See \link{calcObservedMutations} for more technical details.
 
 The mutations are binned as either replacement (R) or silent (S) across the different 
 regions of the sequences as defined by \code{regionDefinition}. Typically, this would 

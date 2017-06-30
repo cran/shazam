@@ -22,10 +22,17 @@ summary statistics \code{data.frame} stored in the \code{stats} slot of a
 \link{Baseline} object - provided \link{groupBaseline} has already been run.
 }
 \examples{
+\donttest{
 # Subset example data
 data(ExampleDb, package="alakazam")
 db <- subset(ExampleDb, ISOTYPE \%in\% c("IgA", "IgG") & SAMPLE == "+7d")
 
+# Collapse clones
+db <- collapseClones(db, sequenceColumn="SEQUENCE_IMGT",
+                     germlineColumn="GERMLINE_IMGT_D_MASK",
+                     method="thresholdedFreq", minimumFrequency=0.6,
+                     includeAmbiguous=FALSE, breakTiesStochastic=FALSE)
+                     
 # Calculate BASELINe
 baseline <- calcBaseline(db, 
                          sequenceColumn="SEQUENCE_IMGT",
@@ -33,14 +40,14 @@ baseline <- calcBaseline(db,
                          testStatistic="focused",
                          regionDefinition=IMGT_V,
                          targetingModel=HH_S5F,
-                         nproc = 1)
+                         nproc=1)
 
 # Grouping the PDFs by the isotype and sample annotations.
 grouped <- groupBaseline(baseline, groupBy=c("SAMPLE", "ISOTYPE"))
 
 # Get a data.frame of the summary statistics
 getBaselineStats(grouped)
-
+}
 }
 \seealso{
 For calculating the BASELINe summary statistics see \link{summarizeBaseline}.

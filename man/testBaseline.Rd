@@ -27,10 +27,17 @@ A data.frame with test results containing the following columns:
 posterior probability density functions (PDFs).
 }
 \examples{
+\donttest{
 # Subset example data
 data(ExampleDb, package="alakazam")
 db <- subset(ExampleDb, ISOTYPE == "IgG")
 
+# Collapse clones
+db <- collapseClones(db, sequenceColumn="SEQUENCE_IMGT",
+                     germlineColumn="GERMLINE_IMGT_D_MASK",
+                     method="thresholdedFreq", minimumFrequency=0.6,
+                     includeAmbiguous=FALSE, breakTiesStochastic=FALSE)
+                     
 # Calculate BASELINe
 baseline <- calcBaseline(db, 
                          sequenceColumn="SEQUENCE_IMGT",
@@ -45,7 +52,7 @@ grouped <- groupBaseline(baseline, groupBy="SAMPLE")
 
 # Perform test on sample PDFs
 testBaseline(grouped, groupBy="SAMPLE")
-
+}
 }
 \references{
 \enumerate{

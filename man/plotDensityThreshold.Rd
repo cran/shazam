@@ -21,7 +21,7 @@ be set automatically.}
 \item{xmax}{maximum limit for plotting the x-axis. If \code{NULL} the limit will 
 be set automatically.}
 
-\item{breaks}{number of breaks o show on the x-axis. If \code{NULL} the breaks will 
+\item{breaks}{number of breaks to show on the x-axis. If \code{NULL} the breaks will 
 be set automatically.}
 
 \item{binwidth}{binwidth for the histogram. If \code{NULL} the binwidth 
