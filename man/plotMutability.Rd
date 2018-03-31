@@ -4,7 +4,7 @@
 \alias{plotMutability}
 \title{Plot mutability probabilities}
 \usage{
-plotMutability(model, nucleotides = c("A", "C", "G", "T"),
+plotMutability(model, nucleotides = c("A", "C", "G", "T"), mark = NULL,
   style = c("hedgehog", "bar"), size = 1, silent = FALSE, ...)
 }
 \arguments{
@@ -12,6 +12,9 @@ plotMutability(model, nucleotides = c("A", "C", "G", "T"),
 mutability rates.}
 
 \item{nucleotides}{vector of center nucleotide characters to plot.}
+
+\item{mark}{vector of 5-mer motifs to highlight in the plot. If \code{NULL}
+only highlight classical hot and cold spot motifs.}
 
 \item{style}{type of plot to draw. One of:
 \itemize{

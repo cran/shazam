@@ -1722,20 +1722,20 @@ calcObservedMutations <- function(inputSeq, germlineSeq,
     aminoAcidClasses <- if (is.null(mutationDefinition)) { NULL } else { mutationDefinition@classes }
     
     # Removing IMGT gaps (they should come in threes)
-    # After converting ... to XXX any other . is not an IMGT gap & will be treated like N
-    germlineSeq <- gsub("\\.\\.\\.", "XXX", germlineSeq)
+    # After converting ... to ZZZ any other . is not an IMGT gap & will be treated like N
+    germlineSeq <- gsub("\\.\\.\\.", "ZZZ", germlineSeq)
     #If there is a single gap left convert it to an N
     germlineSeq <- gsub("\\.", "N", germlineSeq)
     # Re-assigning s_germlineSeq (now has all "." that are not IMGT gaps converted to Ns)
-    germlineSeq <- gsub("XXX", "...", germlineSeq)
+    germlineSeq <- gsub("ZZZ", "...", germlineSeq)
     
     # Removing IMGT gaps (they should come in threes)
-    # After converting ... to XXX any other . is not an IMGT gap & will be treated like N
-    inputSeq <- gsub("\\.\\.\\.", "XXX", inputSeq)
+    # After converting ... to ZZZ any other . is not an IMGT gap & will be treated like N
+    inputSeq <- gsub("\\.\\.\\.", "ZZZ", inputSeq)
     #If there is a single gap left convert it to an N
     inputSeq <- gsub("\\.", "N", inputSeq)
     # Re-assigning s_germlineSeq (now has all "." that are not IMGT gaps converted to Ns)
-    inputSeq <- gsub("XXX", "...", inputSeq)    
+    inputSeq <- gsub("ZZZ", "...", inputSeq)    
     
     # Trim the input and germline sequence to the shortest
     len_inputSeq <- stri_length(inputSeq)
@@ -2772,6 +2772,9 @@ calcExpectedMutations <- function(germlineSeq,
         stop(deparse(substitute(targetingModel)), " is not a valid TargetingModel object")
     }
     
+    # Mask ambiguous nucleotide characters
+    germlineSeq <- gsub("[MRWSYKVHDB]", "N", germlineSeq)
+    
     # Assign codon table
     codonTable <- if (is.null(mutationDefinition)) { CODON_TABLE } else { mutationDefinition@codonTable }
     
@@ -2800,8 +2803,7 @@ calcExpectedMutations <- function(germlineSeq,
             
             targeting_region <- targeting[1:4, regionDefinition@boundaries %in% region]
             mutationalPaths_region <- mutationalPaths[, regionDefinition@boundaries[1:ncol(mutationalPaths)] %in% region]
-            targeting_typeOfMutation_region <- sum(targeting_region[mutationalPaths_region == typeOfMutation], 
-                                                   na.rm=TRUE)
+            targeting_typeOfMutation_region <- sum(targeting_region[mutationalPaths_region == typeOfMutation], na.rm=TRUE)
             
             listExpectedMutationFrequencies[[region_mutation]] <- targeting_typeOfMutation_region
             
@@ -2809,7 +2811,7 @@ calcExpectedMutations <- function(germlineSeq,
     }
     expectedMutationFrequencies <- unlist(listExpectedMutationFrequencies)
     expectedMutationFrequencies[!is.finite(expectedMutationFrequencies)] <- NA
-    expectedMutationFrequencies <- expectedMutationFrequencies/sum(expectedMutationFrequencies, na.rm=TRUE)
+    expectedMutationFrequencies <- expectedMutationFrequencies / sum(expectedMutationFrequencies, na.rm=TRUE)
     return(expectedMutationFrequencies)    
 }
 
@@ -2850,32 +2852,32 @@ calculateTargeting <- function(germlineSeq,
         
         # If the sequence and germline (which now should be the same length) is shorter
         # than the length_regionDefinition, pad it with Ns
-        if(len_shortest<length_regionDefinition){
-            fillWithNs <- array("N",length_regionDefinition-len_shortest)
-            c_inputSeq <- c( c_inputSeq, fillWithNs)
+        if(len_shortest < length_regionDefinition){
+            fillWithNs <- array("N", length_regionDefinition - len_shortest)
+            c_inputSeq <- c(c_inputSeq, fillWithNs)
             c_germlineSeq <- c( c_germlineSeq, fillWithNs)
         }
         
         # Mask germline with Ns where input sequence has Ns
-        c_germlineSeq[c_inputSeq == "N" |  !c_inputSeq%in%c(NUCLEOTIDES[1:5],".") ] = "N"    
+        c_germlineSeq[c_inputSeq == "N" |  !c_inputSeq %in% c(NUCLEOTIDES[1:5], ".") ] <- "N"    
         s_germlineSeq <- c2s(c_germlineSeq)
     } else {
         s_germlineSeq <- germlineSeq
-        c_germlineSeq <- s2c(s_germlineSeq)
     }
     
     # Removing IMGT gaps (they should come in threes)
-    # After converting ... to XXX any other . is not an IMGT gap & will be treated like N
-    gaplessSeq <- gsub("\\.\\.\\.", "XXX", s_germlineSeq)
+    # After converting ... to ZZZ any other . is not an IMGT gap & will be treated like N
+    gaplessSeq <- gsub("\\.\\.\\.", "ZZZ", s_germlineSeq)
     #If there is a single gap left convert it to an N
     gaplessSeq <- gsub("\\.", "N", gaplessSeq)
-    
     # Re-assigning s_germlineSeq (now has all "." that are not IMGT gaps converted to Ns)
-    s_germlineSeq <- gsub("XXX", "...", gaplessSeq)
-    c_germlineSeq <- s2c(s_germlineSeq)
+    gaplessSeq <- gsub("ZZZ", "...", gaplessSeq)
+
+    # Vector of seq    
+    c_germlineSeq <- s2c(gaplessSeq)
     # Matrix to hold targeting values for each position in c_germlineSeq
     germlineSeqTargeting <- matrix(NA, 
-                                   ncol=stri_length(s_germlineSeq), 
+                                   ncol=stri_length(gaplessSeq), 
                                    nrow=length(NUCLEOTIDES[1:5]),
                                    dimnames=list(NUCLEOTIDES[1:5], c_germlineSeq))
     
@@ -2883,18 +2885,18 @@ calculateTargeting <- function(germlineSeq,
     # targeting. e.g.
     # GAGAAA......TAG yields: "GAGAA" "AGAAA" "GAAAT" "AAATA" "AATAG"
     # (because the IMGT gaps are NOT real gaps in sequence!!!)
-    gaplessSeq <- gsub("\\.\\.\\.", "", s_germlineSeq)
+    gaplessSeq <- gsub("\\.\\.\\.", "", gaplessSeq)
     gaplessSeqLen <- stri_length(gaplessSeq)
     
     #Slide through 5-mers and look up targeting
     gaplessSeq <- paste("NN", gaplessSeq, "NN", sep="")
     gaplessSeqLen <- stri_length(gaplessSeq)
-    pos<- 3:(gaplessSeqLen - 2)
-    subSeq =  substr(rep(gaplessSeq, gaplessSeqLen - 4), (pos - 2), (pos + 2))
-    germlineSeqTargeting_gapless <- targetingModel@targeting[,subSeq]
+    pos <- 3:(gaplessSeqLen - 2)
+    subSeq <- substr(rep(gaplessSeq, gaplessSeqLen - 4), (pos - 2), (pos + 2))
+    germlineSeqTargeting_gapless <- targetingModel@targeting[, subSeq]
     #     germlineSeqTargeting_gapless <- sapply(subSeq, function(x) { 
     #         targetingModel@targeting[, x] })
-    
+
     germlineSeqTargeting[, c_germlineSeq != "."] <- germlineSeqTargeting_gapless  
     
     # Set self-mutating targeting values to be NA

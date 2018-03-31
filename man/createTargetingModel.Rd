@@ -4,7 +4,7 @@
 \alias{createTargetingModel}
 \title{Creates a TargetingModel}
 \usage{
-createTargetingModel(db, model = c("RS", "S"),
+createTargetingModel(db, model = c("S", "RS"),
   sequenceColumn = "SEQUENCE_IMGT", germlineColumn = "GERMLINE_IMGT_D_MASK",
   vCallColumn = "V_CALL", multipleMutation = c("independent", "ignore"),
   minNumMutations = 50, minNumSeqMutations = 500, modelName = "",
@@ -14,10 +14,12 @@ createTargetingModel(db, model = c("RS", "S"),
 \arguments{
 \item{db}{data.frame containing sequence data.}
 
-\item{model}{type of model to create. The default model, "RS", creates 
-a model by counting both replacement and silent mutations.
-The "S" specification builds a model by counting only 
-silent mutations.}
+\item{model}{type of model to create. The default model, "S", 
+builds a model by counting only silent mutations. \code{model="S"}
+should be used for data that includes functional sequences.
+Setting \code{model="RS"} creates a model by counting both 
+replacement and silent mutations and may be used on fully 
+non-functional sequence data sets.}
 
 \item{sequenceColumn}{name of the column containing IMGT-gapped sample sequences.}
 

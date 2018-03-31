@@ -207,6 +207,18 @@ setClass("TargetingModel",
                      substitution=matrix(0, 5, 3125),
                      targeting=matrix(0, 5, 3125)))
 
+#### Methods ####
+
+#' @param    x    \code{TargetingModel} object.
+#' @param    y    ignored.
+#' @param    ...  arguments to pass to \link{plotMutability}.
+#' 
+#' @rdname   TargetingModel-class
+#' @aliases  TargetingModel-method
+#' @export
+setMethod("plot", c(x="TargetingModel", y="missing"),
+          function(x, y, ...) { plotMutability(x, ...) })
+
 
 #### Model building functions #####
 
@@ -217,10 +229,12 @@ setClass("TargetingModel",
 #' motifs.
 #'
 #' @param    db                data.frame containing sequence data.
-#' @param    model             type of model to create. The default model, "RS", creates 
-#'                             a model by counting both replacement and silent mutations.
-#'                             The "S" specification builds a model by counting only 
-#'                             silent mutations.
+#' @param    model             type of model to create. The default model, "S", 
+#'                             builds a model by counting only silent mutations. \code{model="S"}
+#'                             should be used for data that includes functional sequences.
+#'                             Setting \code{model="RS"} creates a model by counting both 
+#'                             replacement and silent mutations and may be used on fully 
+#'                             non-functional sequence data sets.
 #' @param    sequenceColumn    name of the column containing IMGT-gapped sample sequences.
 #' @param    germlineColumn    name of the column containing IMGT-gapped germline sequences.
 #' @param    vCallColumn       name of the column containing the V-segment allele call.
@@ -304,7 +318,7 @@ setClass("TargetingModel",
 #' }
 #' 
 #' @export
-createSubstitutionMatrix <- function(db, model=c("RS", "S"), 
+createSubstitutionMatrix <- function(db, model=c("S", "RS"), 
                                      sequenceColumn="SEQUENCE_IMGT",
                                      germlineColumn="GERMLINE_IMGT_D_MASK",
                                      vCallColumn="V_CALL",
@@ -408,7 +422,7 @@ createSubstitutionMatrix <- function(db, model=c("RS", "S"),
                 glAtMutation <- codonGL[muCodonPos]
                 if( !any(codonGL=="N") & !any(codonSeq=="N") ){
                     if(!length(grep("N",wrd))){
-                        substitutionList[[v_fam]][[wrd]][glAtMutation,seqAtMutation] <- substitutionList[[v_fam]][[wrd]][glAtMutation,seqAtMutation] + 1
+                        substitutionList[[v_fam]][[wrd]][glAtMutation,seqAtMutation] <- substitutionList[[v_fam]][[wrd]][glAtMutation, seqAtMutation] + 1
                     }
                 }
             }
@@ -418,19 +432,31 @@ createSubstitutionMatrix <- function(db, model=c("RS", "S"),
     
     # Convert substitutionList to listSubstitution to facilitate the aggregation of mutations
     arrNames <- c(outer(unique(v_families), nuc_words, paste, sep = "_"))
-    listSubstitution <- array(0, dim=c(length(arrNames),4,4), dimnames=list(arrNames, nuc_chars, nuc_chars))
+    listSubstitution <- array(0, dim=c(length(arrNames), 4, 4), 
+                              dimnames=list(arrNames, nuc_chars, nuc_chars))
     
     for(v_fam in unique(v_families)){
-        listSubstitution[paste(v_fam, nuc_words, sep="_"),,]<-t(sapply(nuc_words,function(word){substitutionList[[v_fam]][[word]]}))
+        listSubstitution[paste(v_fam, nuc_words, sep="_"), , ] <- t(sapply(nuc_words, 
+                                                                           function(word) { substitutionList[[v_fam]][[word]] }))
     }
     
     # Aggregate mutations from all V families
-    M<-list()
-    subMat1mer <- matrix(0,4,4) # a single substitution matrix for all fivemers
-    listSubNames<-sapply(dimnames(listSubstitution)[[1]],function(x)strsplit(x,"_",fixed=TRUE)[[1]])
+    M <- list()
+    subMat1mer <- matrix(0, 4, 4) # a single substitution matrix for all fivemers
+    listSubNames <- sapply(dimnames(listSubstitution)[[1]], 
+                           function(x) { strsplit(x, "_", fixed=TRUE)[[1]] })
     
+    .sumSub <- function(i, n) {
+        x <- listSubstitution[listSubNames[2, ] == n, i, ]
+        if(is.null(dim(x))) {
+            return (x)
+        } else {
+            return (colSums(x))
+        }
+    }
     for (nuc_word in nuc_words) {
-        M[[nuc_word]] <- t(sapply(1:4,function(i)apply(listSubstitution[listSubNames[2,] == nuc_word,i,],2,sum))) # sums mutations from all families
+        # Sums mutations from all families
+        M[[nuc_word]] <- t(sapply(1:4, .sumSub, n=nuc_word))
         rownames(M[[nuc_word]]) <- nuc_chars
         subMat1mer <- subMat1mer + M[[nuc_word]]
     }
@@ -618,11 +644,15 @@ minNumMutationsTune = function(subCount, minNumMutationsRange) {
 #'
 #' @param    db                  data.frame containing sequence data.
 #' @param    substitutionModel   matrix of 5-mer substitution rates built by 
-#'                               \link{createSubstitutionMatrix}.
-#' @param    model               type of model to create. The default model, "RS", creates 
-#'                               a model by counting both replacement and silent mutations.
-#'                               The "S" specification builds a model by counting only 
-#'                               silent mutations.
+#'                               \link{createSubstitutionMatrix}. Note, this model will
+#'                               only impact mutability scores when \code{model="S"}
+#'                               (using only silent mutations).
+#' @param    model               type of model to create. The default model, "S", 
+#'                               builds a model by counting only silent mutations. \code{model="S"}
+#'                               should be used for data that includes functional sequences.
+#'                               Setting \code{model="RS"} creates a model by counting both 
+#'                               replacement and silent mutations and may be used on fully 
+#'                               non-functional sequence data sets.
 #' @param    sequenceColumn      name of the column containing IMGT-gapped sample sequences.
 #' @param    germlineColumn      name of the column containing IMGT-gapped germline sequences.
 #' @param    vCallColumn         name of the column containing the V-segment allele call.
@@ -686,7 +716,7 @@ minNumMutationsTune = function(subCount, minNumMutationsRange) {
 #' }
 #' 
 #' @export
-createMutabilityMatrix <- function(db, substitutionModel, model=c("RS", "S"),
+createMutabilityMatrix <- function(db, substitutionModel, model=c("S", "RS"),
                                    sequenceColumn="SEQUENCE_IMGT", 
                                    germlineColumn="GERMLINE_IMGT_D_MASK",
                                    vCallColumn="V_CALL",
@@ -806,9 +836,10 @@ createMutabilityMatrix <- function(db, substitutionModel, model=c("RS", "S"),
                     } else { 
                         muChars <- nuc_chars[1:4][nuc_chars[1:4] != glAtMutation]
                     }
-                    
+
                     # Update counts
                     if (length(muChars) > 0) {
+                        #cat(stri_flatten(muChars), substitutionSums[stri_flatten(muChars), wrd5], "\n")
                         tmpCounts[pos, wrd5] <- substitutionSums[stri_flatten(muChars), wrd5]
                     }
                 }
@@ -1189,10 +1220,12 @@ createTargetingMatrix <- function(substitutionModel, mutabilityModel) {
 #' \code{createTargetingModel} creates a 5-mer \code{TargetingModel}.
 #'
 #' @param    db                  data.frame containing sequence data.
-#' @param    model               type of model to create. The default model, "RS", creates 
-#'                               a model by counting both replacement and silent mutations.
-#'                               The "S" specification builds a model by counting only 
-#'                               silent mutations.
+#' @param    model               type of model to create. The default model, "S", 
+#'                               builds a model by counting only silent mutations. \code{model="S"}
+#'                               should be used for data that includes functional sequences.
+#'                               Setting \code{model="RS"} creates a model by counting both 
+#'                               replacement and silent mutations and may be used on fully 
+#'                               non-functional sequence data sets.
 #' @param    sequenceColumn      name of the column containing IMGT-gapped sample sequences.
 #' @param    germlineColumn      name of the column containing IMGT-gapped germline sequences.
 #' @param    vCallColumn         name of the column containing the V-segment allele calls.
@@ -1247,7 +1280,7 @@ createTargetingMatrix <- function(substitutionModel, mutabilityModel) {
 #' }
 #' 
 #' @export
-createTargetingModel <- function(db, model=c("RS", "S"), sequenceColumn="SEQUENCE_IMGT",
+createTargetingModel <- function(db, model=c("S", "RS"), sequenceColumn="SEQUENCE_IMGT",
                                  germlineColumn="GERMLINE_IMGT_D_MASK",
                                  vCallColumn="V_CALL",
                                  multipleMutation=c("independent", "ignore"),
@@ -1302,25 +1335,59 @@ createTargetingModel <- function(db, model=c("RS", "S"), sequenceColumn="SEQUENC
     return(model_obj)
 }
 
-# Rescales mutability probabilities from a TargetingModel
-# 
-# \code{rescaleMutability} renormalizes the mutability probabilities
-# in a TargetingModel model and returns a rescaled matrix of mutability scores.
-# 
-# @param    model     \link{TargetingModel} object with mutation likelihood information.
-# @param    mean      the mean value for the rescaled mutability scores.
-#                                                
-# @return   A named vector of mutability scores for each 5-mer motif with mean
-#           equal to \code{mean}.
-#           
-# @seealso  Takes as input a \link{TargetingModel} object.
-# 
-# @examples
-# # Subset example data to one isotype and sample as a demo
-# data(ExampleDb, package="alakazam")
-# db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
-#
-# # Create model and rescale mutabilities
+
+#' Calculate total mutability
+#' 
+#' \code{calculateMutability} calculates the total (summed) mutability for a set of sequences 
+#' based on a 5-mer nucleotide mutability model.
+#'
+#' @param    sequences           character vector of sequences.
+#' @param    model               \link{TargetingModel} object with mutation likelihood information.
+#' @param    progress            if \code{TRUE} print a progress bar.
+#' 
+#' @return   Numeric vector with a total mutability score for each sequence.
+#' 
+#' @examples
+#' \donttest{
+#' # Subset example data to one isotype and sample as a demo
+#' data(ExampleDb, package="alakazam")
+#' db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
+#'
+#' # Calculate mutability of germline sequences using \link{HH_S5F} model
+#' mutability <- calculateMutability(sequences=db$GERMLINE_IMGT_D_MASK, model=HH_S5F)
+#' }
+#' 
+#' @export
+calculateMutability <- function(sequences, model=HH_S5F, progress=FALSE) {
+    # Initialize variables
+    alphb <- seqinr::s2c("ACGTN")
+    model_kmer <- names(model@mutability)
+    model_rates <- as.vector(model@mutability)
+    sequences <- toupper(sequences)
+    sequences <- gsub("\\.", "N", sequences)
+    
+    # Mutability calculation
+    mutability <- vector(mode="numeric", length=length(sequences))
+    if (progress) { 
+        pb <- progressBar(length(sequences)) 
+    }
+    for (s in 1:length(sequences)) {
+        kmer <- seqinr::count(seqinr::s2c(sequences[s]), wordsize=5, alphabet=alphb)
+        seq_kmer <- names(kmer)
+        seq_counts <- as.vector(kmer)
+        
+        index <- match(seq_kmer, model_kmer)
+        mutability[s] <- sum(seq_counts*model_rates[index], na.rm=TRUE)
+        
+        if (progress) { pb$tick() }
+    }
+    
+    return(mutability)
+}
+
+
+
+# Create model and rescale mutabilities
 # model <- createTargetingModel(db, model="S", multipleMutation="ignore")
 # mut <- rescaleMutability(model)
 #
@@ -1843,6 +1910,8 @@ writeTargetingDistance <- function(model, file) {
 #' @param    model        \link{TargetingModel} object or vector containing normalized 
 #'                        mutability rates.
 #' @param    nucleotides  vector of center nucleotide characters to plot.
+#' @param    mark         vector of 5-mer motifs to highlight in the plot. If \code{NULL}
+#'                        only highlight classical hot and cold spot motifs.
 #' @param    style        type of plot to draw. One of:
 #'                        \itemize{
 #'                          \item \code{"hedgehog"}:  circular plot showing higher mutability
@@ -1878,7 +1947,7 @@ writeTargetingDistance <- function(model, file) {
 #' plotMutability(HH_S5F, c("G", "T"), style="bar")
 #' 
 #' @export
-plotMutability <- function(model, nucleotides=c("A", "C", "G", "T"),
+plotMutability <- function(model, nucleotides=c("A", "C", "G", "T"), mark=NULL,
                            style=c("hedgehog", "bar"), size=1, silent=FALSE, 
                            ...) {
     # model=HH_S5F
@@ -1914,8 +1983,8 @@ plotMutability <- function(model, nucleotides=c("A", "C", "G", "T"),
     text_offset <- -5.6
     
     # Set guide colors
-    motif_colors <- setNames(c("#4daf4a", "#e41a1c", "#094d85", "#999999"),
-                             c("WA/TW", "WRC/GYW", "SYC/GRS", "Neutral"))
+    motif_colors <- setNames(c("#000000", "#4daf4a", "#e41a1c", "#094d85", "#999999"),
+                             c("Marked", "WA/TW", "WRC/GYW", "SYC/GRS", "Neutral"))
     dna_colors <- setNames(c("#7bce77", "#ff9b39", "#f04949", "#5796ca", "#c4c4c4"),
                            c("A", "C", "G", "T", "N"))
     
@@ -1934,7 +2003,12 @@ plotMutability <- function(model, nucleotides=c("A", "C", "G", "T"),
     mut_df$motif[grepl("(.[AT]A..)|(..T[AT].)", mut_df$word, perl=TRUE)] <- "WA/TW"
     mut_df$motif[grepl("([AT][GA]C..)|(..G[CT][AT])", mut_df$word, perl=TRUE)] <- "WRC/GYW"
     mut_df$motif[grepl("([CG][CT]C..)|(..G[GA][CG])", mut_df$word, perl=TRUE)] <- "SYC/GRS"
-    mut_df$motif <- factor(mut_df$motif, levels=c("WA/TW", "WRC/GYW", "SYC/GRS", "Neutral"))
+    if (is.null(mark)) {
+        mut_df$motif <- factor(mut_df$motif, levels=c("WA/TW", "WRC/GYW", "SYC/GRS", "Neutral"))
+    } else {
+        mut_df$motif[mut_df$word %in% mark] <- "Marked"
+        mut_df$motif <- factor(mut_df$motif, levels=c("Marked", "WA/TW", "WRC/GYW", "SYC/GRS", "Neutral"))
+    }
     
     # Subset to nucleotides of interest
     mut_df <- mut_df[mut_df$pos3 %in% nucleotides, ]

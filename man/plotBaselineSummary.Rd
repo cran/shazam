@@ -6,8 +6,8 @@
 \usage{
 plotBaselineSummary(baseline, idColumn, groupColumn = NULL,
   groupColors = NULL, subsetRegions = NULL, facetBy = c("region",
-  "group"), title = NULL, style = c("mean"), size = 1, silent = FALSE,
-  ...)
+  "group"), title = NULL, style = c("summary"), size = 1,
+  silent = FALSE, ...)
 }
 \arguments{
 \item{baseline}{either a data.frame returned from \link{summarizeBaseline}
@@ -42,7 +42,7 @@ for faceting will be color coded.}
 
 \item{style}{type of plot to draw. One of:
 \itemize{
-  \item \code{"mean"}:     plots the mean and confidence interval for
+  \item \code{"summary"}:  plots the mean and confidence interval for
                            the selection scores of each value in 
                            \code{idColumn}. Faceting and coloring
                            are determine by values in \code{groupColumn}

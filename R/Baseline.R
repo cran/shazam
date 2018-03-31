@@ -71,6 +71,30 @@ setClass("Baseline",
 
 #### Methods #####
 
+#' @param    x    \code{Baseline} object.
+#' @param    y    name of the column in the \code{db} slot of \code{baseline} 
+#'                containing primary identifiers.
+#' @param    ...  arguments to pass to \link{plotBaselineDensity}.
+#' 
+#' @rdname   Baseline-class
+#' @aliases  Baseline-method
+#' @export
+setMethod("plot", c(x="Baseline", y="character"),
+          function(x, y, ...) { plotBaselineDensity(x, y, ...) })
+
+
+#' @param    object  \code{Baseline} object.
+#' @param    nproc   number of cores to distribute the operation over.
+#' 
+#' @rdname   Baseline-class
+#' @aliases  Baseline-method
+#' @export
+setMethod("summary", c(object="Baseline", nproc=integer()),
+          function(object, nproc=1) { summarizeBaseline(object, returnType="df", nproc=nproc) })
+
+
+#### Accessory functions #####
+
 #' Creates a Baseline object
 #' 
 #' \code{createBaseline} creates and initialize a \code{Baseline} object. 
@@ -237,60 +261,11 @@ createBaseline <- function(description="",
 #' @export
 editBaseline <- function(baseline, field_name, value) {
     if (!match(field_name, slotNames(baseline))) { 
-        stop("field_name not part of BASELINe object!")
+        stop("field_name not part of Baseline object!")
     }
     slot(baseline, field_name) <- value
     
     return(baseline)
-}
-
-
-#' Gets the summary statistics of a Baseline object
-#'
-#' \code{getBaselineStats} is an accessor method that returns the 
-#' summary statistics \code{data.frame} stored in the \code{stats} slot of a 
-#' \link{Baseline} object - provided \link{groupBaseline} has already been run.
-#'
-#' @param    baseline  \code{Baseline} object that has been run through
-#'                     either \link{groupBaseline} or \link{summarizeBaseline}.
-#' 
-#' @return   A \code{data.frame} with the mean selection strength (mean Sigma), 95\% 
-#'           confidence intervals, and p-values with positive signs for the presence 
-#'           of positive selection and/or p-values with negative signs for the presence 
-#'           of negative selection. 
-#' 
-#' @seealso  For calculating the BASELINe summary statistics see \link{summarizeBaseline}.
-#' 
-#' @examples
-#' \donttest{
-#' # Subset example data
-#' data(ExampleDb, package="alakazam")
-#' db <- subset(ExampleDb, ISOTYPE %in% c("IgA", "IgG") & SAMPLE == "+7d")
-#' 
-#' # Collapse clones
-#' db <- collapseClones(db, sequenceColumn="SEQUENCE_IMGT",
-#'                      germlineColumn="GERMLINE_IMGT_D_MASK",
-#'                      method="thresholdedFreq", minimumFrequency=0.6,
-#'                      includeAmbiguous=FALSE, breakTiesStochastic=FALSE)
-#'                      
-#' # Calculate BASELINe
-#' baseline <- calcBaseline(db, 
-#'                          sequenceColumn="SEQUENCE_IMGT",
-#'                          germlineColumn="GERMLINE_IMGT_D_MASK", 
-#'                          testStatistic="focused",
-#'                          regionDefinition=IMGT_V,
-#'                          targetingModel=HH_S5F,
-#'                          nproc=1)
-#' 
-#' # Grouping the PDFs by the isotype and sample annotations.
-#' grouped <- groupBaseline(baseline, groupBy=c("SAMPLE", "ISOTYPE"))
-#' 
-#' # Get a data.frame of the summary statistics
-#' getBaselineStats(grouped)
-#' }
-#' @export
-getBaselineStats <- function(baseline) {
-    return(baseline@stats)
 }
 
 
@@ -582,8 +557,15 @@ calcBaseline <- function(db,
                          }
                      )
             )
+        #cat(class(mat_pdfs_binom), "\n") # for debugging
+        #cat(dim(mat_pdfs_binom), "\n") # for debugging
         
-        list_pdfs[[region]] <- mat_pdfs_binom[, 1:4001]
+        # IMPORTANT: if input has a single sequence, mat_pdfs_binom (1-row) gets coerced 
+        # into a numeric vector without matrix(..., nrow=nrow(mat_pdfs_binom))
+        list_pdfs[[region]] <- matrix(mat_pdfs_binom[, 1:4001], nrow=nrow(mat_pdfs_binom))
+        #cat(class(list_pdfs[[region]]), "\n") # for debugging
+        stopifnot(class(list_pdfs[[region]])=="matrix")
+        
         list_k[[region]] <- mat_pdfs_binom[, 4002]
         list_n[[region]] <- mat_pdfs_binom[, 4003]
         list_p[[region]] <- mat_pdfs_binom[, 4004]
@@ -888,6 +870,8 @@ groupBaseline <- function(baseline, groupBy, nproc=1) {
     # If user wants to paralellize this function and specifies nproc > 1, then
     # initialize and register slave R processes/clusters & 
     # export all nesseary environment variables, functions and packages.  
+    baseline@db <- data.frame()
+    gc()
     if (nproc > 1){        
         cluster <- parallel::makeCluster(nproc, type = "PSOCK")
         parallel::clusterExport( cluster, list('baseline', 'uniqueGroupsIdx',
@@ -931,7 +915,13 @@ groupBaseline <- function(baseline, groupBy, nproc=1) {
                 idx <- uniqueGroupsIdx[[i]]
                 
                 # Get a matrix (r=numb of sequences/groups * c=4001(i,e. the length of the PDFS))
+                # Care was taken to make sure that @pdfs[[region]] should be maintained
+                # as a matrix regardless of the number of input sequences (even for a
+                # single-sequence input)
+                # Thus matrix_GroupPdfs should be expected to be maintained as a matrix as
+                # opposed a numeric vector
                 matrix_GroupPdfs <- (baseline@pdfs[[region]])[idx, , drop=FALSE]
+                stopifnot(class(matrix_GroupPdfs)=="matrix")
                 
                 # A list version of 
                 list_GroupPdfs <- 
@@ -940,6 +930,8 @@ groupBaseline <- function(baseline, groupBy, nproc=1) {
                                 rowVals <- matrix_GroupPdfs[rowIndex, ]
                                 if( !all(is.na(rowVals)) ) { matrix_GroupPdfs[rowIndex, ] }
                             })
+                rm(matrix_GroupPdfs)
+                gc()
                 # Determine the number of sequences that went into creating each of the PDFs
                 # If running groupBaseline for the first time after calcBaseline, then
                 # each PDF should have a numbOfSeqs=1. 
@@ -954,7 +946,7 @@ groupBaseline <- function(baseline, groupBy, nproc=1) {
                 numbOfNonNASeqs <- length(list_GroupPdfs)
                 
                 # If all the PDFs in the group are NAs, return a PDF of NAs
-                if (length(list_GroupPdfs) == 0) { 
+                if (length(list_GroupPdfs) == 0) {
                     return(c(rep(NA, 4001), 0))
                 }
                 
@@ -972,6 +964,8 @@ groupBaseline <- function(baseline, groupBy, nproc=1) {
                     # sort by number of items
                     len_numbOfSeqs_region <- length(numbOfSeqs_region)
                     sorted_numbOfSeqs_region <- sort(numbOfSeqs_region)
+                    rm(numbOfSeqs_region)
+                    gc()
                     sorted_list_GroupPdfs <- list()
                     for(newIndex in 1:len_numbOfSeqs_region){
                         sorted_list_GroupPdfs[[newIndex]] <-  list_GroupPdfs[[ as.numeric(names(sorted_numbOfSeqs_region)[newIndex]) ]]
@@ -991,18 +985,24 @@ groupBaseline <- function(baseline, groupBy, nproc=1) {
                         # Convolute these PDFs together
                         list_sameWeightPdfs <- sorted_list_GroupPdfs[indexesOfWeight]
                         updatedPdf <- groupPosteriors(list_sameWeightPdfs)
+                        rm(list_sameWeightPdfs)
+                        gc()
                         # The new updated weights for this convoluted PDF
                         updatedWeight <- as.numeric(pdfWeight) * length(indexesOfWeight)
                         
                         # remove these from sorted_numbOfSeqs_region & sorted_list_GroupPdfs
                         sorted_numbOfSeqs_region  <- sorted_numbOfSeqs_region[-indexesOfWeight]
                         sorted_list_GroupPdfs <- sorted_list_GroupPdfs[-indexesOfWeight]
+                        rm(indexesOfWeight)
+                        gc()
                         
                         # add the convoluted PDF and its new weight
                         newLength <- length(sorted_numbOfSeqs_region)+1
                         sorted_numbOfSeqs_region[newLength] <- updatedWeight
                         sorted_list_GroupPdfs[[newLength]] <- updatedPdf
-                        
+                        rm(updatedWeight)
+                        rm(updatedPdf)
+                        gc()
                         
                         # sort by number of items
                         len_sorted_numbOfSeqs_region <- length(sorted_numbOfSeqs_region)
@@ -1042,8 +1042,10 @@ groupBaseline <- function(baseline, groupBy, nproc=1) {
                             # add the convoluted PDF and its new weight
                             newLength <- length(sorted_numbOfSeqs_region)+1
                             sorted_numbOfSeqs_region[newLength] <- updatedWeight
+                            rm(updatedWeight)
                             sorted_list_GroupPdfs[[newLength]] <- updatedPdf
-                            
+                            rm(updatedPdf)
+                            gc()
                             # sort by number of items
                             len_sorted_numbOfSeqs_region <- length(sorted_numbOfSeqs_region)
                             sorted_numbOfSeqs_region <- sort(sorted_numbOfSeqs_region)
@@ -1059,7 +1061,6 @@ groupBaseline <- function(baseline, groupBy, nproc=1) {
                             }
                         }
                     }
-                    
                     return( c( list_GroupPdfs[[1]], as.numeric(sorted_numbOfSeqs_region) ) )
                 }
                 
@@ -1213,7 +1214,13 @@ summarizeBaseline <- function(baseline, returnType=c("baseline", "df"), nproc=1)
             db_seq <- data.frame(db[idx, ])
             names(db_seq) <- names(db)
             for (region in regions) {
+                
+                # care was taken to make sure that @pdfs[[region]] should be maintained
+                # as a matrix regardless of the number of input sequences (even for a
+                # single-sequence input)
+                stopifnot(class(baseline@pdfs[[region]])=="matrix")
                 baseline_pdf <- baseline@pdfs[[region]][idx, ]
+                
                 baseline_ci <- baselineCI(baseline_pdf)
                 df_baseline_seq_region <- 
                     data.frame(db_seq,
@@ -1554,9 +1561,9 @@ plotBaselineDensity <- function(baseline, idColumn, groupColumn=NULL, colorEleme
                                 colorValues=NULL, title=NULL, subsetRegions=NULL, sigmaLimits=c(-5, 5), 
                                 facetBy=c("region", "group"), style=c("density"), size=1, 
                                 silent=FALSE, ...) {
-    # Test variable settings
-    # baseline=baseline_two
-    # idColumn="BARCODE"; groupColumn="CPRIMER"; subsetRegions=NULL; sigmaLimits=c(-5, 5)
+    ## DEBUG
+    # baseline=grouped
+    # idColumn="SAMPLE"; groupColumn="ISOTYPE"; subsetRegions=NULL; sigmaLimits=c(-5, 5)
     # facetBy="region"; style="density"; size=1; silent=FALSE
     
     # Check input
@@ -1582,7 +1589,7 @@ plotBaselineDensity <- function(baseline, idColumn, groupColumn=NULL, colorEleme
         # Subset to regions of interest
         dens_names <- baseline@regions        
         if (!is.null(subsetRegions)) {
-            dens_names <- dens_names[dens_names %in% subsetRegions]        
+            dens_names <- dens_names[dens_names %in% subsetRegions]
         }
         dens_list <- baseline@pdfs[dens_names]
         
@@ -1597,7 +1604,8 @@ plotBaselineDensity <- function(baseline, idColumn, groupColumn=NULL, colorEleme
             rownames(dens_list[[i]]) <- group_df$GROUP_COLLAPSE
             colnames(dens_list[[i]]) <- col_names
             dens_list[[i]] <- dens_list[[i]][, col_names >= sigmaLimits[1] & 
-                                                 col_names <= sigmaLimits[2]]
+                                               col_names <= sigmaLimits[2],
+                                             drop=FALSE]
         }
         
         # Melt density matrices
@@ -1630,9 +1638,9 @@ plotBaselineDensity <- function(baseline, idColumn, groupColumn=NULL, colorEleme
         # Apply color order
         if (!is.null(colorValues)) {
             if (colorElement == "id") {
-                dens_df[,idColumn] <- factor(dens_df[,idColumn], levels=names(colorValues))
+                dens_df[, idColumn] <- factor(dens_df[, idColumn], levels=names(colorValues))
             } else {
-                dens_df[,groupColumn] <- factor(dens_df[,groupColumn], levels=names(colorValues))
+                dens_df[, groupColumn] <- factor(dens_df[, groupColumn], levels=names(colorValues))
             }
         }
         
@@ -1710,7 +1718,7 @@ plotBaselineDensity <- function(baseline, idColumn, groupColumn=NULL, colorEleme
 #' @param    title          string defining the plot title.
 #' @param    style          type of plot to draw. One of:
 #'                          \itemize{
-#'                            \item \code{"mean"}:     plots the mean and confidence interval for
+#'                            \item \code{"summary"}:  plots the mean and confidence interval for
 #'                                                     the selection scores of each value in 
 #'                                                     \code{idColumn}. Faceting and coloring
 #'                                                     are determine by values in \code{groupColumn}
@@ -1764,7 +1772,7 @@ plotBaselineDensity <- function(baseline, idColumn, groupColumn=NULL, colorEleme
 #' @export
 plotBaselineSummary <- function(baseline, idColumn, groupColumn=NULL, groupColors=NULL, 
                                 subsetRegions=NULL, facetBy=c("region", "group"), 
-                                title=NULL, style=c("mean"), size=1, silent=FALSE, ...) {
+                                title=NULL, style=c("summary"), size=1, silent=FALSE, ...) {
     # Check arguments
     style <- match.arg(style)
     facetBy <- match.arg(facetBy)
@@ -1812,7 +1820,7 @@ plotBaselineSummary <- function(baseline, idColumn, groupColumn=NULL, groupColor
         theme(legend.position="top") +
         theme(axis.text.x=element_text(angle=90, vjust=0.5, hjust=1))
     
-    if (style == "mean") { 
+    if (style == "summary") { 
         # Plot mean and confidence intervals
         stats_df <- stats_df[!is.na(stats_df$BASELINE_SIGMA), ]
         if (!is.null(groupColumn) & !is.null(groupColors)) {

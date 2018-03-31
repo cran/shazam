@@ -4,7 +4,19 @@
 \name{TargetingModel-class}
 \alias{TargetingModel-class}
 \alias{TargetingModel}
+\alias{plot,TargetingModel,missing-method}
+\alias{TargetingModel-method}
 \title{S4 class defining a targeting model}
+\usage{
+\S4method{plot}{TargetingModel,missing}(x, y, ...)
+}
+\arguments{
+\item{x}{\code{TargetingModel} object.}
+
+\item{y}{ignored.}
+
+\item{...}{arguments to pass to \link{plotMutability}.}
+}
 \description{
 \code{TargetingModel} defines a common data structure for mutability, substitution and
 targeting of immunoglobulin (Ig) sequencing data in a 5-mer microsequence context.

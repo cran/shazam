@@ -4,12 +4,14 @@
 \alias{shmulateSeq}
 \title{Simulate mutations in a single sequence}
 \usage{
-shmulateSeq(sequence, mutations, targetingModel = HH_S5F)
+shmulateSeq(sequence, numMutations, targetingModel = HH_S5F)
 }
 \arguments{
-\item{sequence}{sequence string in which mutations are to be introduced.}
+\item{sequence}{sequence string in which mutations are to be introduced.
+Accepted alphabet: \code{\{A, T, G, C, N, .\}}. Note
+that \code{-} is not accepted.}
 
-\item{mutations}{number of mutations to be introduced into \code{sequence}.}
+\item{numMutations}{number of mutations to be introduced into \code{sequence}.}
 
 \item{targetingModel}{5-mer \link{TargetingModel} object to be used for computing 
 probabilities of mutations at each position. Defaults to
@@ -22,12 +24,19 @@ A string defining the mutated sequence.
 Generates random mutations in a sequence iteratively using a targeting model.
 Targeting probabilities at each position are updated after each iteration.
 }
+\details{
+If the input \code{sequence} has a non-triplet overhang at the end, it will be trimmed
+to the last codon. For example, \code{ATGCATGC} will be trimmed to \code{ATGCAT}.
+
+Mutations are not introduced to positions in the input \code{sequence} that contain 
+\code{.} or \code{N}.
+}
 \examples{
 # Define example input sequence
-sequence <- "NGATCTGACGACACGGCCGTGTATTACTGTGCGAGAGATAGTTTA"
+sequence <- "NGATCTGACGACACGGCCGTGTATTACTGTGCGAGAGATA.TTTA"
 
 # Simulate using the default human 5-mer targeting model
-shmulateSeq(sequence, mutations=6)
+shmulateSeq(sequence, numMutations=6)
 
 }
 \seealso{

@@ -503,7 +503,7 @@ nearestDist<- function(sequences, model=c("ham", "aa", "hh_s1f", "hh_s5f", "mk_r
 #' @param    progress        if \code{TRUE} print a progress bar.
 #'
 #' @return   Returns a modified \code{db} data.frame with nearest neighbor distances in the 
-#'           \code{DIST_NEAREST} column if \code{crossGrups=NULL} or in the 
+#'           \code{DIST_NEAREST} column if \code{crossGroups=NULL} or in the 
 #'           \code{CROSS_DIST_NEAREST} column if \code{crossGroups} was specified.
 #'
 #' @details
@@ -813,7 +813,14 @@ distToNearest <- function(db, sequenceColumn="JUNCTION", vCallColumn="V_CALL", j
 #' 
 #' @seealso  See \link{distToNearest} for generating the nearest neighbor distance vectors.
 #'           See \link{plotGmmThreshold} and \link{plotDensityThreshold} for plotting output.
-#'           
+#'      
+#' @note 
+#' We recommend users to visually inspect the resulting
+#' fits when using \code{method="gmm"}. Our empirical observations imply that, the bimodality 
+#' of the distance-to-nearest distribution is detectable for a repertoire of minimum 1k reads.
+#' The increased number of sequences will improve the fitting procedure, although it would be 
+#' at the potential expense of higher demand in computational time complexity.     
+#' 
 #' @examples
 #' \donttest{
 #' # Subset example data to one sample as a demo
@@ -1155,7 +1162,8 @@ gmmFit <- function(ent, edge=0.9, cross=NULL, model, cutoff, sen, spc, progress=
     }
     
     if (valley.itr != 0) {
-        MaxLoc <- which.max(vec.lkhood)
+        # MaxLoc <- which.max(vec.lkhood)
+        MaxLoc <- which.max(abs(vec.lkhood))
         
         omega[1] <- vec.omega1[MaxLoc]; omega[2] <- vec.omega2[MaxLoc]
         mu[1] <- vec.mu1[MaxLoc];       mu[2] <- vec.mu2[MaxLoc]
@@ -1268,7 +1276,8 @@ rocSpace <- function(ent, omega.gmm, mu.gmm, sigma.gmm, model, cutoff, sen, spc,
         }
         # print(paste0(func, " fit done. Loglik= ", round(MixModel$loglik, digits = 2)))
         # Invoke fit parameters
-        log_lik <- round(MixModel$loglik, digits = 2)
+        # log_lik <- round(MixModel$loglik, digits = 2)
+        log_lik <- round(abs(MixModel$loglik), digits = 2)
         if (log_lik > LOG_LIK){
             LOG_LIK <- log_lik
             

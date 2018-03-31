@@ -4,7 +4,7 @@
 \alias{createMutabilityMatrix}
 \title{Builds a mutability model}
 \usage{
-createMutabilityMatrix(db, substitutionModel, model = c("RS", "S"),
+createMutabilityMatrix(db, substitutionModel, model = c("S", "RS"),
   sequenceColumn = "SEQUENCE_IMGT", germlineColumn = "GERMLINE_IMGT_D_MASK",
   vCallColumn = "V_CALL", multipleMutation = c("independent", "ignore"),
   minNumSeqMutations = 500, numSeqMutationsOnly = FALSE,
@@ -14,12 +14,16 @@ createMutabilityMatrix(db, substitutionModel, model = c("RS", "S"),
 \item{db}{data.frame containing sequence data.}
 
 \item{substitutionModel}{matrix of 5-mer substitution rates built by 
-\link{createSubstitutionMatrix}.}
+\link{createSubstitutionMatrix}. Note, this model will
+only impact mutability scores when \code{model="S"}
+(using only silent mutations).}
 
-\item{model}{type of model to create. The default model, "RS", creates 
-a model by counting both replacement and silent mutations.
-The "S" specification builds a model by counting only 
-silent mutations.}
+\item{model}{type of model to create. The default model, "S", 
+builds a model by counting only silent mutations. \code{model="S"}
+should be used for data that includes functional sequences.
+Setting \code{model="RS"} creates a model by counting both 
+replacement and silent mutations and may be used on fully 
+non-functional sequence data sets.}
 
 \item{sequenceColumn}{name of the column containing IMGT-gapped sample sequences.}
 

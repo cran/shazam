@@ -17,19 +17,19 @@ vertex annotations, whose edges are to be recreated.}
 probabilities of mutations at each position. Defaults to
 \link{HH_S5F}.}
 
-\item{field}{annotation to use for both unweighted path length exclusion and
-consideration as the MRCA node. If \code{NULL} do not exclude 
-any nodes.}
+\item{field}{annotation to use for both unweighted path length exclusion 
+and consideration as the MRCA node. If \code{NULL} do not 
+exclude any nodes.}
 
-\item{exclude}{vector of annotation values in \code{field} to exclude from potential
-MRCA set. If \code{NULL} do not exclude any nodes. 
+\item{exclude}{vector of annotation values in \code{field} to exclude from 
+potential MRCA set. If \code{NULL} do not exclude any nodes.
 Has no effect if \code{field=NULL}.}
 
-\item{junctionWeight}{fraction of the nucleotide sequence that is within the junction 
-region. When specified this adds a proportional number of  
-mutations to the trunk of the tree. Requires a value between 
-0 and 1. If \code{NULL} then edge weights are unmodified
-from the input \code{graph}.}
+\item{junctionWeight}{fraction of the nucleotide sequence that is within the 
+junction region. When specified this adds a proportional 
+number of mutations to the immediate offspring nodes of the 
+MRCA. Requires a value between 0 and 1. If \code{NULL} then 
+edge weights are unmodified from the input \code{graph}.}
 }
 \value{
 A \code{data.frame} of simulated sequences with columns:
@@ -42,11 +42,11 @@ A \code{data.frame} of simulated sequences with columns:
           }
 }
 \description{
-\code{shmulateTree} returns a set of simulated sequences generated from an input sequence and an
-lineage tree. The input sequence is used to replace the MRCA node of the \code{igraph} object
-defining the lineage tree. Sequences are then simulated with mutations corresponding to edge 
-weights in the tree. Sequences will not be generated for groups of nodes that are specified 
-to be excluded.
+\code{shmulateTree} returns a set of simulated sequences generated from an input 
+sequence and a lineage tree. The input sequence is used to replace the most recent 
+common ancestor (MRCA) node of the \code{igraph} object defining the lineage tree. 
+Sequences are then simulated with mutations corresponding to edge weights in the tree. 
+Sequences will not be generated for groups of nodes that are specified to be excluded.
 }
 \examples{
 # Load example lineage and define example MRCA
@@ -59,7 +59,7 @@ shmulateTree(sequence, graph)
 
 # Simulate using the mouse 5-mer targeting model
 # Exclude nodes without a sample identifier
-# Add 20\% mutation rate to the trunk
+# Add 20\% mutation rate to the immediate offsprings of the MRCA
 shmulateTree(sequence, graph, targetingModel=MK_RS5NF,
              field="SAMPLE", exclude=NA, junctionWeight=0.2)
  

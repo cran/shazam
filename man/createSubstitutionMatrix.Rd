@@ -4,7 +4,7 @@
 \alias{createSubstitutionMatrix}
 \title{Builds a substitution model}
 \usage{
-createSubstitutionMatrix(db, model = c("RS", "S"),
+createSubstitutionMatrix(db, model = c("S", "RS"),
   sequenceColumn = "SEQUENCE_IMGT", germlineColumn = "GERMLINE_IMGT_D_MASK",
   vCallColumn = "V_CALL", multipleMutation = c("independent", "ignore"),
   returnModel = c("5mer", "1mer", "1mer_raw"), minNumMutations = 50,
@@ -13,10 +13,12 @@ createSubstitutionMatrix(db, model = c("RS", "S"),
 \arguments{
 \item{db}{data.frame containing sequence data.}
 
-\item{model}{type of model to create. The default model, "RS", creates 
-a model by counting both replacement and silent mutations.
-The "S" specification builds a model by counting only 
-silent mutations.}
+\item{model}{type of model to create. The default model, "S", 
+builds a model by counting only silent mutations. \code{model="S"}
+should be used for data that includes functional sequences.
+Setting \code{model="RS"} creates a model by counting both 
+replacement and silent mutations and may be used on fully 
+non-functional sequence data sets.}
 
 \item{sequenceColumn}{name of the column containing IMGT-gapped sample sequences.}
 

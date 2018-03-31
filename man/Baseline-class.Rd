@@ -4,7 +4,28 @@
 \name{Baseline-class}
 \alias{Baseline-class}
 \alias{Baseline}
+\alias{plot,Baseline,character-method}
+\alias{Baseline-method}
+\alias{summary,Baseline-method}
+\alias{Baseline-method}
 \title{S4 class defining a BASELINe (selection) object}
+\usage{
+\S4method{plot}{Baseline,character}(x, y, ...)
+
+\S4method{summary}{Baseline}(object, nproc = 1)
+}
+\arguments{
+\item{x}{\code{Baseline} object.}
+
+\item{y}{name of the column in the \code{db} slot of \code{baseline} 
+containing primary identifiers.}
+
+\item{...}{arguments to pass to \link{plotBaselineDensity}.}
+
+\item{object}{\code{Baseline} object.}
+
+\item{nproc}{number of cores to distribute the operation over.}
+}
 \description{
 \code{Baseline} defines a common data structure the results of selection
 analysis using the BASELINe method.
