@@ -92,7 +92,9 @@ sequence in the input \code{data.frame}.
 \details{
 Mutation counts are determined by comparing the input sequences (in the column specified 
 by \code{sequenceColumn}) to the germline sequence (in the column specified by 
-\code{germlineColumn}). See \link{calcObservedMutations} for more technical details.
+\code{germlineColumn}). See \link{calcObservedMutations} for more technical details, 
+\strong{including criteria for which sequence differences are included in the mutation 
+counts and which are not}.
 
 The mutations are binned as either replacement (R) or silent (S) across the different 
 regions of the sequences as defined by \code{regionDefinition}. Typically, this would 

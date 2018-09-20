@@ -4,7 +4,8 @@
 \alias{collapseClones}
 \title{Constructs effective clonal sequences for all clones}
 \usage{
-collapseClones(db, cloneColumn = "CLONE", sequenceColumn = "SEQUENCE_IMGT",
+collapseClones(db, cloneColumn = "CLONE",
+  sequenceColumn = "SEQUENCE_IMGT",
   germlineColumn = "GERMLINE_IMGT_D_MASK", muFreqColumn = NULL,
   regionDefinition = NULL, method = c("mostCommon", "thresholdedFreq",
   "catchAll", "mostMutated", "leastMutated"), minimumFrequency = NULL,
@@ -336,19 +337,19 @@ clones <- collapseClones(db, method="mostCommon",
 
 # Make a copy of db that has a mutation frequency column
 db2 <- observedMutations(db, frequency=TRUE, combine=TRUE)
+
 # mostMutated method, resolving ties stochastically
 clones <- collapseClones(db2, method="mostMutated", muFreqColumn="MU_FREQ", 
                          breakTiesStochastic=TRUE, breakTiesByColumns=NULL)
+                         
 # mostMutated method, resolving ties deterministically using additional columns
 clones <- collapseClones(db2, method="mostMutated", muFreqColumn="MU_FREQ", 
                          breakTiesStochastic=FALSE, 
                          breakTiesByColumns=list(c("DUPCOUNT"), c(max)))
 
-# catchAll method
-clones <- collapseClones(db, method="catchAll")
-
-# Build clonal consensus for V-region only
-clones <- collapseClones(db, method="mostCommon", regionDefinition=IMGT_V)
+# Build consensus for V segment only
+# Capture all nucleotide variations using ambiguous characters 
+clones <- collapseClones(db, method="catchAll", regionDefinition=IMGT_V)
 
 # Return the same number of rows as the input
 clones <- collapseClones(db, method="mostCommon", expandedDb=TRUE)

@@ -78,8 +78,8 @@ db <- collapseClones(db, sequenceColumn="SEQUENCE_IMGT",
                      
 # Calculate BASELINe
 baseline <- calcBaseline(db, 
-                         sequenceColumn="SEQUENCE_IMGT",
-                         germlineColumn="GERMLINE_IMGT_D_MASK", 
+                         sequenceColumn="CLONAL_SEQUENCE",
+                         germlineColumn="CLONAL_GERMLINE", 
                          testStatistic="focused",
                          regionDefinition=IMGT_V,
                          targetingModel=HH_S5F,

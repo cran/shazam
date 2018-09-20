@@ -4,8 +4,8 @@
 \alias{plotTune}
 \title{Visualize parameter tuning for minNumMutations and minNumSeqMutations}
 \usage{
-plotTune(tuneMtx, thresh, criterion = c("5mer", "3mer", "1mer", "3mer+1mer",
-  "measured", "inferred"), pchs = 1, ltys = 2, cols = 1,
+plotTune(tuneMtx, thresh, criterion = c("5mer", "3mer", "1mer",
+  "3mer+1mer", "measured", "inferred"), pchs = 1, ltys = 2, cols = 1,
   plotLegend = TRUE, legendPos = "topright", legendHoriz = FALSE,
   legendCex = 1)
 }

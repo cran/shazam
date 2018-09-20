@@ -5,9 +5,10 @@
 \title{Calculate the BASELINe PDFs}
 \usage{
 calcBaseline(db, sequenceColumn = "CLONAL_SEQUENCE",
-  germlineColumn = "CLONAL_GERMLINE", testStatistic = c("local", "focused",
-  "imbalanced"), regionDefinition = NULL, targetingModel = HH_S5F,
-  mutationDefinition = NULL, calcStats = FALSE, nproc = 1)
+  germlineColumn = "CLONAL_GERMLINE", testStatistic = c("local",
+  "focused", "imbalanced"), regionDefinition = NULL,
+  targetingModel = HH_S5F, mutationDefinition = NULL,
+  calcStats = FALSE, nproc = 1)
 }
 \arguments{
 \item{db}{\code{data.frame} containing sequence data and annotations.}

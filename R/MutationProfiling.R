@@ -315,19 +315,19 @@ NULL
 #' 
 #' # Make a copy of db that has a mutation frequency column
 #' db2 <- observedMutations(db, frequency=TRUE, combine=TRUE)
+#' 
 #' # mostMutated method, resolving ties stochastically
 #' clones <- collapseClones(db2, method="mostMutated", muFreqColumn="MU_FREQ", 
 #'                          breakTiesStochastic=TRUE, breakTiesByColumns=NULL)
+#'                          
 #' # mostMutated method, resolving ties deterministically using additional columns
 #' clones <- collapseClones(db2, method="mostMutated", muFreqColumn="MU_FREQ", 
 #'                          breakTiesStochastic=FALSE, 
 #'                          breakTiesByColumns=list(c("DUPCOUNT"), c(max)))
 #' 
-#' # catchAll method
-#' clones <- collapseClones(db, method="catchAll")
-#' 
-#' # Build clonal consensus for V-region only
-#' clones <- collapseClones(db, method="mostCommon", regionDefinition=IMGT_V)
+#' # Build consensus for V segment only
+#' # Capture all nucleotide variations using ambiguous characters 
+#' clones <- collapseClones(db, method="catchAll", regionDefinition=IMGT_V)
 #' 
 #' # Return the same number of rows as the input
 #' clones <- collapseClones(db, method="mostCommon", expandedDb=TRUE)
@@ -479,7 +479,7 @@ collapseClones <- function(db,
     }
     
     # Ensure that the nproc does not exceed the number of cores/CPUs available
-    nproc <- min(nproc, getnproc())
+    nproc <- min(nproc, cpuCount())
     
     # If user wants to paralellize this function and specifies nproc > 1, then
     # initialize and register slave R processes/clusters & 
@@ -1324,7 +1324,9 @@ calcClonalConsensus <- function(db,
 #' @details
 #' Mutation counts are determined by comparing the input sequences (in the column specified 
 #' by \code{sequenceColumn}) to the germline sequence (in the column specified by 
-#' \code{germlineColumn}). See \link{calcObservedMutations} for more technical details.
+#' \code{germlineColumn}). See \link{calcObservedMutations} for more technical details, 
+#' \strong{including criteria for which sequence differences are included in the mutation 
+#' counts and which are not}.
 #' 
 #' The mutations are binned as either replacement (R) or silent (S) across the different 
 #' regions of the sequences as defined by \code{regionDefinition}. Typically, this would 
@@ -1428,7 +1430,7 @@ observedMutations <- function(db,
         nproc <- 0
     }
     # Ensure that the nproc does not exceed the number of cores/CPUs available
-    nproc <- min(nproc, getnproc())
+    nproc <- min(nproc, cpuCount())
     
     # If user wants to paralellize this function and specifies nproc > 1, then
     # initialize and register slave R processes/clusters & 
@@ -1443,7 +1445,7 @@ observedMutations <- function(db,
                                               'EXPANDED_AMBIGUOUS_CODONS',
                                               'makeNullRegionDefinition', 'mutationDefinition',
                                               'getCodonPos','getContextInCodon','mutationType',
-                                              'translateCodonToAminoAcid','AMINO_ACIDS',
+                                              'AMINO_ACIDS',
                                               'binMutationsByRegion', 'countNonNByRegion'), 
                                 envir=environment())
         registerDoParallel(cluster)
@@ -1465,7 +1467,7 @@ observedMutations <- function(db,
                                         frequency=frequency & !combine,
                                         regionDefinition=regionDefinition,
                                         mutationDefinition=mutationDefinition,
-                                        returnRaw = combine,
+                                        returnRaw=combine,
                                         ambiguousMode=ambiguousMode)
             if (combine) {
                 num_mutations <- 0
@@ -1480,7 +1482,7 @@ observedMutations <- function(db,
                     mu_freq
                 }
             } else {
-                oM   
+                oM
             }
         }
     
@@ -1493,12 +1495,12 @@ observedMutations <- function(db,
         #labels_length=1
         labels_length <- length(makeNullRegionDefinition()@labels)
     }
-    observed_mutations <- do.call( rbind, lapply(observedMutations_list, function(x) { 
+    # Convert mutation vector list to a matrix
+    observed_mutations <- do.call(rbind, lapply(observedMutations_list, function(x) { 
         length(x) <- labels_length 
-        return(x)
-    }))
-    
-    
+        return(x) }))
+    #observed_mutations <- t(sapply(observedMutations_list, c))
+
     sep <- "_"
     if (ncol(observed_mutations) > 1) sep <- "_"
     observed_mutations[is.na(observed_mutations)] <- 0
@@ -1519,7 +1521,7 @@ observedMutations <- function(db,
 
 #' Count the number of observed mutations in a sequence.
 #'
-#' \code{calcObservedMutations} determines all the mutations in a given input seqeunce 
+#' \code{calcObservedMutations} determines all the mutations in a given input sequence 
 #' compared to its germline sequence.
 #'
 #' @param    inputSeq            input sequence. IUPAC ambiguous characters for DNA are 
@@ -1571,19 +1573,34 @@ observedMutations <- function(db,
 #'           with the frequencies of replacement (R) and silent (S) mutations.
 #'           
 #' @details
-#' Each mutation is considered independently in the germline context. If specified, only 
-#' the part of \code{inputSeq} defined in \code{regionDefinition} is analyzed. For example, 
-#' when using the default \link{IMGT_V} definition, then mutations in positions beyond 
-#' 312 will be ignored. Additionally, non-triplet overhang at the sequence end is ignored.
+#' \strong{Each mutation is considered independently in the germline context}. For illustration,
+#' consider the case where the germline is \code{TGG} and the observed is \code{TAC}.
+#' When determining the mutation type at position 2, which sees a change from \code{G} to 
+#' \code{A}, we compare the codon \code{TGG} (germline) to \code{TAG} (mutation at position
+#' 2 independent of other mutations in the germline context). Similarly, when determining 
+#' the mutation type at position 3, which sees a change from \code{G} to \code{C}, we 
+#' compare the codon \code{TGG} (germline) to \code{TGC} (mutation at position 3 independent 
+#' of other mutations in the germline context).
 #' 
-#' Only replacement (R) and silent (S) mutations are included in the results. Excluded are: 
+#' If specified, only the part of \code{inputSeq} defined in \code{regionDefinition} is 
+#' analyzed. For example, when using the default \link{IMGT_V} definition, then mutations 
+#' in positions beyond 312 will be ignored. Additionally, non-triplet overhang at the 
+#' sequence end is ignored.
+#' 
+#' Only replacement (R) and silent (S) mutations are included in the results. \strong{Excluded}
+#' are: 
 #' \itemize{
 #'      \item Stop mutations
+#'      
+#'            E.g.: the case where \code{TAGTGG} is observed for the germline \code{TGGTGG}.
+#'            
 #'      \item Mutations occurring in codons where one or both of the observed and the 
 #'            germline involve(s) one or more of "N", "-", or ".".
 #'            
-#'            E.g.: the case in which NNN in the germline sequence is observed as NNC in 
-#'            the input sequence.
+#'            E.g.: the case where \code{TTG} is observed for the germline being any one of 
+#'            \code{TNG}, \code{.TG}, or \code{-TG}. Similarly, the case where any one of 
+#'            \code{TTN}, \code{TT.}, or \code{TT-} is observed for the germline \code{TTG}.
+#'            
 #' }
 #' In other words, a result that is \code{NA} or zero indicates absence of R and S mutations, 
 #' not necessarily all types of mutations, such as the excluded ones mentioned above.
@@ -1873,7 +1890,6 @@ calcObservedMutations <- function(inputSeq, germlineSeq,
     
     # return positions of point mutations and their mutation types ("raw")
     if (returnRaw){
-        
         if (length(mutations_array_raw) == sum(is.na(mutations_array_raw))) {
             # if mutations_array_raw is NA, or 
             # if mutations_array_raw is empty due to all mutations being "Stop" and hence removed
@@ -1885,23 +1901,23 @@ calcObservedMutations <- function(inputSeq, germlineSeq,
                 # this won't be a problem if ambiguousMode="eitherOr", but would for "and"
                 # set inputCodons, germCodons, and mutPos to NULL to work around that
                 nonN.denoms <- countNonNByRegion(regDef=regionDefinition, ambiMode=ambiguousMode, 
-                                                inputChars=c_inputSeq, germChars=c_germlineSeq,
-                                                inputCodons=NULL, 
-                                                germCodons=NULL, 
-                                                mutPos=NULL)
+                                                 inputChars=c_inputSeq, germChars=c_germlineSeq,
+                                                 inputCodons=NULL, 
+                                                 germCodons=NULL, 
+                                                 mutPos=NULL)
             } else {
                 nonN.denoms <- setNames(object=rep(NA, length(regionDefinition@regions)), 
-                                       nm=regionDefinition@regions)
+                                        nm=regionDefinition@regions)
             }
             
             return(list(pos=mutations_array_raw, nonN=nonN.denoms))
         } else {
             
             nonN.denoms <- countNonNByRegion(regDef=regionDefinition, ambiMode=ambiguousMode, 
-                                            inputChars=c_inputSeq, germChars=c_germlineSeq,
-                                            inputCodons=c_inputSeq_codons, 
-                                            germCodons=c_germlineSeq_codons, 
-                                            mutPos=mutations_pos)
+                                             inputChars=c_inputSeq, germChars=c_germlineSeq,
+                                             inputCodons=c_inputSeq_codons, 
+                                             germCodons=c_germlineSeq_codons, 
+                                             mutPos=mutations_pos)
             
             # df indicating position, mutation type (R or S), and region of each mutation
             rawDf <- data.frame(as.numeric(colnames(mutations_array_raw)))
@@ -2625,7 +2641,7 @@ expectedMutations <- function(db,
     }
     
     # Ensure that the nproc does not exceed the number of cores/CPUs available
-    nproc <- min(nproc, getnproc(), na.rm=T)
+    nproc <- min(nproc, cpuCount(), na.rm=T)
     
     # If user wants to paralellize this function and specifies nproc > 1, then
     # initialize and register slave R processes/clusters & 
@@ -3095,10 +3111,6 @@ getCodonPos <- function(nucPos) {
     return ((codonNum - 2):codonNum)
 }
 
-# Translate codon to amino acid
-translateCodonToAminoAcid <- function(Codon) {
-    return (AMINO_ACIDS[Codon])
-}
 
 # Given two codons, tells you if the mutation is R or S (based on your definition)
 #
@@ -3147,9 +3159,7 @@ mutationType <- function(codonFrom, codonTo,
                          aminoAcidClasses=NULL) {
     # codonFrom="TTT"; codonTo="TTA"
     # codonFrom="TTT"; codonTo="TGA"
-    
-    ambiguousMode <- match.arg(ambiguousMode)
-    
+
     # placeholder for tabulation
     tab <- setNames(object=rep(0, 4), nm=c("R", "S", "Stop", "na"))
     
@@ -3169,8 +3179,8 @@ mutationType <- function(codonFrom, codonTo,
                     tab[4] <- tab[4] + 1
                 } else {
                     # Translate codons
-                    cur.aaFrom <- translateCodonToAminoAcid(cur.codonFrom)
-                    cur.aaTo <- translateCodonToAminoAcid(cur.codonTo)
+                    cur.aaFrom <- AMINO_ACIDS[cur.codonFrom]
+                    cur.aaTo <- AMINO_ACIDS[cur.codonTo]
                     
                     # If any codon is NA then return NA
                     if (any(is.na(c(codonFrom, codonTo, cur.aaFrom, cur.aaTo)))) { 

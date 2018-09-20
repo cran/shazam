@@ -226,26 +226,21 @@ createBaseline <- function(description="",
 #' 
 #' \code{editBaseline} edits a field in a \code{Baseline} object.
 #'
-#' @param   baseline     The \code{Baseline} S4 object to be edited.
-#' @param   field_name   Name of the field in the \code{Baseline} S4 object to be edited.
-#' @param   value        The value to set the \code{field_name}.
+#' @param   baseline  \code{Baseline} object to be edited.
+#' @param   field     name of the field in the \code{Baseline} object to be edited.
+#' @param   value     value to set the \code{field}.
 #' 
 #' @return   A \code{Baseline} object with the field of choice updated.
 #' 
-#' @seealso  See \link{Baseline} for the return object.
+#' @seealso  See \link{Baseline} for the input and return object.
 #'
 #' @examples
+#' \donttest{
 #' # Subset example data
 #' data(ExampleDb, package="alakazam")
-#' db <- subset(ExampleDb, ISOTYPE %in% c("IgA", "IgG") & SAMPLE == "+7d")
+#' db <- subset(ExampleDb, ISOTYPE == "IgG" & SAMPLE == "+7d")
 #' 
-#' # Collapse clones
-#' db <- collapseClones(db, sequenceColumn="SEQUENCE_IMGT",
-#'                      germlineColumn="GERMLINE_IMGT_D_MASK",
-#'                      method="thresholdedFreq", minimumFrequency=0.6,
-#'                      includeAmbiguous=FALSE, breakTiesStochastic=FALSE)
-#'                      
-#' # Calculate BASELINe
+#' # Make Baseline object
 #' baseline <- calcBaseline(db, 
 #'                          sequenceColumn="SEQUENCE_IMGT",
 #'                          germlineColumn="GERMLINE_IMGT_D_MASK", 
@@ -255,15 +250,16 @@ createBaseline <- function(description="",
 #'                          nproc=1)
 #'                          
 #' # Edit the field "description"
-#' baseline <- editBaseline(baseline, field_name="description", 
-#'                          value="+7d IgA & IgG")
-#'                                                   
+#' baseline <- editBaseline(baseline, field="description", 
+#'                          value="+7d IgG")
+#' }
+#' 
 #' @export
-editBaseline <- function(baseline, field_name, value) {
-    if (!match(field_name, slotNames(baseline))) { 
-        stop("field_name not part of Baseline object!")
+editBaseline <- function(baseline, field, value) {
+    if (!match(field, slotNames(baseline))) { 
+        stop(field, " is not part of the Baseline object.")
     }
-    slot(baseline, field_name) <- value
+    slot(baseline, field) <- value
     
     return(baseline)
 }
@@ -411,7 +407,7 @@ calcBaseline <- function(db,
     db <- toupperColumns(db, c(sequenceColumn, germlineColumn))
     
     # Ensure that the nproc does not exceed the number of cores/CPUs available
-    nproc <- min(nproc, getnproc())
+    nproc <- min(nproc, cpuCount())
     # nproc_arg will be passed to any function that has the nproc argument
     # If the cluster is already being set by the parent function then 
     # this will be set to 'cluster', that way the child function does not close
@@ -441,7 +437,7 @@ calcBaseline <- function(db,
                                               'NUCLEOTIDES_AMBIGUOUS', 'IUPAC2nucs',
                                               'makeNullRegionDefinition',
                                               'getCodonPos','getContextInCodon',
-                                              'mutationType','translateCodonToAminoAcid',
+                                              'mutationType',
                                               'AMINO_ACIDS','binMutationsByRegion',
                                               'collapseMatrixToVector','calcExpectedMutations',
                                               'calculateTargeting','HH_S5F','calculateMutationalPaths',
@@ -811,8 +807,8 @@ calcBaselineBinomialPdf <- function (x=3,
 #'
 #' # Calculate BASELINe
 #' baseline <- calcBaseline(db, 
-#'                          sequenceColumn="SEQUENCE_IMGT",
-#'                          germlineColumn="GERMLINE_IMGT_D_MASK", 
+#'                          sequenceColumn="CLONAL_SEQUENCE",
+#'                          germlineColumn="CLONAL_GERMLINE", 
 #'                          testStatistic="focused",
 #'                          regionDefinition=IMGT_V,
 #'                          targetingModel=HH_S5F,
@@ -844,7 +840,7 @@ groupBaseline <- function(baseline, groupBy, nproc=1) {
     i <- NULL
     
     # Ensure that the nproc does not exceed the number of cores/CPUs available
-    nproc <- min(nproc, getnproc())
+    nproc <- min(nproc, cpuCount())
     
     # Get indices of unique combinations of field(s) specified by groupBy
     # unique groups
@@ -1159,8 +1155,8 @@ groupBaseline <- function(baseline, groupBy, nproc=1) {
 #'                      
 #' # Calculate BASELINe
 #' baseline <- calcBaseline(db, 
-#'                          sequenceColumn="SEQUENCE_IMGT",
-#'                          germlineColumn="GERMLINE_IMGT_D_MASK", 
+#'                          sequenceColumn="CLONAL_SEQUENCE",
+#'                          germlineColumn="CLONAL_GERMLINE", 
 #'                          testStatistic="focused",
 #'                          regionDefinition=IMGT_V,
 #'                          targetingModel=HH_S5F,
@@ -1181,7 +1177,7 @@ summarizeBaseline <- function(baseline, returnType=c("baseline", "df"), nproc=1)
     returnType <- match.arg(returnType)
     
     # Ensure that the nproc does not exceed the number of cores/CPUs available
-    nproc <- min(nproc, getnproc())
+    nproc <- min(nproc, cpuCount())
     
     # If user wants to paralellize this function and specifies nproc > 1, then
     # initialize and register slave R processes/clusters & 
@@ -1246,7 +1242,7 @@ summarizeBaseline <- function(baseline, returnType=c("baseline", "df"), nproc=1)
         return(stats)    
     } else if (returnType == "baseline") {
         # Append stats to baseline object
-        return(editBaseline(baseline, field_name = "stats", stats))
+        return(editBaseline(baseline, field="stats", stats))
     } else {
         return(NULL)
     }
@@ -1266,7 +1262,11 @@ summarizeBaseline <- function(baseline, returnType=c("baseline", "df"), nproc=1)
 #' @return   A data.frame with test results containing the following columns:
 #'           \itemize{
 #'             \item  \code{REGION}:  sequence region, such as "CDR" and "FWR".
-#'             \item  \code{TEST}:    string defining the two group values compared.
+#'             \item  \code{TEST}:    string defining the groups be compared. The
+#'                                    string is formated as the conclusion associated with the
+#'                                    p-value in the form \code{GROUP1 != GROUP2}. Meaning,
+#'                                    the p-value for rejection of the null hypothesis that 
+#'                                    GROUP1 and GROUP2 have equivalent distributions.
 #'             \item  \code{PVALUE}:  two-sided p-value for the comparison.
 #'             \item  \code{FDR}:     FDR corrected \code{PVALUE}.
 #'           }
@@ -1285,7 +1285,7 @@ summarizeBaseline <- function(baseline, returnType=c("baseline", "df"), nproc=1)
 #' \donttest{
 #' # Subset example data
 #' data(ExampleDb, package="alakazam")
-#' db <- subset(ExampleDb, ISOTYPE == "IgG")
+#' db <- subset(ExampleDb, ISOTYPE %in% c("IgM", "IgG", "IgA"))
 #'
 #' # Collapse clones
 #' db <- collapseClones(db, sequenceColumn="SEQUENCE_IMGT",
@@ -1295,18 +1295,21 @@ summarizeBaseline <- function(baseline, returnType=c("baseline", "df"), nproc=1)
 #'                      
 #' # Calculate BASELINe
 #' baseline <- calcBaseline(db, 
-#'                          sequenceColumn="SEQUENCE_IMGT",
-#'                          germlineColumn="GERMLINE_IMGT_D_MASK", 
+#'                          sequenceColumn="CLONAL_SEQUENCE",
+#'                          germlineColumn="CLONAL_GERMLINE", 
 #'                          testStatistic="focused",
 #'                          regionDefinition=IMGT_V,
 #'                          targetingModel=HH_S5F,
 #'                          nproc=1)
 #' 
-#' # Group PDFs by the sample identifier
-#' grouped <- groupBaseline(baseline, groupBy="SAMPLE")
+#' # Group PDFs by the isotype
+#' grouped <- groupBaseline(baseline, groupBy="ISOTYPE")
 #' 
-#' # Perform test on sample PDFs
-#' testBaseline(grouped, groupBy="SAMPLE")
+#' # Visualize isotype PDFs
+#' plot(grouped, "ISOTYPE")
+#' 
+#' # Perform test on isotype PDFs
+#' testBaseline(grouped, groupBy="ISOTYPE")
 #' }
 #' @export
 testBaseline <- function(baseline, groupBy) {
@@ -1511,6 +1514,9 @@ baseline2DistPValue <-function(base1, base2) {
 #'                                                     Faceting is determined by the 
 #'                                                     \code{facetBy} argument.
 #'                          }
+#' @param    sizeElement    one of \code{c("none", "id", "group")} specifying whether the lines in the
+#'                          plot should be all of the same size (\code{none}) or have their sizes depend on 
+#'                          the values in \code{id} or \code{code}.
 #' @param    size           numeric scaling factor for lines, points and text in the plot.
 #' @param    silent         if \code{TRUE} do not draw the plot and just return the ggplot2 
 #'                          object; if \code{FALSE} draw the plot.
@@ -1534,8 +1540,8 @@ baseline2DistPValue <-function(base1, base2) {
 #'                      
 #' # Calculate BASELINe
 #' baseline <- calcBaseline(db, 
-#'                          sequenceColumn="SEQUENCE_IMGT",
-#'                          germlineColumn="GERMLINE_IMGT_D_MASK", 
+#'                          sequenceColumn="CLONAL_SEQUENCE",
+#'                          germlineColumn="CLONAL_GERMLINE", 
 #'                          testStatistic="focused",
 #'                          regionDefinition=IMGT_V,
 #'                          targetingModel=HH_S5F,
@@ -1559,7 +1565,8 @@ baseline2DistPValue <-function(base1, base2) {
 #' @export
 plotBaselineDensity <- function(baseline, idColumn, groupColumn=NULL, colorElement=c("id", "group"), 
                                 colorValues=NULL, title=NULL, subsetRegions=NULL, sigmaLimits=c(-5, 5), 
-                                facetBy=c("region", "group"), style=c("density"), size=1, 
+                                facetBy=c("region", "group"), style=c("density"), 
+                                sizeElement=c("none", "id", "group"), size=1, 
                                 silent=FALSE, ...) {
     ## DEBUG
     # baseline=grouped
@@ -1570,7 +1577,7 @@ plotBaselineDensity <- function(baseline, idColumn, groupColumn=NULL, colorEleme
     colorElement <- match.arg(colorElement)
     style <- match.arg(style)
     facetBy <- match.arg(facetBy)
-    
+    sizeElement <- match.arg(sizeElement)
     
     # Set base plot settings
     base_theme <- theme_bw() +
@@ -1644,12 +1651,26 @@ plotBaselineDensity <- function(baseline, idColumn, groupColumn=NULL, colorEleme
             }
         }
         
+        # Apply line width
+        dens_df[, "size"] <- factor(1)
+        
+        if (sizeElement=="id") {
+            dens_df[, "size"] <- factor(dens_df[, idColumn])
+        } else if (sizeElement == "group" ) {
+            dens_df[, "size"] <- factor(dens_df[, groupColumn])
+        }
+        
+        size_values <- 1:length(levels(dens_df[,"size"]))
+        size_names <- levels(dens_df[, "size"])        
+        size_values <- size*size_values/max(size_values)
+        names(size_values) <- size_names
+        
         # Plot probability density curve
         p1 <- ggplot(dens_df, aes_string(x="SIGMA", y="DENSITY")) +
             base_theme + 
             xlab(expression(Sigma)) +
             ylab("Density") +
-            geom_line(size=1*size)
+            geom_line(aes(size=size))
         # Add line
         if (colorElement == "id" & is.null(secondaryColumn)) {
             p1 <- p1 + aes_string(color=idColumn)
@@ -1677,6 +1698,35 @@ plotBaselineDensity <- function(baseline, idColumn, groupColumn=NULL, colorEleme
     }
     
     # Add additional theme elements
+    p1 <- p1 + 
+        scale_size_manual(breaks=names(size_values), values=size_values)
+    
+    if (sizeElement == "none") {
+        p1 <- p1 +
+            guides( 
+                size=FALSE, 
+                colour = guide_legend(override.aes = list(size = size_values))
+                )        
+        if (length(unique(c(groupColumn,idColumn)))>1) {
+            p1 <- p1 +
+                guides (
+                    linetype = guide_legend(override.aes = list(size = size_values))
+                )
+        }
+    } else if (sizeElement == colorElement) {
+        p1 <- p1 +
+            guides( 
+                size=FALSE, 
+                colour = guide_legend(override.aes = list(size = size_values)))
+    } else {
+        p1 <- p1 +
+            guides( 
+                size=FALSE, 
+                linetype = guide_legend(override.aes = list(size = size_values))
+            ) 
+    }
+    
+      
     p1 <- p1 + do.call(theme, list(...))
     
     # Plot
@@ -1749,8 +1799,8 @@ plotBaselineDensity <- function(baseline, idColumn, groupColumn=NULL, colorEleme
 #'                      
 #' # Calculate BASELINe
 #' baseline <- calcBaseline(db, 
-#'                          sequenceColumn="SEQUENCE_IMGT",
-#'                          germlineColumn="GERMLINE_IMGT_D_MASK", 
+#'                          sequenceColumn="CLONAL_SEQUENCE",
+#'                          germlineColumn="CLONAL_GERMLINE", 
 #'                          testStatistic="focused",
 #'                          regionDefinition=IMGT_V,
 #'                          targetingModel=HH_S5F,

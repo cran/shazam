@@ -7,7 +7,8 @@
 plotBaselineDensity(baseline, idColumn, groupColumn = NULL,
   colorElement = c("id", "group"), colorValues = NULL, title = NULL,
   subsetRegions = NULL, sigmaLimits = c(-5, 5), facetBy = c("region",
-  "group"), style = c("density"), size = 1, silent = FALSE, ...)
+  "group"), style = c("density"), sizeElement = c("none", "id",
+  "group"), size = 1, silent = FALSE, ...)
 }
 \arguments{
 \item{baseline}{\code{Baseline} object containing selection probability 
@@ -55,6 +56,10 @@ for purposes of the \code{colorElement} argument.}
                            \code{facetBy} argument.
 }}
 
+\item{sizeElement}{one of \code{c("none", "id", "group")} specifying whether the lines in the
+plot should be all of the same size (\code{none}) or have their sizes depend on 
+the values in \code{id} or \code{code}.}
+
 \item{size}{numeric scaling factor for lines, points and text in the plot.}
 
 \item{silent}{if \code{TRUE} do not draw the plot and just return the ggplot2 
@@ -83,8 +88,8 @@ db <- collapseClones(db, sequenceColumn="SEQUENCE_IMGT",
                      
 # Calculate BASELINe
 baseline <- calcBaseline(db, 
-                         sequenceColumn="SEQUENCE_IMGT",
-                         germlineColumn="GERMLINE_IMGT_D_MASK", 
+                         sequenceColumn="CLONAL_SEQUENCE",
+                         germlineColumn="CLONAL_GERMLINE", 
                          testStatistic="focused",
                          regionDefinition=IMGT_V,
                          targetingModel=HH_S5F,

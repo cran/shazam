@@ -1,3 +1,34 @@
+Version 0.1.10: September 19, 2018
+-------------------------------------------------------------------------------
+
+General:
+
++ Added `subsample` argument to `distToNearest` function.
++ Removed some internal utility functions in favor of importing them from 
+  `alakazam`. Specifically, `progressBar`, `getBaseTheme` and `checkColumns`.
++ Removed `clearConsole`, `getnproc`, and `getPlatform` functions. 
+
+Distance Calculation:
+
++ Changed default `findThreshold` method to `density`.
++ Significantly reduced run time of the `density` method by retuning the 
+  bandwidth detection process. The `density` method should now also yield more 
+  consistent thresholds, on average.
++ The `subsample` argument to `findThreshold` now applies to both the 
+  `density` and `gmm` methods. Subsampling of distance is not performed by 
+  default.
++ Fixed a bug in `plotDensityThreshold` and `plotGmmThreshold` wherein the
+  `breaks` argument was ignored when specifying `xmax` and/or `xmin`.
+
+Selection Analsis:
+
++ Fixed a plotting bug in `plotBaselineDensity` arising when the `groupColumn` 
+  and `idColumn` arguments were set to the same column.
++ Added the `sizeElement` argument to `plotBaselineDensity` to control 
+  line size
++ Renamed the `field_name` argument to `field` in `editBaseline`.
+
+
 Version 0.1.9: March 30, 2018
 -------------------------------------------------------------------------------
 

@@ -4,7 +4,8 @@
 \alias{createMutationDefinition}
 \title{Creates a MutationDefinition}
 \usage{
-createMutationDefinition(name, classes, description = "", citation = "")
+createMutationDefinition(name, classes, description = "",
+  citation = "")
 }
 \arguments{
 \item{name}{name of the mutation definition.}

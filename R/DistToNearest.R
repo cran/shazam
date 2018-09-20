@@ -209,8 +209,12 @@ dist5Mers <- function(seq1, seq2, targetingDistance,
 #                             average (avg) of seq1->seq2 and seq2->seq1 or the minimum (min).
 #
 # @return  A matrix of pairwise distances between junction sequences.
-pairwise5MerDist <- function(sequences, targetingDistance, 
+pairwise5MerDist <- function(sequences, 
+                             targetingDistance, 
                              symmetry=c("avg", "min")) {
+    # get names
+    seq_names <- names(sequences)
+
     # Initial checks
     symmetry <- match.arg(symmetry)
     
@@ -245,7 +249,80 @@ pairwise5MerDist <- function(sequences, targetingDistance,
     # Make distance matrix symmetric
     dist_mat <- dist_mat + t(dist_mat)
     
+    # assign names
+    if (!is.null(seq_names)) {
+        rownames(dist_mat) <- seq_names
+        colnames(dist_mat) <- seq_names
+    }
+    
     return(dist_mat)
+}
+
+# Given an array of nucleotide sequences and a vector indices (a subset of array of nucleotide sequences), 
+# find the pairwise distances
+# 
+# @param   sequences          character vector of nucleotide sequences.
+# @paramindx                  numeric vector of subsamples indices
+# @param   targetingDistance  targeting distance obtained from a targeting model
+#                             with the function `calcTargetingDistance`
+# @param   symmetry           if model is hs5f, distance between seq1 and seq2 is either the
+#                             average (avg) of seq1->seq2 and seq2->seq1 or the minimum (min).
+#
+# @return  A non-square matrix of pairwise distances between junction sequences.
+nonsquare5MerDist <- function(sequences, indx,  targetingDistance, symmetry=c("avg", "min")) {
+    
+    # get names
+    seq_names <- names(sequences)
+    
+    # Initial checks
+    symmetry <- match.arg(symmetry)
+    
+    # Convert junctions to uppercase
+    sequences <- toupper(sequences)
+    # Convert gaps to Ns
+    sequences <- gsub('[-.]', 'N', sequences, fixed=T)
+    # Add 'NN' to front and end of each sequence for fivemers
+    sequences <- as.vector(sapply(sequences, function(x){ paste("NN", x, "NN", sep="") }))
+    
+    n_seq <- length(sequences)
+    
+    #Junctions are broken in to 5-mers based on a sliding window (of one) and placed in matrix
+    #Each column is a junction
+    #E.g. junctions 1234567, ABCDEFG, JKLMNOP becomes:
+    # 12345   ABCDE   JKLMN
+    # 23456   BCDEF   KLMNO
+    # 34567   CDEFG   LMNOP
+    .matSeqSlidingFiveMer <- sapply(sequences, function(x) { window5Mers(x) }, 
+                                    simplify="matrix")
+    
+    # Compute pairwise distance between all sequences' fivemers (by column)
+    .dist <- function(i) {
+        c(rep.int(0, i - 1), 
+          sapply(i:n_seq, function(j) { dist5Mers(.matSeqSlidingFiveMer[,i],
+                                                  .matSeqSlidingFiveMer[,j],
+                                                  targetingDistance,
+                                                  symmetry=symmetry) }))
+    }
+    dist_mat <- matrix(NA, nrow=n_seq, ncol=n_seq)
+    diag(dist_mat) <- 0
+    indx <- sort(indx)
+    for (i in 1:n_seq) {
+        if (!(i %in% indx)) next
+        for (j in 1:n_seq) {
+            if (!is.na(dist_mat[i,j])) next
+            dist_mat[i,j] = dist5Mers(.matSeqSlidingFiveMer[,i], .matSeqSlidingFiveMer[,j], 
+                                      targetingDistance, symmetry=symmetry)
+            dist_mat[j,i] = dist_mat[i,j]
+        }
+    }
+    sub_dist_mat <- dist_mat[indx,]
+    
+    # assign names
+    if (!is.null(seq_names)) {
+        rownames(sub_dist_mat) <- seq_names[indx]
+        colnames(sub_dist_mat) <- seq_names
+    }
+    return(sub_dist_mat)
 }
 
 
@@ -333,7 +410,8 @@ nearestDist<- function(sequences, model=c("ham", "aa", "hh_s1f", "hh_s5f", "mk_r
                                           "hs1f_compat", "m1n_compat"),
                        normalize=c("none", "len", "mut"),
                        symmetry=c("avg", "min"),
-                       crossGroups=NULL, mst=FALSE) {
+                       crossGroups=NULL, mst=FALSE,
+                       subsample=NULL) {
     ## DEBUG
     # sequences <- c("ACGTACGTACGT", "ACGAACGTACGT", "AAAAAAAAAAAA", "A-AAAA---AAA")
     # model="aa"; normalize="len"; crossGroups=NULL; mst=FALSE
@@ -363,25 +441,59 @@ nearestDist<- function(sequences, model=c("ham", "aa", "hh_s1f", "hh_s5f", "mk_r
         if (length(seq_length) > 1) {
             stop("Unexpected. Different sequence lengths found.")
         }
-        
+        # check subSampling
+        subSampling <- all(!is.null(subsample), subsample < n_uniq)
+        if (subSampling) indx <- sample(x=1:n_uniq, size=subsample, replace=FALSE, prob=NULL)
         # Get distance matrix
         if (model == "ham") {
-            dist_mat <- pairwiseDist(seq_uniq, dist_mat=getDNAMatrix(gap=0))
+            if (subSampling) {
+                dist_mat <- nonsquareDist(seq_uniq, indx, dist_mat=getDNAMatrix(gap=0))
+            } else {
+                dist_mat <- pairwiseDist(seq_uniq, dist_mat=getDNAMatrix(gap=0))
+            }
         } else if (model == "aa") {
             seq_uniq <- setNames(alakazam::translateDNA(seq_uniq), seq_uniq)
-            dist_mat <- pairwiseDist(seq_uniq, dist_mat=getAAMatrix())
+            if (subSampling) {
+                dist_mat <- nonsquareDist(seq_uniq, indx, dist_mat=getAAMatrix())
+            } else {
+                dist_mat <- pairwiseDist(seq_uniq, dist_mat=getAAMatrix())
+            }
         } else if (model == "hh_s1f") {
-            dist_mat <- pairwiseDist(seq_uniq, dist_mat=HH_S1F_Distance)
+            if (subSampling) {
+                dist_mat <- nonsquareDist(seq_uniq, indx, dist_mat=HH_S1F_Distance)
+            } else {
+                dist_mat <- pairwiseDist(seq_uniq, dist_mat=HH_S1F_Distance)
+            }
         } else if (model == "mk_rs1nf") {
-            dist_mat <- pairwiseDist(seq_uniq, dist_mat=MK_RS1NF_Distance)
+            if (subSampling) {
+                dist_mat <- nonsquareDist(seq_uniq, indx, dist_mat=MK_RS1NF_Distance)
+            } else {
+                dist_mat <- pairwiseDist(seq_uniq, dist_mat=MK_RS1NF_Distance)
+            }
         } else if (model == "hh_s5f") {
-            dist_mat <- pairwise5MerDist(seq_uniq, HH_S5F_Distance, symmetry=symmetry)
+            if (subSampling) {
+                dist_mat <- nonsquare5MerDist(seq_uniq, indx, HH_S5F_Distance, symmetry=symmetry)
+            } else {
+                dist_mat <- pairwise5MerDist(seq_uniq, HH_S5F_Distance, symmetry=symmetry)
+            }
         } else if (model == "mk_rs5nf") {
-            dist_mat <- pairwise5MerDist(seq_uniq, MK_RS5NF_Distance, symmetry=symmetry)
+            if (subSampling) {
+                dist_mat <- nonsquare5MerDist(seq_uniq, indx, MK_RS5NF_Distance, symmetry=symmetry)
+            } else {
+                dist_mat <- pairwise5MerDist(seq_uniq, MK_RS5NF_Distance, symmetry=symmetry)
+            }
         } else if (model == "hs1f_compat") {
-            dist_mat <- pairwiseDist(seq_uniq, dist_mat=HS1F_Compat)
+            if (subSampling) {
+                dist_mat <- nonsquareDist(seq_uniq, indx, dist_mat=HS1F_Compat)
+            } else {
+                dist_mat <- pairwiseDist(seq_uniq, dist_mat=HS1F_Compat)
+            }
         } else if (model == "m1n_compat") {
-            dist_mat <- pairwiseDist(seq_uniq, dist_mat=M1N_Compat)
+            if (subSampling) {
+                dist_mat <- nonsquareDist(seq_uniq, indx, dist_mat=M1N_Compat)
+            } else {
+                dist_mat <- pairwiseDist(seq_uniq, dist_mat=M1N_Compat)
+            }
         }                
         ## DEBUG
         # cat("\n-> seq_uniq:\n")
@@ -500,6 +612,11 @@ nearestDist<- function(sequences, model=c("ham", "aa", "hh_s1f", "hh_s5f", "mk_r
 #'                           (self vs others).
 #' @param    mst             if \code{TRUE}, return comma-separated branch lengths from minimum 
 #'                           spanning tree.
+#' @param    subsample       number of sequences to subsample for speeding up pairwise-distance-matrix calculation. 
+#'                           Subsampling is performed without replacement in each group of sequences with the 
+#'                           same \code{vCallColumn}, \code{jCallColumn}, and junction length. 
+#'                           If \code{subsample} is larger than the unique number of sequences in each group, 
+#'                           then the subsampling process is ignored. If \code{NULL} no subsampling is performed.
 #' @param    progress        if \code{TRUE} print a progress bar.
 #'
 #' @return   Returns a modified \code{db} data.frame with nearest neighbor distances in the 
@@ -574,15 +691,12 @@ nearestDist<- function(sequences, model=c("ham", "aa", "hh_s1f", "hh_s5f", "mk_r
 #'       geom_histogram(aes(x=DIST_NEAREST), binwidth=0.025, 
 #'                      fill="steelblue", color="white")
 #' plot(p1)
-#'
-#' # Use human 5-mer model
-#' dist <- distToNearest(db, vCallColumn="V_CALL_GENOTYPED", model="hh_s5f")
 #' 
 #' @export
 distToNearest <- function(db, sequenceColumn="JUNCTION", vCallColumn="V_CALL", jCallColumn="J_CALL", 
                           model=c("ham", "aa", "hh_s1f", "hh_s5f", "mk_rs1nf", "mk_rs5nf", "m1n_compat", "hs1f_compat"), 
                           normalize=c("len", "none"), symmetry=c("avg", "min"),
-                          first=TRUE, nproc=1, fields=NULL, cross=NULL, mst=FALSE,
+                          first=TRUE, nproc=1, fields=NULL, cross=NULL, mst=FALSE, subsample=NULL,
                           progress=FALSE) {
     # Hack for visibility of foreach index variables
     i <- NULL
@@ -613,29 +727,11 @@ distToNearest <- function(db, sequenceColumn="JUNCTION", vCallColumn="V_CALL", j
     }    
     
     # Parse V and J columns to get gene
-    # cat("V+J Column parsing\n")
-    if (first) {
-        db$V <- alakazam::getGene(db[[vCallColumn]])
-        db$J <- alakazam::getGene(db[[jCallColumn]])
-    } else {
-        db$V1 <- alakazam::getGene(db[[vCallColumn]], first=FALSE)
-        db$J1 <- alakazam::getGene(db[[jCallColumn]], first=FALSE)
-        db$V <- db$V1
-        db$J <- db$J1
-        # Reassign V genes to most general group of genes
-        for(ambig in unique(db$V1[grepl(',', db$V1)])) {
-            for(g in strsplit(ambig, split=',')[[1]]) {
-                db$V[grepl(g, db$V1)] = ambig
-            }
-        }
-        # Reassign J genes to most general group of genes
-        for(ambig in unique(db$J1[grepl(',',db$J1)])) {
-            for(g in strsplit(ambig, split=',')[[1]]) {
-                db$J[grepl(g, db$J1)] = ambig
-            }
-        }
-    }
-    
+    db <- groupGenes(db,
+                     v_call=vCallColumn,
+                     j_call=jCallColumn,
+                     first=first)
+
     # Create new column for distance to nearest neighbor
     db$TMP_DIST_NEAREST <- rep(NA, nrow(db))
     db$ROW_ID <- 1:nrow(db)
@@ -656,9 +752,9 @@ distToNearest <- function(db, sequenceColumn="JUNCTION", vCallColumn="V_CALL", j
         stop('Nproc must be positive.')
     }
     
-    # Get indices of unique combinations of V, J, L, and any specified field(s)
+    # Get indices of unique combinations of V, J (VJ_GROUP), L, and any specified field(s)
     # groups to use
-    group_cols <- c("V","J","L")
+    group_cols <- c("VJ_GROUP","L")
     if (!is.null(fields)) {
         group_cols <- append(group_cols,fields)
     }
@@ -690,6 +786,7 @@ distToNearest <- function(db, sequenceColumn="JUNCTION", vCallColumn="V_CALL", j
                                  "uniqueGroupsIdx", 
                                  "cross",
                                  "mst",
+                                 "subsample",
                                  "sequenceColumn", 
                                  "model",
                                  "normalize",
@@ -703,7 +800,8 @@ distToNearest <- function(db, sequenceColumn="JUNCTION", vCallColumn="V_CALL", j
                                  "M1N_Compat",
                                  "calcTargetingDistance",
                                  "findUniqSeq",
-                                 "pairwise5MerDist")
+                                 "pairwise5MerDist",
+                                 "nonsquare5MerDist")
         parallel::clusterExport(cluster, export_functions, envir=environment())
     }
     
@@ -726,7 +824,8 @@ distToNearest <- function(db, sequenceColumn="JUNCTION", vCallColumn="V_CALL", j
                                                  normalize=normalize,
                                                  symmetry=symmetry,
                                                  crossGroups=crossGroups,
-                                                 mst=mst)
+                                                 mst=mst,
+                                                 subsample=subsample)
         # Update progress
         if (progress) { pb$tick() }
         
@@ -745,7 +844,7 @@ distToNearest <- function(db, sequenceColumn="JUNCTION", vCallColumn="V_CALL", j
     } else {
         db$DIST_NEAREST <- db$TMP_DIST_NEAREST
     }
-    return(db[, !(names(db) %in% c("V", "J", "L", "ROW_ID", "V1", "J1","TMP_DIST_NEAREST"))])
+    return(db[, !(names(db) %in% c("VJ_GROUP", "L", "ROW_ID", "V1", "J1","TMP_DIST_NEAREST"))])
 }
 
 
@@ -758,7 +857,7 @@ distToNearest <- function(db, sequenceColumn="JUNCTION", vCallColumn="V_CALL", j
 #' using either a Gamma/Guassian Mixture Model fit (\code{method="gmm"}) or kernel density 
 #' fit (\code{method="density"}).
 #'
-#' @param    data       numeric vector containing nearest neighbor distances. 
+#' @param    distances  numeric vector containing nearest neighbor distances. 
 #' @param    method     string defining the method to use for determining the optimal threshold.
 #'                      One of \code{"gmm"} or \code{"density"}. See Details for methodological
 #'                      descriptions.
@@ -768,10 +867,7 @@ distToNearest <- function(db, sequenceColumn="JUNCTION", vCallColumn="V_CALL", j
 #' @param    cross      supplementary nearest neighbor distance vector output from \link{distToNearest} 
 #'                      for initialization of the Gaussian fit parameters. 
 #'                      Applies only when \code{method="gmm"}. 
-#' @param    subsample  number of distances to subsample for speeding up bandwidth inference.
-#'                      If \code{NULL} no subsampling is performed. As bandwith inferrence 
-#'                      is computationally expensive, subsampling is recommended for large data sets.
-#'                      Applies only when \code{method="density"}. 
+#' @param    subsample  maximum number of distances to subsample to before threshold detection.
 #' @param    model      allows the user to choose among four possible combinations of fitting curves: 
 #'                      \code{"norm-norm"}, \code{"norm-gamma"}, \code{"gamma-norm"}, 
 #'                      and \code{"gamma-gamma"}. Applies only when \code{method="gmm"}.
@@ -815,11 +911,11 @@ distToNearest <- function(db, sequenceColumn="JUNCTION", vCallColumn="V_CALL", j
 #'           See \link{plotGmmThreshold} and \link{plotDensityThreshold} for plotting output.
 #'      
 #' @note 
-#' We recommend users to visually inspect the resulting
-#' fits when using \code{method="gmm"}. Our empirical observations imply that, the bimodality 
-#' of the distance-to-nearest distribution is detectable for a repertoire of minimum 1k reads.
-#' The increased number of sequences will improve the fitting procedure, although it would be 
-#' at the potential expense of higher demand in computational time complexity.     
+#' Visually inspecting the resulting distribution fits is strongly recommended when using 
+#' either fitting method. Empirical observations imply that the bimodality 
+#' of the distance-to-nearest distribution is detectable for a minimum of 1,000 distances.
+#' Larger numbers of distances will improve the fitting procedure, although this can come 
+#' at the expense of higher computational demands.
 #' 
 #' @examples
 #' \donttest{
@@ -831,12 +927,12 @@ distToNearest <- function(db, sequenceColumn="JUNCTION", vCallColumn="V_CALL", j
 #' db <- distToNearest(db, model="ham", normalize="len", nproc=1)
 #'                             
 #' # Find threshold using the "gmm" method with optimal threshold
-#' output <- findThreshold(db$DIST_NEAREST, method="gmm", model="norm-norm", cutoff="opt")
+#' output <- findThreshold(db$DIST_NEAREST, method="gmm", model="gamma-gamma", cutoff="opt")
 #' plot(output, binwidth=0.02, title=paste0(output@model, "   loglk=", output@loglk))
 #' print(output)
 #'
 #' # Find threshold using the "gmm" method with user defined specificity
-#' output <- findThreshold(db$DIST_NEAREST, method="gmm", model="norm-norm", 
+#' output <- findThreshold(db$DIST_NEAREST, method="gmm", model="gamma-gamma", 
 #'                         cutoff="user", spc=0.99)
 #' plot(output, binwidth=0.02, title=paste0(output@model, "   loglk=", output@loglk))
 #' print(output)
@@ -847,40 +943,46 @@ distToNearest <- function(db, sequenceColumn="JUNCTION", vCallColumn="V_CALL", j
 #' print(output)
 #' }
 #' @export
-findThreshold <- function (data, method=c("gmm", "density"), 
+findThreshold <- function (distances, method=c("density", "gmm"), 
                            edge=0.9, cross=NULL, subsample=NULL,
                            model=c("gamma-gamma", "gamma-norm", "norm-gamma", "norm-norm"),
                            cutoff=c("optimal", "intersect", "user"), sen=NULL, spc=NULL, 
                            progress=FALSE){
-  # Check arguments
-  method <- match.arg(method)
-  model <- match.arg(model)
-  cutoff <- match.arg(cutoff)
-  
-  if (method == "gmm") {
-      if (cutoff == "user"){
-          if (is.null(sen) & is.null(spc)) {
-              cat("Error: one of 'sen' or 'spc' values should be specified.")
-              output <- NA
-          } else if (!is.null(sen) & !is.null(spc)) {
-              cat("Error: only one of 'sen' or 'spc' values can be specified.")
-              output <- NA
-          } else {
-              output <- gmmFit(ent=data, edge=edge, cross=cross, model=model, cutoff=cutoff, 
-                               sen=sen, spc=spc, progress=progress)
-          }
-      } else {
-          output <- gmmFit(ent=data, edge=edge, cross=cross, model=model, cutoff=cutoff, 
-                           sen=sen, spc=spc, progress=progress)
-      }
-  } else if (method == "density") {
-    output <- smoothValley(data, subsample=subsample)
-  } else {
-    cat("Error: assigned method has not been found.\n")
-    output <- NA
-  }
-  
-  return(output)
+    # Check arguments
+    method <- match.arg(method)
+    model <- match.arg(model)
+    cutoff <- match.arg(cutoff)
+    
+    # Subsample input distances
+    if(!is.null(subsample)) {
+        subsample <- min(length(distances), subsample)
+        distances <- sample(distances, subsample, replace=FALSE)
+    }
+    
+    if (method == "gmm") {
+        if (cutoff == "user"){
+            if (is.null(sen) & is.null(spc)) {
+                cat("Error: one of 'sen' or 'spc' values should be specified.")
+                output <- NA
+            } else if (!is.null(sen) & !is.null(spc)) {
+                cat("Error: only one of 'sen' or 'spc' values can be specified.")
+                output <- NA
+            } else {
+                output <- gmmFit(ent=distances, edge=edge, cross=cross, model=model, cutoff=cutoff, 
+                                 sen=sen, spc=spc, progress=progress)
+            }
+        } else {
+            output <- gmmFit(ent=distances, edge=edge, cross=cross, model=model, cutoff=cutoff, 
+                             sen=sen, spc=spc, progress=progress)
+        }
+    } else if (method == "density") {
+        output <- smoothValley(distances)
+    } else {
+        cat("Error: assigned method has not been found.\n")
+        output <- NA
+    }
+    
+    return(output)
 }
 
 
@@ -889,7 +991,6 @@ findThreshold <- function (data, method=c("gmm", "density"),
 # Infer value of the minimum between the two modes in a bimodal distribution.
 #
 # @param    distances  numeric vector of distances.
-# @param    subsample  number of distances to subsample for speeding up bandwidth inference.
 # 
 # @return   Returns distance threshold that separates two modes of the input distribution.
 #
@@ -930,29 +1031,38 @@ findThreshold <- function (data, method=c("gmm", "density"),
 # plot(p1)
 #
 # @export
-smoothValley <- function(distances, subsample=NULL) {
+ smoothValley <- function(distances) {
     # Remove NA, NaN, and infinite distances
     distances <- distances[!is.na(distances) & !is.nan(distances) & !is.infinite(distances)]
-    # Subsample input distances
-    if(!is.null(subsample)) {
-        subsample <- min(length(distances), subsample)
-        distances <- sample(distances, subsample, replace=FALSE)
-    }
+
+    # Guassian distribution bandwidth scale parameter
+    #guassian_scaling <- (1/(4 * pi))^(1/10)
+    
     # Ideal bandwidth
-    h_ucv <- h.ucv(distances, 4)$h
+    bandwidth <- kedd::h.ucv(unique(distances), 4)$h
+    #bandwidth <- kedd::h.ucv(distances, 4)$h
+    #bandwidth <- ks::hucv(unique(distances), deriv.order=4)
+    
     # Density estimate
-    dens <- bkde(distances, bandwidth=h_ucv)
+    dens <- KernSmooth::bkde(distances, bandwidth=bandwidth, canonical=TRUE)
+    #dens <- KernSmooth::bkde(distances, bandwidth=bandwidth)
+    xdens <- dens$x
+    ydens <- dens$y
+    #dens <- ks::kde(distances, h=bandwidth*guassian_scaling, binned=TRUE)
+    #xdens <- dens$eval.points
+    #ydens <- dens$estimate
+    
     # Find threshold
-    tryCatch(threshold <- dens$x[which(diff(sign(diff(dens$y))) == 2)[1] + 1], 
+    tryCatch(threshold <- xdens[which(diff(sign(diff(ydens))) == 2)[1] + 1], 
              error = function(e) {
                  warning('No minimum was found between two modes.')
                  return(NULL) })
     
     results <- new("DensityThreshold",
                    x=distances,
-                   bandwidth=h_ucv,
-                   xdens=dens$x,
-                   ydens=dens$y,
+                   bandwidth=bandwidth,
+                   xdens=xdens,
+                   ydens=ydens,
                    threshold=threshold)
     
     return(results)
@@ -1615,7 +1725,7 @@ plotGmmThreshold <- function(data, cross=NULL, xmin=NULL, xmax=NULL, breaks=NULL
     
     # Plot distToNearest distribution plus Gaussian fits
     p <- ggplot(xdf, aes_string(x="x")) +
-        getBaseTheme() + 
+        baseTheme() + 
         xlab("Distance") + 
         ylab("Density") +
         geom_histogram(aes_string(y="..density.."), binwidth=binwidth, 
@@ -1634,13 +1744,14 @@ plotGmmThreshold <- function(data, cross=NULL, xmin=NULL, xmax=NULL, breaks=NULL
     }
     
     # Add x limits
-    if (!is.na(xmin) | !is.na(xmax) & is.null(breaks)) {
+    if (is.null(breaks) & (!is.na(xmin) | !is.na(xmax))) {
         p <- p + xlim(xmin, xmax)
-    } else if (!is.null(breaks)) {
+    }
+    # Set breaks
+    if (!is.null(breaks)) {
         p <- p + scale_x_continuous(breaks=scales::pretty_breaks(n=breaks),
                                     limits=c(xmin, xmax))
     }
-    
     # Add Title
     if (!is.null(title)) {
         p <- p + ggtitle(title)
@@ -1721,7 +1832,7 @@ plotDensityThreshold <- function(data, cross=NULL, xmin=NULL, xmax=NULL, breaks=
     
     # Plot distToNearest distribution plus Gaussian fits
     p <- ggplot(xdf, aes_string(x="x")) +
-        getBaseTheme() +
+        baseTheme() +
         xlab("Distance") + 
         ylab("Density") +
         geom_histogram(aes_string(y="..density.."), binwidth=binwidth, 
@@ -1740,13 +1851,14 @@ plotDensityThreshold <- function(data, cross=NULL, xmin=NULL, xmax=NULL, breaks=
     }
     
     # Add x limits
-    if (!is.na(xmin) | !is.na(xmax) & is.null(breaks)) {
+    if (is.null(breaks) & (!is.na(xmin) | !is.na(xmax))) {
         p <- p + xlim(xmin, xmax)
-    } else if (!is.null(breaks)) {
+    }
+    # Set breaks
+    if (!is.null(breaks)) {
         p <- p + scale_x_continuous(breaks=scales::pretty_breaks(n=breaks),
                                     limits=c(xmin, xmax))
     }
-    
     # Add title
     if (!is.null(title)) {
         p <- p + ggtitle(title)

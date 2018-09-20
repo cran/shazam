@@ -7,7 +7,6 @@
 \alias{print,GmmThreshold-method}
 \alias{GmmThreshold-method}
 \alias{plot,GmmThreshold,missing-method}
-\alias{GmmThreshold-method}
 \title{Output of the \code{gmm} method of findThreshold}
 \usage{
 \S4method{print}{GmmThreshold}(x)

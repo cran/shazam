@@ -7,7 +7,6 @@
 \alias{print,DensityThreshold-method}
 \alias{DensityThreshold-method}
 \alias{plot,DensityThreshold,missing-method}
-\alias{DensityThreshold-method}
 \title{Output of the \code{dens} method of findThreshold}
 \usage{
 \S4method{print}{DensityThreshold}(x)

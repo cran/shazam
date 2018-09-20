@@ -7,7 +7,6 @@
 \alias{plot,Baseline,character-method}
 \alias{Baseline-method}
 \alias{summary,Baseline-method}
-\alias{Baseline-method}
 \title{S4 class defining a BASELINe (selection) object}
 \usage{
 \S4method{plot}{Baseline,character}(x, y, ...)

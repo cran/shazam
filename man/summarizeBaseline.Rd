@@ -4,7 +4,8 @@
 \alias{summarizeBaseline}
 \title{Calculate BASELINe summary statistics}
 \usage{
-summarizeBaseline(baseline, returnType = c("baseline", "df"), nproc = 1)
+summarizeBaseline(baseline, returnType = c("baseline", "df"),
+  nproc = 1)
 }
 \arguments{
 \item{baseline}{\code{Baseline} object returned by \link{calcBaseline} containing 
@@ -49,8 +50,8 @@ db <- collapseClones(db, sequenceColumn="SEQUENCE_IMGT",
                      
 # Calculate BASELINe
 baseline <- calcBaseline(db, 
-                         sequenceColumn="SEQUENCE_IMGT",
-                         germlineColumn="GERMLINE_IMGT_D_MASK", 
+                         sequenceColumn="CLONAL_SEQUENCE",
+                         germlineColumn="CLONAL_GERMLINE", 
                          testStatistic="focused",
                          regionDefinition=IMGT_V,
                          targetingModel=HH_S5F,

@@ -2,16 +2,15 @@
 # Subset example data to one sample
 library(shazam)
 data(ExampleDb, package="alakazam")
-db <- subset(ExampleDb, SAMPLE == "-1h")
 
 ## ---- eval=TRUE, warning=FALSE-------------------------------------------
 # Use nucleotide Hamming distance and normalize by junction length
-dist_ham <- distToNearest(db, model="ham", first=FALSE, normalize="len", 
-                          nproc=1)
+dist_ham <- distToNearest(ExampleDb, vCallColumn="V_CALL_GENOTYPED", 
+                          model="ham", normalize="len", nproc=1)
 
 # Use genotyped V assignments, a 5-mer model and no normalization
-dist_s5f <- distToNearest(db, vCallColumn="V_CALL_GENOTYPED", model="hh_s5f", 
-                          first=FALSE, normalize="none", nproc=1)
+dist_s5f <- distToNearest(ExampleDb, vCallColumn="V_CALL_GENOTYPED", 
+                          model="hh_s5f", normalize="none", nproc=1)
 
 ## ---- eval=TRUE, warning=FALSE, fig.width=7------------------------------
 # Generate Hamming distance histogram
@@ -39,16 +38,6 @@ p2 <- ggplot(subset(dist_s5f, !is.na(DIST_NEAREST)),
 plot(p2)
 
 ## ---- eval=TRUE, warning=FALSE, fig.width=7------------------------------
-# Find threshold using gmm method
-output <- findThreshold(dist_ham$DIST_NEAREST, method="gmm", model="gamma-gamma")
-
-# Plot distance histogram, Gaussian fits, and optimum threshold
-plot(output, binwidth=0.02, title="GMM Method: gamma-gamma")
-
-# Print threshold
-print(output)
-
-## ---- eval=TRUE, warning=FALSE, fig.width=7------------------------------
 # Find threshold using density method
 output <- findThreshold(dist_ham$DIST_NEAREST, method="density")
 threshold <- output@threshold
@@ -59,10 +48,19 @@ plot(output, title="Density Method")
 # Print threshold
 print(output)
 
+## ---- eval=TRUE, warning=FALSE, fig.width=7------------------------------
+# Find threshold using gmm method
+output <- findThreshold(dist_ham$DIST_NEAREST, method="gmm", model="gamma-gamma")
+
+# Plot distance histogram, Gaussian fits, and optimum threshold
+plot(output, binwidth=0.02, title="GMM Method: gamma-gamma")
+
+# Print threshold
+print(output)
+
 ## ----fields, eval=TRUE, warning=FALSE------------------------------------
-dist_fields <- distToNearest(ExampleDb, model="ham", first=FALSE, 
-                             normalize="len", fields="SAMPLE", 
-                             nproc=1)
+dist_fields <- distToNearest(ExampleDb, model="ham", normalize="len", 
+                             fields="SAMPLE", nproc=1)
 
 ## ---- eval=TRUE, warning=FALSE, fig.width=7------------------------------
 # Generate grouped histograms

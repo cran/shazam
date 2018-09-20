@@ -104,12 +104,13 @@
 #' @import   graphics
 #' @import   methods
 #' @import   utils
-#' @importFrom  alakazam    getAllele getGene getFamily getSegment
-#'                          getAAMatrix getDNAMatrix
-#'                          pairwiseDist pairwiseEqual seqDist seqEqual
+#' @importFrom  alakazam    getAllele getGene getFamily getSegment groupGenes
+#'                          getAAMatrix getDNAMatrix IUPAC_DNA
+#'                          pairwiseDist nonsquareDist pairwiseEqual 
+#'                          seqDist seqEqual
 #'                          isValidAASeq translateStrings gridPlot
 #'                          getMRCA getPathLengths tableEdges
-#'                          IUPAC_DNA
+#'                          progressBar baseTheme checkColumns cpuCount
 #' @importFrom  ape         mst
 #' @importFrom  diptest     dip.test
 #' @importFrom  doParallel  registerDoParallel

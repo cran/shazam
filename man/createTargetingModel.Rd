@@ -5,11 +5,11 @@
 \title{Creates a TargetingModel}
 \usage{
 createTargetingModel(db, model = c("S", "RS"),
-  sequenceColumn = "SEQUENCE_IMGT", germlineColumn = "GERMLINE_IMGT_D_MASK",
-  vCallColumn = "V_CALL", multipleMutation = c("independent", "ignore"),
-  minNumMutations = 50, minNumSeqMutations = 500, modelName = "",
-  modelDescription = "", modelSpecies = "", modelCitation = "",
-  modelDate = NULL)
+  sequenceColumn = "SEQUENCE_IMGT",
+  germlineColumn = "GERMLINE_IMGT_D_MASK", vCallColumn = "V_CALL",
+  multipleMutation = c("independent", "ignore"), minNumMutations = 50,
+  minNumSeqMutations = 500, modelName = "", modelDescription = "",
+  modelSpecies = "", modelCitation = "", modelDate = NULL)
 }
 \arguments{
 \item{db}{data.frame containing sequence data.}

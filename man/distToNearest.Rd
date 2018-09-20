@@ -6,9 +6,10 @@
 \usage{
 distToNearest(db, sequenceColumn = "JUNCTION", vCallColumn = "V_CALL",
   jCallColumn = "J_CALL", model = c("ham", "aa", "hh_s1f", "hh_s5f",
-  "mk_rs1nf", "mk_rs5nf", "m1n_compat", "hs1f_compat"), normalize = c("len",
-  "none"), symmetry = c("avg", "min"), first = TRUE, nproc = 1,
-  fields = NULL, cross = NULL, mst = FALSE, progress = FALSE)
+  "mk_rs1nf", "mk_rs5nf", "m1n_compat", "hs1f_compat"),
+  normalize = c("len", "none"), symmetry = c("avg", "min"),
+  first = TRUE, nproc = 1, fields = NULL, cross = NULL,
+  mst = FALSE, subsample = NULL, progress = FALSE)
 }
 \arguments{
 \item{db}{data.frame containing sequence data.}
@@ -45,6 +46,12 @@ overlapping gene calls.}
 
 \item{mst}{if \code{TRUE}, return comma-separated branch lengths from minimum 
 spanning tree.}
+
+\item{subsample}{number of sequences to subsample for speeding up pairwise-distance-matrix calculation. 
+Subsampling is performed without replacement in each group of sequences with the 
+same \code{vCallColumn}, \code{jCallColumn}, and junction length. 
+If \code{subsample} is larger than the unique number of sequences in each group, 
+then the subsampling process is ignored. If \code{NULL} no subsampling is performed.}
 
 \item{progress}{if \code{TRUE} print a progress bar.}
 }
@@ -106,9 +113,6 @@ p1 <- ggplot(data=subset(dist, !is.na(DIST_NEAREST))) +
       geom_histogram(aes(x=DIST_NEAREST), binwidth=0.025, 
                      fill="steelblue", color="white")
 plot(p1)
-
-# Use human 5-mer model
-dist <- distToNearest(db, vCallColumn="V_CALL_GENOTYPED", model="hh_s5f")
 
 }
 \references{

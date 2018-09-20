@@ -17,7 +17,11 @@ BASELINe PDFs returned by \link{groupBaseline}.}
 A data.frame with test results containing the following columns:
           \itemize{
             \item  \code{REGION}:  sequence region, such as "CDR" and "FWR".
-            \item  \code{TEST}:    string defining the two group values compared.
+            \item  \code{TEST}:    string defining the groups be compared. The
+                                   string is formated as the conclusion associated with the
+                                   p-value in the form \code{GROUP1 != GROUP2}. Meaning,
+                                   the p-value for rejection of the null hypothesis that 
+                                   GROUP1 and GROUP2 have equivalent distributions.
             \item  \code{PVALUE}:  two-sided p-value for the comparison.
             \item  \code{FDR}:     FDR corrected \code{PVALUE}.
           }
@@ -30,7 +34,7 @@ posterior probability density functions (PDFs).
 \donttest{
 # Subset example data
 data(ExampleDb, package="alakazam")
-db <- subset(ExampleDb, ISOTYPE == "IgG")
+db <- subset(ExampleDb, ISOTYPE \%in\% c("IgM", "IgG", "IgA"))
 
 # Collapse clones
 db <- collapseClones(db, sequenceColumn="SEQUENCE_IMGT",
@@ -40,18 +44,21 @@ db <- collapseClones(db, sequenceColumn="SEQUENCE_IMGT",
                      
 # Calculate BASELINe
 baseline <- calcBaseline(db, 
-                         sequenceColumn="SEQUENCE_IMGT",
-                         germlineColumn="GERMLINE_IMGT_D_MASK", 
+                         sequenceColumn="CLONAL_SEQUENCE",
+                         germlineColumn="CLONAL_GERMLINE", 
                          testStatistic="focused",
                          regionDefinition=IMGT_V,
                          targetingModel=HH_S5F,
                          nproc=1)
 
-# Group PDFs by the sample identifier
-grouped <- groupBaseline(baseline, groupBy="SAMPLE")
+# Group PDFs by the isotype
+grouped <- groupBaseline(baseline, groupBy="ISOTYPE")
 
-# Perform test on sample PDFs
-testBaseline(grouped, groupBy="SAMPLE")
+# Visualize isotype PDFs
+plot(grouped, "ISOTYPE")
+
+# Perform test on isotype PDFs
+testBaseline(grouped, groupBy="ISOTYPE")
 }
 }
 \references{

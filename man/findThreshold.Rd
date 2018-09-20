@@ -4,13 +4,13 @@
 \alias{findThreshold}
 \title{Find distance threshold}
 \usage{
-findThreshold(data, method = c("gmm", "density"), edge = 0.9,
-  cross = NULL, subsample = NULL, model = c("gamma-gamma", "gamma-norm",
-  "norm-gamma", "norm-norm"), cutoff = c("optimal", "intersect", "user"),
-  sen = NULL, spc = NULL, progress = FALSE)
+findThreshold(distances, method = c("density", "gmm"), edge = 0.9,
+  cross = NULL, subsample = NULL, model = c("gamma-gamma",
+  "gamma-norm", "norm-gamma", "norm-norm"), cutoff = c("optimal",
+  "intersect", "user"), sen = NULL, spc = NULL, progress = FALSE)
 }
 \arguments{
-\item{data}{numeric vector containing nearest neighbor distances.}
+\item{distances}{numeric vector containing nearest neighbor distances.}
 
 \item{method}{string defining the method to use for determining the optimal threshold.
 One of \code{"gmm"} or \code{"density"}. See Details for methodological
@@ -24,10 +24,7 @@ Applies only when \code{method="density"}. .}
 for initialization of the Gaussian fit parameters. 
 Applies only when \code{method="gmm"}.}
 
-\item{subsample}{number of distances to subsample for speeding up bandwidth inference.
-If \code{NULL} no subsampling is performed. As bandwith inferrence 
-is computationally expensive, subsampling is recommended for large data sets.
-Applies only when \code{method="density"}.}
+\item{subsample}{maximum number of distances to subsample to before threshold detection.}
 
 \item{model}{allows the user to choose among four possible combinations of fitting curves: 
 \code{"norm-norm"}, \code{"norm-gamma"}, \code{"gamma-norm"}, 
@@ -79,11 +76,11 @@ fit (\code{method="density"}).
 }
 }
 \note{
-We recommend users to visually inspect the resulting
-fits when using \code{method="gmm"}. Our empirical observations imply that, the bimodality 
-of the distance-to-nearest distribution is detectable for a repertoire of minimum 1k reads.
-The increased number of sequences will improve the fitting procedure, although it would be 
-at the potential expense of higher demand in computational time complexity.
+Visually inspecting the resulting distribution fits is strongly recommended when using 
+either fitting method. Empirical observations imply that the bimodality 
+of the distance-to-nearest distribution is detectable for a minimum of 1,000 distances.
+Larger numbers of distances will improve the fitting procedure, although this can come 
+at the expense of higher computational demands.
 }
 \examples{
 \donttest{
@@ -95,12 +92,12 @@ db <- subset(ExampleDb, SAMPLE == "-1h")
 db <- distToNearest(db, model="ham", normalize="len", nproc=1)
                             
 # Find threshold using the "gmm" method with optimal threshold
-output <- findThreshold(db$DIST_NEAREST, method="gmm", model="norm-norm", cutoff="opt")
+output <- findThreshold(db$DIST_NEAREST, method="gmm", model="gamma-gamma", cutoff="opt")
 plot(output, binwidth=0.02, title=paste0(output@model, "   loglk=", output@loglk))
 print(output)
 
 # Find threshold using the "gmm" method with user defined specificity
-output <- findThreshold(db$DIST_NEAREST, method="gmm", model="norm-norm", 
+output <- findThreshold(db$DIST_NEAREST, method="gmm", model="gamma-gamma", 
                         cutoff="user", spc=0.99)
 plot(output, binwidth=0.02, title=paste0(output@model, "   loglk=", output@loglk))
 print(output)

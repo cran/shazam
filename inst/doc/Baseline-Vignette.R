@@ -45,15 +45,18 @@ baseline <- calcBaseline(clones, testStatistic="focused",
 # Combine selection scores by time-point
 grouped_1 <- groupBaseline(baseline, groupBy="SAMPLE")
 
+## ---- eval=TRUE, warning=FALSE, results="hide"---------------------------
 # Subset the original data to switched isotypes
 db_sub <- subset(ExampleDb, ISOTYPE %in% c("IgM", "IgG"))
-# Collapse clonal groups into single sequences for subset
+
+# Collapse clonal groups into single sequence
 clones_sub <- collapseClones(db_sub, regionDefinition=IMGT_V, 
                              method="thresholdedFreq", minimumFrequency=0.6,
                              includeAmbiguous=FALSE, breakTiesStochastic=FALSE, 
                              nproc=1)
+
 # Calculate selection scores from scratch
-baseline_sub <- calcBaseline(clones, testStatistic="focused", 
+baseline_sub <- calcBaseline(clones_sub, testStatistic="focused", 
                              regionDefinition=IMGT_V, nproc=1)
 
 # Combine selection scores by time-point and isotype
