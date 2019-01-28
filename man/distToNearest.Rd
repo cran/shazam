@@ -41,8 +41,8 @@ overlapping gene calls.}
 
 \item{fields}{additional fields to use for grouping.}
 
-\item{cross}{columns for grouping to calculate distances across groups 
-(self vs others).}
+\item{cross}{character vector of column names to use for grouping to calculate 
+distances across groups. Meaning the columns that define self versus others.}
 
 \item{mst}{if \code{TRUE}, return comma-separated branch lengths from minimum 
 spanning tree.}
@@ -51,14 +51,17 @@ spanning tree.}
 Subsampling is performed without replacement in each group of sequences with the 
 same \code{vCallColumn}, \code{jCallColumn}, and junction length. 
 If \code{subsample} is larger than the unique number of sequences in each group, 
-then the subsampling process is ignored. If \code{NULL} no subsampling is performed.}
+then the subsampling process is ignored for that group. For each sequence in \code{db},
+the reported \code{DIST_NEAREST} is the distance to the closest sequence in the
+subsampled set for the group. If \code{NULL} no subsampling is performed.}
 
 \item{progress}{if \code{TRUE} print a progress bar.}
 }
 \value{
 Returns a modified \code{db} data.frame with nearest neighbor distances in the 
-          \code{DIST_NEAREST} column if \code{crossGroups=NULL} or in the 
-          \code{CROSS_DIST_NEAREST} column if \code{crossGroups} was specified.
+          \code{DIST_NEAREST} column if \code{cross=NULL}. 
+          if \code{cross} was specified, distances will be added as the 
+          \code{CROSS_DIST_NEAREST} column
 }
 \description{
 Get non-zero distance of every sequence (as defined by \code{sequenceColumn}) to its 
@@ -95,6 +98,15 @@ instead of a distance (since it has no neighbor). If for a given combination the
 multiple sequences but only 1 unique sequence, (in which case every sequence in this 
 group is the de facto nearest neighbor to each other, thus giving rise to distances 
 of 0), \code{NA}s are returned instead of zero-distances.
+
+Note on \code{subsample}: Subsampling is performed independently in each group of sequences
+sharing the same \code{vCallColumn}, \code{jCallColumn}, and junction length. If \code{subsample} 
+is larger than number of sequences in the group, it is ignored. In other words, subsampling 
+is performed only on groups of sequences of size equal to or greater than \code{subsample}. 
+\code{DIST_NEAREST} has values calculated using all sequences in the group for groups of size
+smaller than \code{subsample} and values calculated using a subset of sequences for the larger 
+groups. To select a value of \code{subsample}, it can be useful to explore the group sizes in 
+\code{db}.
 }
 \examples{
 # Subset example data to one sample as a demo

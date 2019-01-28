@@ -1,7 +1,7 @@
 Package: shazam
 Type: Package
-Version: 0.1.10
-Date: 2018-09-19
+Version: 0.1.11
+Date: 2019-01-27
 Authors@R: c(person("Mohamed", "Uduman", role=c("aut"), 
                     email="mohamed.uduman@yale.edu"),
              person("Gur", "Yaari", role=c("aut"), 
@@ -47,9 +47,9 @@ Suggests: knitr, rmarkdown, testthat
 Collate: 'Shazam.R' 'RegionDefinitions.R' 'Baseline.R' 'Core.R'
         'DistToNearest.R' 'MutationDefinitions.R' 'MutationProfiling.R'
         'Shmulate.R' 'TargetingModels.R'
-RoxygenNote: 6.1.0
+RoxygenNote: 6.1.1
 NeedsCompilation: no
-Packaged: 2018-09-20 17:24:06 UTC; jason
+Packaged: 2019-01-27 23:34:51 UTC; jason
 Author: Mohamed Uduman [aut],
   Gur Yaari [aut],
   Namita Gupta [aut],
@@ -61,4 +61,4 @@ Author: Mohamed Uduman [aut],
   Steven Kleinstein [aut, cph]
 Maintainer: Jason Vander Heiden <jason.vanderheiden@yale.edu>
 Repository: CRAN
-Date/Publication: 2018-09-20 18:00:03 UTC
+Date/Publication: 2019-01-28 13:10:03 UTC

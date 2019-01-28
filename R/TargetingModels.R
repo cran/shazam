@@ -198,14 +198,14 @@ setClass("TargetingModel",
                  mutability="numeric",
                  substitution="matrix",
                  targeting="matrix"),
-         prototype=c(name="name",
-                     description="description",
-                     species="species",
-                     date="2000-01-01",
-                     citation="citation",
-                     mutability=numeric(3125),
-                     substitution=matrix(0, 5, 3125),
-                     targeting=matrix(0, 5, 3125)))
+         prototype=list(name="name",
+                        description="description",
+                        species="species",
+                        date="2000-01-01",
+                        citation="citation",
+                        mutability=numeric(3125),
+                        substitution=matrix(0, 5, 3125),
+                        targeting=matrix(0, 5, 3125)))
 
 #### Methods ####
 
@@ -1890,7 +1890,7 @@ symmetrize <- function(sub1mer) {
 #' @examples
 #' \dontrun{
 #' # Write HS5F targeting model to working directory as hs5f.tab
-#' writeTargetingModel(HH_S5F, "hh_s5f.tsv") 
+#' writeTargetingDistance(HH_S5F, "hh_s5f.tsv") 
 #' }
 #' 
 #' @export

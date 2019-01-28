@@ -90,3 +90,30 @@ p5 <- ggplot(subset(dist_cross, !is.na(CROSS_DIST_NEAREST)),
     facet_grid(SAMPLE ~ ., scales="free_y")
 plot(p5)
 
+## ----subsample, eval=TRUE, warning=FALSE---------------------------------
+# Explore V-J-junction length groups sizes to use subsample
+# Show the size of the largest groups
+library(dplyr)
+library(alakazam)
+top_10_sizes <- ExampleDb %>%
+     group_by(JUNCTION_LENGTH) %>% # group by junction length
+     do(alakazam::groupGenes(., first=TRUE)) %>% # group by V and J call
+     mutate(GROUP_ID=paste(JUNCTION_LENGTH,VJ_GROUP, sep="_")) %>% # Create group ids based on junction length and VJ calls
+     ungroup() %>%
+     group_by(GROUP_ID) %>% # group by GROUP_ID
+     distinct(JUNCTION) %>% # for each group, we want to count unique junctions, so keep distinct
+     summarize(SIZE=n()) %>% # get the size of the group, the number of sequences
+     arrange(desc(SIZE)) %>% # sort by decreasing size
+     select(SIZE) %>% 
+     top_n(10) # show the top 10
+top_10_sizes
+
+# Use 30 to subsample
+# NOTE. This is a toy example. To use 30 with real data 
+# is probably not a good choice.
+dist <- distToNearest(ExampleDb, 
+                      vCallColumn="V_CALL_GENOTYPED", 
+                      model="ham", 
+                      first=FALSE, normalize="len",
+                      subsample = 30)
+

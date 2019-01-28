@@ -25,7 +25,7 @@ and columns define the complete 5-mer of the unmutated nucleotide sequence.
 \examples{
 \dontrun{
 # Write HS5F targeting model to working directory as hs5f.tab
-writeTargetingModel(HH_S5F, "hh_s5f.tsv") 
+writeTargetingDistance(HH_S5F, "hh_s5f.tsv") 
 }
 
 }
