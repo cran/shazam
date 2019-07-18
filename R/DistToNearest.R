@@ -295,14 +295,14 @@ nonsquare5MerDist <- function(sequences, indx,  targetingDistance, symmetry=c("a
     .matSeqSlidingFiveMer <- sapply(sequences, function(x) { window5Mers(x) }, 
                                     simplify="matrix")
     
-    # Compute pairwise distance between all sequences' fivemers (by column)
-    .dist <- function(i) {
-        c(rep.int(0, i - 1), 
-          sapply(i:n_seq, function(j) { dist5Mers(.matSeqSlidingFiveMer[,i],
-                                                  .matSeqSlidingFiveMer[,j],
-                                                  targetingDistance,
-                                                  symmetry=symmetry) }))
-    }
+    # # Compute pairwise distance between all sequences' fivemers (by column)
+    # .dist <- function(i) {
+    #     d <- c(rep.int(0, i - 1), 
+    #       sapply(i:n_seq, function(j) { dist5Mers(.matSeqSlidingFiveMer[,i],
+    #                                               .matSeqSlidingFiveMer[,j],
+    #                                               targetingDistance,
+    #                                               symmetry=symmetry) }))
+    # }
     dist_mat <- matrix(NA, nrow=n_seq, ncol=n_seq)
     diag(dist_mat) <- 0
     indx <- sort(indx)
@@ -406,7 +406,7 @@ allValidChars <- function(seq, validChars) {
 # shazam:::nearestDist(sequences, model="aa", normalize="none")
 # shazam:::nearestDist(sequences, model="ham", normalize="len")
 # shazam:::nearestDist(sequences, model="aa", normalize="len")
-nearestDist<- function(sequences, model=c("ham", "aa", "hh_s1f", "hh_s5f", "mk_rs1nf", "mk_rs5nf", 
+nearestDist <- function(sequences, model=c("ham", "aa", "hh_s1f", "hh_s5f", "mk_rs1nf", "mk_rs5nf", 
                                           "hs1f_compat", "m1n_compat"),
                        normalize=c("none", "len", "mut"),
                        symmetry=c("avg", "min"),
@@ -430,6 +430,13 @@ nearestDist<- function(sequences, model=c("ham", "aa", "hh_s1f", "hh_s5f", "mk_r
     seq_uniq <- findUniqSeq(sequences)
     n_uniq <- length(seq_uniq)
     
+    # corresponding crossGroups values for seq_uniq
+    if (!is.null(crossGroups)) {
+        stopifnot( all.equal(sequences[match(seq_uniq, sequences)], 
+                             seq_uniq, check.attributes=FALSE) )
+        crossGroups_uniq <- crossGroups[match(seq_uniq, sequences)]
+    }
+    
     # Initialize return vector and computation vector
     seq_dist <- setNames(rep(NA, length(sequences)), sequences)
     seq_uniq_dist <- rep(NA, n_uniq)
@@ -444,6 +451,10 @@ nearestDist<- function(sequences, model=c("ham", "aa", "hh_s1f", "hh_s5f", "mk_r
         # check subSampling
         subSampling <- all(!is.null(subsample), subsample < n_uniq)
         if (subSampling) indx <- sample(x=1:n_uniq, size=subsample, replace=FALSE, prob=NULL)
+        # corresponding subsampling of crossGroups_uniq
+        if (subSampling & !is.null(crossGroups)) {
+            crossGroups_uniq_sub <- crossGroups_uniq[indx]
+        }
         # Get distance matrix
         if (model == "ham") {
             if (subSampling) {
@@ -565,15 +576,57 @@ nearestDist<- function(sequences, model=c("ham", "aa", "hh_s1f", "hh_s5f", "mk_r
         # Identify sequences to be considered when finding minimum
         # cross distance
         .dcross <- function(i) {
+            #cat(i,"\n")
             this_group <- crossGroups[i]
             other_groups <-  which(crossGroups != this_group)
             other_seq <- unique(sequences[other_groups])
             other_idx <- match(other_seq, seq_uniq)
             this_idx <- match(sequences[i], seq_uniq)
-            r <- dist_mat[this_idx, other_idx]
+            
+            stopifnot( all.equal( other_seq, seq_uniq[other_idx] , check.attributes=FALSE ) )
+            stopifnot( all.equal( sequences[i], seq_uniq[this_idx] , check.attributes=FALSE ) )
+            
+            # the next two checks may not always be true
+            # this happens when all the out-group sequences are identical to the in-group sequences
+            #stopifnot( all( crossGroups_uniq[other_idx] != this_group ) )
+            #stopifnot( crossGroups_uniq[this_idx] == this_group )
+            
+            if (subSampling) {
+                # When there is subsampling, nonsquareDist returns a non-n-by-n matrix 
+                # This matrix has fewers than n rows, and exactly n cols
+                # For each unique sequence, look for its cross-group distances in its column, 
+                #     NOT in its row (because there will be fewer than n rows)
+                
+                # dist_mat rows correspond to seq_uniq[indx]
+                # (indx itself is wrt seq_uniq)
+                # (other_idx is also wrt seq_uni)
+                
+                # which other_seq are included in the subsampled seqs represented by
+                #       the available rows in dist_mat?
+                # wrt dist_mat
+                other_avail_wrt_dist_mat <- which(indx %in% other_idx)
+                
+                if (length(other_avail_wrt_dist_mat)>0) {
+                    # the next two checks may not always be true
+                    # this happens when all the out-group sequences are identical to the in-group sequences
+                    #stopifnot(all( crossGroups_uniq_sub[other_avail_wrt_dist_mat] != this_group ))
+                    #stopifnot(all( crossGroups_uniq_sub[-other_avail_wrt_dist_mat] == this_group ))
+                    
+                    r <- dist_mat[other_avail_wrt_dist_mat, this_idx]
+                } else {
+                    stopifnot(all( crossGroups_uniq_sub == this_group ))
+                    return(NA)
+                }
+            } else {
+                # without subsampling
+                # dist_mat is a n-by-n matrix
+                stopifnot( all(other_idx <= nrow(dist_mat) ) ) 
+                r <- dist_mat[other_idx, this_idx]
+            }
+            
             gt0 <- which(r > 0)
             
-            if (length(gt0) != 0) { min(r[gt0]) } else { NA }
+            if (length(gt0) != 0) { return(min(r[gt0])) } else { return(NA) }
         }
         
         # Define return distance vector
@@ -586,12 +639,17 @@ nearestDist<- function(sequences, model=c("ham", "aa", "hh_s1f", "hh_s5f", "mk_r
 
 #' Distance to nearest neighbor
 #'
-#' Get non-zero distance of every sequence (as defined by \code{sequenceColumn}) to its 
-#' nearest sequence sharing same V gene, J gene, and sequence length.
+#' Get non-zero distance of every heavy chain (\code{IGH}) sequence (as defined by 
+#' \code{sequenceColumn}) to its nearest sequence in a partition of heavy chains sharing the same 
+#' V gene, J gene, and junction length (VJL), or in a partition of single cells with heavy chains
+#' sharing the same heavy chain VJL combination, or of single cells with heavy and light chains 
+#' sharing the same heavy chain VJL and light chain VJL combinations.
 #'
 #' @param    db              data.frame containing sequence data.
-#' @param    sequenceColumn  name of the column containing nucleotide sequences to compare. 
-#'                           Also used to determine sequence length for grouping.
+#' @param    sequenceColumn  name of the column containing the junction for grouping and for calculating
+#'                           nearest neighbot distances. Note that while both heavy and light chain junctions
+#'                           may be used for VJL grouping, only the heavy chain junction is used to calculate 
+#'                           distances.
 #' @param    vCallColumn     name of the column containing the V-segment allele calls.
 #' @param    jCallColumn     name of the column containing the J-segment allele calls.
 #' @param    model           underlying SHM model, which must be one of 
@@ -606,6 +664,12 @@ nearestDist<- function(sequences, model=c("ham", "aa", "hh_s1f", "hh_s5f", "mk_r
 #'                           is used. if \code{FALSE} the union of ambiguous gene 
 #'                           assignments is used to group all sequences with any 
 #'                           overlapping gene calls.
+#' @param    VJthenLen       a Boolean value specifying whether to perform partitioning as a 2-stage
+#'                           process. If \code{TRUE}, partitions are made first based on V and J
+#'                           annotations, and then further split based on junction lengths corresponding 
+#'                           to \code{sequenceColumn}. If \code{FALSE}, perform partition as a 1-stage 
+#'                           process during which V annotation, J annotation, and junction length are used 
+#'                           to create partitions simultaneously. Defaults to \code{TRUE}.
 #' @param    nproc           number of cores to distribute the function over.
 #' @param    fields          additional fields to use for grouping.
 #' @param    cross           character vector of column names to use for grouping to calculate 
@@ -613,23 +677,56 @@ nearestDist<- function(sequences, model=c("ham", "aa", "hh_s1f", "hh_s5f", "mk_r
 #' @param    mst             if \code{TRUE}, return comma-separated branch lengths from minimum 
 #'                           spanning tree.
 #' @param    subsample       number of sequences to subsample for speeding up pairwise-distance-matrix calculation. 
-#'                           Subsampling is performed without replacement in each group of sequences with the 
-#'                           same \code{vCallColumn}, \code{jCallColumn}, and junction length. 
-#'                           If \code{subsample} is larger than the unique number of sequences in each group, 
-#'                           then the subsampling process is ignored for that group. For each sequence in \code{db},
-#'                           the reported \code{DIST_NEAREST} is the distance to the closest sequence in the
-#'                           subsampled set for the group. If \code{NULL} no subsampling is performed.
+#'                           Subsampling is performed without replacement in each VJL group of heavy chain sequences. 
+#'                           If \code{subsample} is larger than the unique number of heavy chain sequences in each 
+#'                           VJL group, then the subsampling process is ignored for that group. For each heavy chain
+#'                           sequence in \code{db}, the reported \code{DIST_NEAREST} is the distance to the closest
+#'                           heavy chain sequence in the subsampled set for the VJL group. If \code{NULL} no 
+#'                           subsampling is performed.
 #' @param    progress        if \code{TRUE} print a progress bar.
-#'
-#' @return   Returns a modified \code{db} data.frame with nearest neighbor distances in the 
-#'           \code{DIST_NEAREST} column if \code{cross=NULL}. 
-#'           if \code{cross} was specified, distances will be added as the 
-#'           \code{CROSS_DIST_NEAREST} column
+#' @param    cellIdColumn    name of the column containing cell IDs. Only applicable and required for 
+#'                           single-cell mode.
+#' @param    locusColumn     name of the column containing locus information. Only applicable and 
+#'                           required for single-cell mode.
+#' @param    groupUsingOnlyIGH    use only heavy chain (\code{IGH}) sequences for VJL grouping, disregarding 
+#'                                light chains. Only applicable and required for single-cell mode. 
+#'                                Default is \code{TRUE}. Also see \link[alakazam]{groupGenes}.                   
+#' @param    keepVJLgroup         a Boolean value specifying whether to keep in the output the the column 
+#'                                column indicating grouping based on VJL combinations. Only applicable for
+#'                                1-stage partitioning (i.e. \code{VJthenLen=FALSE}). Also see 
+#'                                \link[alakazam]{groupGenes}.
+#' 
+#' @return   Returns a modified \code{db} data.frame with nearest neighbor distances between heavy chain
+#'           sequences in the \code{DIST_NEAREST} column if \code{cross=NULL}. If \code{cross} was 
+#'           specified, distances will be added as the \code{CROSS_DIST_NEAREST} column. 
+#'           
+#'           Note that distances between light chain sequences are not calculated, even if light chains 
+#'           were used for VJL grouping via \code{groupUsingOnlyIGH=FALSE}. Light chain sequences, if any,
+#'           will have \code{NA} in the \code{DIST_NEAREST} field.
 #'
 #' @details
-#' The distance to nearest neighbor can be used to estimate a threshold for assigning Ig
-#' sequences to clonal groups. A histogram of the resulting vector is often bimodal, 
-#' with the ideal threshold being a value that separates the two modes.
+#' 
+#' To invoke single-cell mode, both \code{cellIdColumn} and \code{locusColumn} must be supplied. 
+#' Otherwise, the function will run under non-single-cell mode.
+#' 
+#' Under single-cell mode, only heavy chain sequences will be used for calculating nearest neighbor
+#' distances. Under non-single-cell mode, all input sequences will be used for calculating nearest
+#' neighbor distances, regardless of the values in the \code{locusColumn} field (if present).
+#' 
+#' For single-cell mode, the input format is the same as that for \link[alakazam]{groupGenes}. 
+#' Namely, each row represents a sequence/chain. Sequences/chains from the same cell are linked
+#' by a cell ID in the \code{cellIdColumn} field. Under this mode, there is a choice of whether 
+#' grouping should be done using only heavy chain (\code{IGH}) sequences only, or using both 
+#' heavy chain (\code{IGH}) and light chain (\code{IGK}, \code{IGL}) sequences. This is governed 
+#' by \code{groupUsingOnlyIGH}.
+#' 
+#' If used, values in the \code{locusColumn} column must be one of \code{"IGH"}, \code{"IGK"}, and \code{"IGL"}.
+#' 
+#' Note that for \code{distToNearest}, a cell with multiple heavy chains is not allowed.
+#' 
+#' The distance to nearest (heavy chain) neighbor can be used to estimate a threshold for assigning 
+#' Ig sequences to clonal groups. A histogram of the resulting vector is often bimodal, with the 
+#' ideal threshold being a value that separates the two modes.
 #' 
 #' The following distance measures are accepted by the \code{model} parameter.
 #' 
@@ -652,20 +749,20 @@ nearestDist<- function(sequences, model=c("ham", "aa", "hh_s1f", "hh_s5f", "mk_r
 #' }
 #' 
 #' Note on \code{NA}s: if, for a given combination of V gene, J gene, and sequence length,
-#' there is only 1 sequence (as defined by \code{sequenceColumn}), \code{NA} is returned 
-#' instead of a distance (since it has no neighbor). If for a given combination there are 
-#' multiple sequences but only 1 unique sequence, (in which case every sequence in this 
-#' group is the de facto nearest neighbor to each other, thus giving rise to distances 
+#' there is only 1  heavy chain sequence (as defined by \code{sequenceColumn}), \code{NA} is 
+#' returned instead of a distance (since it has no heavy chain neighbor). If for a given combination 
+#' there are multiple heavy chain sequences but only 1 unique one, (in which case every heavy cahin 
+#' sequence in this group is the de facto nearest neighbor to each other, thus giving rise to distances 
 #' of 0), \code{NA}s are returned instead of zero-distances.
 #' 
-#' Note on \code{subsample}: Subsampling is performed independently in each group of sequences
-#' sharing the same \code{vCallColumn}, \code{jCallColumn}, and junction length. If \code{subsample} 
-#' is larger than number of sequences in the group, it is ignored. In other words, subsampling 
-#' is performed only on groups of sequences of size equal to or greater than \code{subsample}. 
-#' \code{DIST_NEAREST} has values calculated using all sequences in the group for groups of size
-#' smaller than \code{subsample} and values calculated using a subset of sequences for the larger 
-#' groups. To select a value of \code{subsample}, it can be useful to explore the group sizes in 
-#' \code{db}.
+#' Note on \code{subsample}: Subsampling is performed independently in each VJL group for heavy chain
+#' sequences. If \code{subsample} is larger than number of heavy chain sequences in the group, it is 
+#' ignored. In other words, subsampling is performed only on groups in which the number of heavy chain 
+#' sequences is equal to or greater than \code{subsample}. \code{DIST_NEAREST} has values calculated 
+#' using all heavy chain sequences in the group for groups with fewer than \code{subsample} heavy chain
+#' sequences, and values calculated using a subset of heavy chain sequences for the larger groups. 
+#' To select a value of \code{subsample}, it can be useful to explore the group sizes in \code{db} 
+#' (and the number of heavy chain sequences in those groups).
 #' 
 #' @references
 #' \enumerate{
@@ -692,8 +789,10 @@ nearestDist<- function(sequences, model=c("ham", "aa", "hh_s1f", "hh_s5f", "mk_r
 #' db <- subset(ExampleDb, SAMPLE == "-1h")
 #' 
 #' # Use genotyped V assignments, Hamming distance, and normalize by junction length
+#' # First partition based on V and J assignments, then by junction length
+#' # Take into consideration ambiguous V and J annotations
 #' dist <- distToNearest(db, vCallColumn="V_CALL_GENOTYPED", model="ham", 
-#'                       first=FALSE, normalize="len")
+#'                       first=FALSE, VJthenLen=TRUE, normalize="len")
 #'                            
 #' # Plot histogram of non-NA distances
 #' p1 <- ggplot(data=subset(dist, !is.na(DIST_NEAREST))) + 
@@ -708,8 +807,10 @@ nearestDist<- function(sequences, model=c("ham", "aa", "hh_s1f", "hh_s5f", "mk_r
 distToNearest <- function(db, sequenceColumn="JUNCTION", vCallColumn="V_CALL", jCallColumn="J_CALL", 
                           model=c("ham", "aa", "hh_s1f", "hh_s5f", "mk_rs1nf", "mk_rs5nf", "m1n_compat", "hs1f_compat"), 
                           normalize=c("len", "none"), symmetry=c("avg", "min"),
-                          first=TRUE, nproc=1, fields=NULL, cross=NULL, mst=FALSE, subsample=NULL,
-                          progress=FALSE) {
+                          first=TRUE, VJthenLen=TRUE, nproc=1, fields=NULL, cross=NULL, mst=FALSE, subsample=NULL,
+                          progress=FALSE,
+                          cellIdColumn=NULL, locusColumn=NULL, groupUsingOnlyIGH=TRUE, keepVJLgroup=TRUE) {
+    
     # Hack for visibility of foreach index variables
     i <- NULL
     
@@ -719,7 +820,19 @@ distToNearest <- function(db, sequenceColumn="JUNCTION", vCallColumn="V_CALL", j
     symmetry <- match.arg(symmetry)
     if (!is.data.frame(db)) { stop('Must submit a data frame') }
     
-    # Check for valid columns
+    
+    # single-cell mode?
+    if ( !is.null(cellIdColumn) & !is.null(locusColumn) ) {
+        singleCell <- TRUE
+        
+        if (!all(db[[locusColumn]] %in% c("IGH", "IGK", "IGL"))) {
+            stop("The locus column must be one of {IGH, IGK, IGL}.")
+        }
+        
+    } else {
+        singleCell <- FALSE
+    } 
+    
     columns <- c(sequenceColumn, vCallColumn, jCallColumn, fields, cross)
     columns <- columns[!is.null(columns)]
     
@@ -727,46 +840,55 @@ distToNearest <- function(db, sequenceColumn="JUNCTION", vCallColumn="V_CALL", j
     if (check != TRUE) { stop(check) }
     
     # Convert sequence columns to uppercase
-    db <- toupperColumns(db, c(sequenceColumn))
+    db <- toupperColumns(db, c(sequenceColumn)) 
     
-    # Check for invalid characters
-    valid_seq <- sapply(db[[sequenceColumn]], allValidChars, getCharsInModel(model))
-    not_valid_seq <- which(!valid_seq)
-    if (length(not_valid_seq)>0) {
-        warning("Invalid sequence characters in the ", sequenceColumn, " column.",
-                length(not_valid_seq)," sequence(s) removed")
-        db <- db[valid_seq,]
-    }    
-    
-    # Parse V and J columns to get gene
-    db <- groupGenes(db,
-                     v_call=vCallColumn,
-                     j_call=jCallColumn,
-                     first=first)
-
-    # Create new column for distance to nearest neighbor
-    db$TMP_DIST_NEAREST <- rep(NA, nrow(db))
-    db$ROW_ID <- 1:nrow(db)
-    db$L <- stringi::stri_length(db[[sequenceColumn]])
-    
-    # Create cluster of nproc size and export namespaces
-    # If user wants to paralellize this function and specifies nproc > 1, then
-    # initialize and register slave R processes/clusters & 
-    # export all nesseary environment variables, functions and packages.
-    if( nproc==1 ) {
-        # If needed to run on a single core/cpu then, register DoSEQ 
-        # (needed for 'foreach' in non-parallel mode)
-        registerDoSEQ()
-    } else if( nproc > 1 ) {
-        cluster <- parallel::makeCluster(nproc, type="PSOCK")
-        registerDoParallel(cluster)
-    } else {
-        stop('Nproc must be positive.')
+    # Disallow multiple heavy chains per cell
+    if (singleCell) {
+        bool <- sapply(unique(db[[cellIdColumn]]), function(x) { 
+            return( sum( db[[locusColumn]][db[[cellIdColumn]]==x] == "IGH" )>1 ) 
+        } )
+        if (any(bool)) {
+            stop("Detected multiple heavy chains in cell(s). Each cell must contain only 1 heavy chain.")
+        }
     }
     
-    # Get indices of unique combinations of V, J (VJ_GROUP), L, and any specified field(s)
+    
+    # Check for invalid characters
+    # heavy
+    valid_seq <- sapply(db[[sequenceColumn]], allValidChars, getCharsInModel(model)) 
+    not_valid_seq <- which(!valid_seq)
+    if (length(not_valid_seq) > 0) {
+        warning("Invalid sequence characters in the ", sequenceColumn, 
+                " column. ", length(not_valid_seq), " sequence(s) removed")
+        db <- db[valid_seq, ]
+    }
+    
+    # junction length columns (prep for groupGenes)
+    junc_len <- "JUNC_LEN"
+    db[[junc_len]] <- stri_length(db[[sequenceColumn]])
+    
+    # create V+J grouping, or V+J+L grouping
+    if (VJthenLen) {
+        # 2-stage partitioning using first V+J and then L
+        # V+J only first
+        # creates $VJ_GROUP
+        db <- groupGenes(db, v_call=vCallColumn, j_call=jCallColumn, junc_len=NULL,
+                         cell_id=cellIdColumn, locus=locusColumn, only_igh=groupUsingOnlyIGH,
+                         first=first)
+        # L (later)  
+        group_cols <- c("VJ_GROUP", junc_len)
+        
+    } else {
+        # 1-stage partitioning using V+J+L simultaneously
+        # creates $VJ_GROUP
+        # note that despite the name (VJ), this is based on V+J+L
+        db <- groupGenes(db, v_call=vCallColumn, j_call=jCallColumn, junc_len=junc_len,
+                         cell_id=cellIdColumn, locus=locusColumn, only_igh=groupUsingOnlyIGH,
+                         first=first)
+        group_cols <- c("VJ_GROUP")
+    }
+    
     # groups to use
-    group_cols <- c("VJ_GROUP","L")
     if (!is.null(fields)) {
         group_cols <- append(group_cols,fields)
     }
@@ -791,6 +913,24 @@ distToNearest <- function(db, sequenceColumn="JUNCTION", vCallColumn="V_CALL", j
         curIdx <- which(colSums(curIdx)==length(group_cols))
     }, simplify=FALSE)
     
+    # Create new column for distance to nearest neighbor
+    db$TMP_DIST_NEAREST <- rep(NA, nrow(db))
+    db$ROW_ID <- 1:nrow(db)
+    
+    # Create cluster of nproc size and export namespaces
+    # If user wants to paralellize this function and specifies nproc > 1, then
+    # initialize and register slave R processes/clusters & 
+    # export all nesseary environment variables, functions and packages.
+    if( nproc==1 ) {
+        # If needed to run on a single core/cpu then, register DoSEQ 
+        # (needed for 'foreach' in non-parallel mode)
+        registerDoSEQ()
+    } else if( nproc > 1 ) {
+        cluster <- parallel::makeCluster(nproc, type="PSOCK")
+        registerDoParallel(cluster)
+    } else {
+        stop('Nproc must be positive.')
+    }
     
     # Export groups to the clusters
     if (nproc > 1) { 
@@ -813,37 +953,52 @@ distToNearest <- function(db, sequenceColumn="JUNCTION", vCallColumn="V_CALL", j
                                  "calcTargetingDistance",
                                  "findUniqSeq",
                                  "pairwise5MerDist",
-                                 "nonsquare5MerDist")
+                                 "nonsquare5MerDist",
+                                 "singleCell",
+                                 "locusColumn")
         parallel::clusterExport(cluster, export_functions, envir=environment())
     }
     
-   
-
+    
+    
     n_groups <- length(uniqueGroupsIdx)
     if (progress) { 
         pb <- progressBar(n_groups) 
     }
     list_db <- foreach(i=1:n_groups, .errorhandling='stop') %dopar% {
+        # wrt db
         idx <- uniqueGroupsIdx[[i]]
+        
+        if (singleCell) {
+            # only use IGH
+            # wrt idx
+            idxBool <- db[[locusColumn]][idx] == "IGH"
+        } else {
+            idxBool <- rep(TRUE, length(idx))
+        }
+        
         db_group <- db[idx, ]
+        
         crossGroups <- NULL
         if (!is.null(cross)) {
-            crossGroups <- db_group %>% dplyr::group_indices_(.dots=cross)
+            crossGroups <- db_group %>% dplyr::group_indices(!!!rlang::syms(cross))
         }
-        arrSeqs <-  as.vector(unlist(db[idx, sequenceColumn]))
-        db_group$TMP_DIST_NEAREST <- nearestDist(arrSeqs,
-                                                 model=model,
-                                                 normalize=normalize,
-                                                 symmetry=symmetry,
-                                                 crossGroups=crossGroups,
-                                                 mst=mst,
-                                                 subsample=subsample)
+        
+        arrSeqs <-  db[[sequenceColumn]][idx]
+            
+        db_group$TMP_DIST_NEAREST[idxBool] <- nearestDist(arrSeqs[idxBool], 
+                                                          model=model,
+                                                          normalize=normalize,
+                                                          symmetry=symmetry,
+                                                          crossGroups=crossGroups[idxBool],
+                                                          mst=mst,
+                                                          subsample=subsample)
         # Update progress
         if (progress) { pb$tick() }
         
         return(db_group)
     }
-
+    
     # Convert list from foreach into a db data.frame
     db <- do.call(rbind, list_db)
     db <- db[order(db$ROW_ID), ]
@@ -856,7 +1011,14 @@ distToNearest <- function(db, sequenceColumn="JUNCTION", vCallColumn="V_CALL", j
     } else {
         db$DIST_NEAREST <- db$TMP_DIST_NEAREST
     }
-    return(db[, !(names(db) %in% c("VJ_GROUP", "L", "ROW_ID", "V1", "J1","TMP_DIST_NEAREST"))])
+    
+    # prepare db for return
+    if ((!VJthenLen) && keepVJLgroup) {
+        db$VJL_GROUP <- db[["VJ_GROUP"]]
+    }
+    db <- db[, !(names(db) %in% c(junc_len, "VJ_GROUP", "ROW_ID", "V1", "J1","TMP_DIST_NEAREST"))]
+    
+    return(db)
 }
 
 
@@ -1834,6 +1996,7 @@ plotDensityThreshold <- function(data, cross=NULL, xmin=NULL, xmax=NULL, breaks=
     # Define plot data.frames
     xdf <- data.frame(x=data@x)
     ddf <- data.frame(x=data@xdens, y=data@ydens)
+    ddf <- ddf[ddf$x > 0, ]
     
     # Set binwidth
     if (is.null(binwidth)) { binwidth <- data@bandwidth }
@@ -1864,7 +2027,7 @@ plotDensityThreshold <- function(data, cross=NULL, xmin=NULL, xmax=NULL, breaks=
     
     # Add x limits
     if (is.null(breaks) & (!is.na(xmin) | !is.na(xmax))) {
-        p <- p + xlim(xmin, xmax)
+        p <- p + coord_cartesian(xlim = c(xmin, xmax))
     }
     # Set breaks
     if (!is.null(breaks)) {
@@ -1886,3 +2049,4 @@ plotDensityThreshold <- function(data, cross=NULL, xmin=NULL, xmax=NULL, breaks=
         return(p)
     }
 }
+

@@ -4,7 +4,8 @@
 \alias{shmulateSeq}
 \title{Simulate mutations in a single sequence}
 \usage{
-shmulateSeq(sequence, numMutations, targetingModel = HH_S5F)
+shmulateSeq(sequence, numMutations, targetingModel = HH_S5F, start = 1,
+  end = nchar(sequence))
 }
 \arguments{
 \item{sequence}{sequence string in which mutations are to be introduced.
@@ -16,6 +17,12 @@ that \code{-} is not accepted.}
 \item{targetingModel}{5-mer \link{TargetingModel} object to be used for computing 
 probabilities of mutations at each position. Defaults to
 \link{HH_S5F}.}
+
+\item{start}{Initial position in \code{sequence} where mutations can 
+be introduced. Default: 1}
+
+\item{end}{Last position in \code{sequence} where mutations can 
+be introduced. Default: last position (sequence length).}
 }
 \value{
 A string defining the mutated sequence.

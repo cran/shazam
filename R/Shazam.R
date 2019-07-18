@@ -16,7 +16,8 @@
 #' models, can also be performed along with model driven simulations of SHM.
 #' 
 #' \itemize{
-#'   \item  \link{collapseClones}:           Build clonal consensus sequence.
+#'   \item  \link{collapseClones}:           Build clonal consensus sequences.
+#'   \item  \link{consensusSequence}:        Build a single consensus sequence.
 #'   \item  \link{observedMutations}:        Compute observed mutation counts and frequencies.
 #'   \item  \link{expectedMutations}:        Compute expected mutation frequencies.
 #'   \item  \link{shmulateSeq}:              Simulate mutations in a single sequence.
@@ -114,39 +115,38 @@
 #' @importFrom  ape         mst
 #' @importFrom  diptest     dip.test
 #' @importFrom  doParallel  registerDoParallel
-#' @importFrom  dplyr       do n desc funs %>%
-#'                          as_data_frame data_frame data_frame_
+#' @importFrom  dplyr       do n desc %>%
 #'                          bind_cols bind_rows combine
-#'                          filter filter_ select select_ arrange arrange_
-#'                          group_by group_by_ ungroup
-#'                          mutate mutate_ summarize summarize_
+#'                          filter select arrange 
+#'                          group_by ungroup group_indices
+#'                          mutate summarize
 #'                          mutate_at summarize_at
-#'                          rename rename_ transmute transmute_
+#'                          rename transmute
 #' @importFrom  foreach     foreach %dopar% registerDoSEQ
 #' @importFrom  igraph      V E as_adjacency_matrix graph_from_data_frame
 #'                          vertex_attr set_vertex_attr
+#' @importFrom  iterators   icount
 #' @importFrom  kedd        h.ucv
 #' @importFrom  KernSmooth  bkde
 #' @importFrom  lazyeval    interp
 #' @importFrom  MASS        fitdistr
 #' @importFrom  progress    progress_bar
-#' @importFrom  scales      log2_trans log10_trans trans_breaks trans_format
-#'                          math_format percent scientific
-#' @importFrom  tidyr       gather gather_ spread spread_
-#' @importFrom  iterators   icount
-#' @importFrom  SDMTools    wt.sd
+#' @importFrom  rlang       sym syms
 #' @importFrom  scales      log2_trans log10_trans trans_breaks trans_format
 #'                          math_format percent scientific pretty_breaks
+#' @importFrom  SDMTools    wt.sd
 #' @importFrom  seqinr      c2s s2c words translate
 #' @importFrom  stats       na.omit setNames ecdf sd cor cov median mad
 #'                          approx convolve weighted.mean p.adjust
 #'                          dbeta pbeta qbeta rbeta optim optimize
 #'                          dnorm pnorm runif dgamma pgamma uniroot na.exclude
+#'                          as.dist cutree
 #' @importFrom  stringi     stri_dup stri_flatten stri_join stri_length 
-#'                          stri_sub stri_sub<-
+#'                          stri_sub stri_sub<- stri_detect_regex
 #'                          stri_count_boundaries stri_count_regex 
 #'                          stri_extract_all_regex stri_extract_first_regex  
 #'                          stri_replace_all_regex stri_replace_first_regex
+#' @importFrom  tidyr       gather spread
 NULL
 
 

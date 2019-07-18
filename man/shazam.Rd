@@ -21,7 +21,8 @@ Quantification of expected mutational loaded, under specific SHM targeting
 models, can also be performed along with model driven simulations of SHM.
 
 \itemize{
-  \item  \link{collapseClones}:           Build clonal consensus sequence.
+  \item  \link{collapseClones}:           Build clonal consensus sequences.
+  \item  \link{consensusSequence}:        Build a single consensus sequence.
   \item  \link{observedMutations}:        Compute observed mutation counts and frequencies.
   \item  \link{expectedMutations}:        Compute expected mutation frequencies.
   \item  \link{shmulateSeq}:              Simulate mutations in a single sequence.

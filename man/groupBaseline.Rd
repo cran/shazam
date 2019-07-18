@@ -20,7 +20,7 @@ object by which to group the sequence PDFs.}
 set and will not be reset.}
 }
 \value{
-A \code{Baseline} object, containing the modified \code{db} and the BASELINe 
+A \link{Baseline} object, containing the modified \code{db} and the BASELINe 
           posterior probability density functions (PDF) for each of the groups.
 }
 \description{
@@ -89,7 +89,7 @@ plotBaselineDensity(grouped3, idColumn="SAMPLE", colorValues=sample_colors,
  }
 }
 \seealso{
-To generate the baseline object see \link{calcBaseline}.
+To generate the \link{Baseline} object see \link{calcBaseline}.
           To calculate BASELINe statistics, such as the mean selection strength
           and the 95\% confidence interval, see \link{summarizeBaseline}.
 }

@@ -297,7 +297,7 @@ editBaseline <- function(baseline, field, value) {
 #'                              \code{nproc=0} then the \code{cluster} has already been
 #'                              set and will not be reset.
 #' 
-#' @return  A \code{Baseline} object containing the modified \code{db} and BASELINe 
+#' @return  A \link{Baseline} object containing the modified \code{db} and BASELINe 
 #'          posterior probability density functions (PDF) for each of the sequences.
 #'           
 #' @details 
@@ -768,7 +768,7 @@ calcBaselineBinomialPdf <- function (x=3,
 #'                      \code{nproc} = 0 then the \code{cluster} has already been
 #'                      set and will not be reset.
 #' 
-#' @return   A \code{Baseline} object, containing the modified \code{db} and the BASELINe 
+#' @return   A \link{Baseline} object, containing the modified \code{db} and the BASELINe 
 #'           posterior probability density functions (PDF) for each of the groups.
 #'           
 #' @details
@@ -781,7 +781,7 @@ calcBaselineBinomialPdf <- function (x=3,
 #' from each sample may be combined together, allowing you to compare selection  across 
 #' samples. This is accomplished through a fast numerical convolution technique.
 #'               
-#' @seealso  To generate the baseline object see \link{calcBaseline}.
+#' @seealso  To generate the \link{Baseline} object see \link{calcBaseline}.
 #'           To calculate BASELINe statistics, such as the mean selection strength
 #'           and the 95\% confidence interval, see \link{summarizeBaseline}.
 #' 
@@ -1621,7 +1621,7 @@ plotBaselineDensity <- function(baseline, idColumn, groupColumn=NULL, colorEleme
             tmp_df <- as.data.frame(dens_list[[n]])
             tmp_df$GROUP_COLLAPSE <- rownames(dens_list[[n]])
             gather_cols <- names(tmp_df)[names(tmp_df) != "GROUP_COLLAPSE"]
-            melt_list[[n]] <- tidyr::gather_(tmp_df, "SIGMA", "DENSITY", gather_cols, convert=TRUE)
+            melt_list[[n]] <- tidyr::gather(tmp_df, "SIGMA", "DENSITY", gather_cols, convert=TRUE)
         }
         dens_df <- dplyr::bind_rows(melt_list, .id="REGION")
         

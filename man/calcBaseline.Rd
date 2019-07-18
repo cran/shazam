@@ -45,7 +45,7 @@ summary statistics \code{data.frame} stored in the
 set and will not be reset.}
 }
 \value{
-A \code{Baseline} object containing the modified \code{db} and BASELINe 
+A \link{Baseline} object containing the modified \code{db} and BASELINe 
          posterior probability density functions (PDF) for each of the sequences.
 }
 \description{

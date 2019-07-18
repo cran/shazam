@@ -5,7 +5,8 @@
 \title{Simulate mutations in a lineage tree}
 \usage{
 shmulateTree(sequence, graph, targetingModel = HH_S5F, field = NULL,
-  exclude = NULL, junctionWeight = NULL)
+  exclude = NULL, junctionWeight = NULL, start = 1,
+  end = nchar(sequence))
 }
 \arguments{
 \item{sequence}{string defining the MRCA sequence to seed mutations from.}
@@ -30,6 +31,12 @@ junction region. When specified this adds a proportional
 number of mutations to the immediate offspring nodes of the 
 MRCA. Requires a value between 0 and 1. If \code{NULL} then 
 edge weights are unmodified from the input \code{graph}.}
+
+\item{start}{Initial position in \code{sequence} where mutations can 
+be introduced. Default: 1}
+
+\item{end}{Last position in \code{sequence} where mutations can 
+be introduced. Default: last position (sequence length).}
 }
 \value{
 A \code{data.frame} of simulated sequences with columns:
