@@ -807,9 +807,10 @@ nearestDist <- function(sequences, model=c("ham", "aa", "hh_s1f", "hh_s5f", "mk_
 distToNearest <- function(db, sequenceColumn="JUNCTION", vCallColumn="V_CALL", jCallColumn="J_CALL", 
                           model=c("ham", "aa", "hh_s1f", "hh_s5f", "mk_rs1nf", "mk_rs5nf", "m1n_compat", "hs1f_compat"), 
                           normalize=c("len", "none"), symmetry=c("avg", "min"),
-                          first=TRUE, VJthenLen=TRUE, nproc=1, fields=NULL, cross=NULL, mst=FALSE, subsample=NULL,
-                          progress=FALSE,
-                          cellIdColumn=NULL, locusColumn=NULL, groupUsingOnlyIGH=TRUE, keepVJLgroup=TRUE) {
+                          first=TRUE, VJthenLen=TRUE, nproc=1, fields=NULL, cross=NULL, 
+                          mst=FALSE, subsample=NULL, progress=FALSE,
+                          cellIdColumn=NULL, locusColumn=NULL, 
+                          groupUsingOnlyIGH=TRUE, keepVJLgroup=TRUE) {
     
     # Hack for visibility of foreach index variables
     i <- NULL
@@ -895,14 +896,14 @@ distToNearest <- function(db, sequenceColumn="JUNCTION", vCallColumn="V_CALL", j
     # unique groups
     # not necessary but good practice to force as df and assign colnames
     # (in case group_cols has length 1; which can happen in groupBaseline)
-    uniqueGroups <- data.frame(unique(db[, group_cols]))
+    uniqueGroups <- data.frame(unique(db[, group_cols]), stringsAsFactors=FALSE)
     colnames(uniqueGroups) <- group_cols
     rownames(uniqueGroups) <- NULL
     # indices
     # crucial to have simplify=FALSE 
     # (otherwise won't return a list if uniqueClones has length 1)
     uniqueGroupsIdx <- sapply(1:nrow(uniqueGroups), function(i){
-        curGroup <- data.frame(uniqueGroups[i, ])
+        curGroup <- data.frame(uniqueGroups[i, ], stringsAsFactors=FALSE)
         colnames(curGroup) <- group_cols
         # match for each field
         curIdx <- sapply(group_cols, function(coln){
@@ -911,8 +912,14 @@ distToNearest <- function(db, sequenceColumn="JUNCTION", vCallColumn="V_CALL", j
         curIdx <- do.call(rbind, curIdx)
         # intersect to get match across fields 
         curIdx <- which(colSums(curIdx)==length(group_cols))
+        # sanity check
+        # no NA
+        stopifnot( all(!is.na(curIdx)) )
+        # index within range of db
+        stopifnot( max(curIdx) <= nrow(db) )
+        return(curIdx)
     }, simplify=FALSE)
-    
+
     # Create new column for distance to nearest neighbor
     db$TMP_DIST_NEAREST <- rep(NA, nrow(db))
     db$ROW_ID <- 1:nrow(db)
