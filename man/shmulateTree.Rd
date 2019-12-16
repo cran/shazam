@@ -4,9 +4,16 @@
 \alias{shmulateTree}
 \title{Simulate mutations in a lineage tree}
 \usage{
-shmulateTree(sequence, graph, targetingModel = HH_S5F, field = NULL,
-  exclude = NULL, junctionWeight = NULL, start = 1,
-  end = nchar(sequence))
+shmulateTree(
+  sequence,
+  graph,
+  targetingModel = HH_S5F,
+  field = NULL,
+  exclude = NULL,
+  junctionWeight = NULL,
+  start = 1,
+  end = nchar(sequence)
+)
 }
 \arguments{
 \item{sequence}{string defining the MRCA sequence to seed mutations from.}

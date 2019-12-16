@@ -4,9 +4,18 @@
 \alias{plotGmmThreshold}
 \title{Plot findThreshold results for the gmm method}
 \usage{
-plotGmmThreshold(data, cross = NULL, xmin = NULL, xmax = NULL,
-  breaks = NULL, binwidth = NULL, title = NULL, size = 1,
-  silent = FALSE, ...)
+plotGmmThreshold(
+  data,
+  cross = NULL,
+  xmin = NULL,
+  xmax = NULL,
+  breaks = NULL,
+  binwidth = NULL,
+  title = NULL,
+  size = 1,
+  silent = FALSE,
+  ...
+)
 }
 \arguments{
 \item{data}{\link{GmmThreshold} object output by the \code{"gmm"} method 

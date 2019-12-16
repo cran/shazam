@@ -4,9 +4,15 @@
 \alias{expectedMutations}
 \title{Calculate expected mutation frequencies}
 \usage{
-expectedMutations(db, sequenceColumn = "SEQUENCE_IMGT",
-  germlineColumn = "GERMLINE_IMGT_D_MASK", targetingModel = HH_S5F,
-  regionDefinition = NULL, mutationDefinition = NULL, nproc = 1)
+expectedMutations(
+  db,
+  sequenceColumn = "SEQUENCE_IMGT",
+  germlineColumn = "GERMLINE_IMGT_D_MASK",
+  targetingModel = HH_S5F,
+  regionDefinition = NULL,
+  mutationDefinition = NULL,
+  nproc = 1
+)
 }
 \arguments{
 \item{db}{\code{data.frame} containing sequence data.}

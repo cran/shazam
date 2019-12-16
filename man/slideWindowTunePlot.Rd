@@ -4,11 +4,23 @@
 \alias{slideWindowTunePlot}
 \title{Visualize parameter tuning for sliding window approach}
 \usage{
-slideWindowTunePlot(tuneList, plotFiltered = TRUE, percentage = FALSE,
-  jitter.x = FALSE, jitter.x.amt = 0.1, jitter.y = FALSE,
-  jitter.y.amt = 0.1, pchs = 1, ltys = 2, cols = 1,
-  plotLegend = TRUE, legendPos = "topright", legendHoriz = FALSE,
-  legendCex = 1, title = NULL)
+slideWindowTunePlot(
+  tuneList,
+  plotFiltered = TRUE,
+  percentage = FALSE,
+  jitter.x = FALSE,
+  jitter.x.amt = 0.1,
+  jitter.y = FALSE,
+  jitter.y.amt = 0.1,
+  pchs = 1,
+  ltys = 2,
+  cols = 1,
+  plotLegend = TRUE,
+  legendPos = "topright",
+  legendHoriz = FALSE,
+  legendCex = 1,
+  title = NULL
+)
 }
 \arguments{
 \item{tuneList}{a list of logical matrices returned by \link{slideWindowTune}.}

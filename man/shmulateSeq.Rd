@@ -4,8 +4,13 @@
 \alias{shmulateSeq}
 \title{Simulate mutations in a single sequence}
 \usage{
-shmulateSeq(sequence, numMutations, targetingModel = HH_S5F, start = 1,
-  end = nchar(sequence))
+shmulateSeq(
+  sequence,
+  numMutations,
+  targetingModel = HH_S5F,
+  start = 1,
+  end = nchar(sequence)
+)
 }
 \arguments{
 \item{sequence}{sequence string in which mutations are to be introduced.

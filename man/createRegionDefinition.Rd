@@ -4,8 +4,12 @@
 \alias{createRegionDefinition}
 \title{Creates a RegionDefinition}
 \usage{
-createRegionDefinition(name = "", boundaries = factor(),
-  description = "", citation = "")
+createRegionDefinition(
+  name = "",
+  boundaries = factor(),
+  description = "",
+  citation = ""
+)
 }
 \arguments{
 \item{name}{name of the region definition.}

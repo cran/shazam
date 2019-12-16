@@ -4,9 +4,13 @@
 \alias{calcExpectedMutations}
 \title{Calculate expected mutation frequencies of a sequence}
 \usage{
-calcExpectedMutations(germlineSeq, inputSeq = NULL,
-  targetingModel = HH_S5F, regionDefinition = NULL,
-  mutationDefinition = NULL)
+calcExpectedMutations(
+  germlineSeq,
+  inputSeq = NULL,
+  targetingModel = HH_S5F,
+  regionDefinition = NULL,
+  mutationDefinition = NULL
+)
 }
 \arguments{
 \item{germlineSeq}{germline (reference) sequence.}

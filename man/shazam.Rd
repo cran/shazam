@@ -3,7 +3,6 @@
 \docType{package}
 \name{shazam}
 \alias{shazam}
-\alias{shazam-package}
 \title{The shazam package}
 \description{
 Dramatic improvements in high-throughput sequencing technologies now enable 

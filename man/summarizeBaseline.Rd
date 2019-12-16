@@ -4,8 +4,7 @@
 \alias{summarizeBaseline}
 \title{Calculate BASELINe summary statistics}
 \usage{
-summarizeBaseline(baseline, returnType = c("baseline", "df"),
-  nproc = 1)
+summarizeBaseline(baseline, returnType = c("baseline", "df"), nproc = 1)
 }
 \arguments{
 \item{baseline}{\code{Baseline} object returned by \link{calcBaseline} containing 

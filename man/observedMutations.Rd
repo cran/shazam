@@ -4,10 +4,17 @@
 \alias{observedMutations}
 \title{Calculate observed numbers of mutations}
 \usage{
-observedMutations(db, sequenceColumn = "SEQUENCE_IMGT",
-  germlineColumn = "GERMLINE_IMGT_D_MASK", regionDefinition = NULL,
-  mutationDefinition = NULL, ambiguousMode = c("eitherOr", "and"),
-  frequency = FALSE, combine = FALSE, nproc = 1)
+observedMutations(
+  db,
+  sequenceColumn = "SEQUENCE_IMGT",
+  germlineColumn = "GERMLINE_IMGT_D_MASK",
+  regionDefinition = NULL,
+  mutationDefinition = NULL,
+  ambiguousMode = c("eitherOr", "and"),
+  frequency = FALSE,
+  combine = FALSE,
+  nproc = 1
+)
 }
 \arguments{
 \item{db}{\code{data.frame} containing sequence data.}

@@ -4,11 +4,19 @@
 \alias{createBaseline}
 \title{Creates a Baseline object}
 \usage{
-createBaseline(description = "", db = data.frame(),
-  regionDefinition = createRegionDefinition(), testStatistic = "",
-  regions = NULL, numbOfSeqs = matrix(), binomK = matrix(),
-  binomN = matrix(), binomP = matrix(), pdfs = list(),
-  stats = data.frame())
+createBaseline(
+  description = "",
+  db = data.frame(),
+  regionDefinition = createRegionDefinition(),
+  testStatistic = "",
+  regions = NULL,
+  numbOfSeqs = matrix(),
+  binomK = matrix(),
+  binomN = matrix(),
+  binomP = matrix(),
+  pdfs = list(),
+  stats = data.frame()
+)
 }
 \arguments{
 \item{description}{\code{character} providing general information regarding the 

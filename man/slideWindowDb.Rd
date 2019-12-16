@@ -4,8 +4,13 @@
 \alias{slideWindowDb}
 \title{Sliding window approach towards filtering sequences in a \code{data.frame}}
 \usage{
-slideWindowDb(db, sequenceColumn = "SEQUENCE_IMGT",
-  germlineColumn = "GERMLINE_IMGT_D_MASK", mutThresh, windowSize)
+slideWindowDb(
+  db,
+  sequenceColumn = "SEQUENCE_IMGT",
+  germlineColumn = "GERMLINE_IMGT_D_MASK",
+  mutThresh,
+  windowSize
+)
 }
 \arguments{
 \item{db}{\code{data.frame} containing sequence data.}

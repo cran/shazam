@@ -26,7 +26,7 @@ based on a 5-mer nucleotide mutability model.
 data(ExampleDb, package="alakazam")
 db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
 
-# Calculate mutability of germline sequences using \\link{HH_S5F} model
+# Calculate mutability of germline sequences using \link{HH_S5F} model
 mutability <- calculateMutability(sequences=db$GERMLINE_IMGT_D_MASK, model=HH_S5F)
 }
 

@@ -4,11 +4,17 @@
 \alias{consensusSequence}
 \title{Construct a consensus sequence}
 \usage{
-consensusSequence(sequences, db = NULL, method = c("mostCommon",
-  "thresholdedFreq", "catchAll", "mostMutated", "leastMutated"),
-  minFreq = NULL, muFreqColumn = NULL, lenLimit = NULL,
-  includeAmbiguous = FALSE, breakTiesStochastic = FALSE,
-  breakTiesByColumns = NULL)
+consensusSequence(
+  sequences,
+  db = NULL,
+  method = c("mostCommon", "thresholdedFreq", "catchAll", "mostMutated", "leastMutated"),
+  minFreq = NULL,
+  muFreqColumn = NULL,
+  lenLimit = NULL,
+  includeAmbiguous = FALSE,
+  breakTiesStochastic = FALSE,
+  breakTiesByColumns = NULL
+)
 }
 \arguments{
 \item{sequences}{character vector of sequences.}

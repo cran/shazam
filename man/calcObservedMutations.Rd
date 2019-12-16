@@ -4,9 +4,15 @@
 \alias{calcObservedMutations}
 \title{Count the number of observed mutations in a sequence.}
 \usage{
-calcObservedMutations(inputSeq, germlineSeq, regionDefinition = NULL,
-  mutationDefinition = NULL, ambiguousMode = c("eitherOr", "and"),
-  returnRaw = FALSE, frequency = FALSE)
+calcObservedMutations(
+  inputSeq,
+  germlineSeq,
+  regionDefinition = NULL,
+  mutationDefinition = NULL,
+  ambiguousMode = c("eitherOr", "and"),
+  returnRaw = FALSE,
+  frequency = FALSE
+)
 }
 \arguments{
 \item{inputSeq}{input sequence. IUPAC ambiguous characters for DNA are 

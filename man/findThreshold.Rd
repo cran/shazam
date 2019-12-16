@@ -4,10 +4,18 @@
 \alias{findThreshold}
 \title{Find distance threshold}
 \usage{
-findThreshold(distances, method = c("density", "gmm"), edge = 0.9,
-  cross = NULL, subsample = NULL, model = c("gamma-gamma",
-  "gamma-norm", "norm-gamma", "norm-norm"), cutoff = c("optimal",
-  "intersect", "user"), sen = NULL, spc = NULL, progress = FALSE)
+findThreshold(
+  distances,
+  method = c("density", "gmm"),
+  edge = 0.9,
+  cross = NULL,
+  subsample = NULL,
+  model = c("gamma-gamma", "gamma-norm", "norm-gamma", "norm-norm"),
+  cutoff = c("optimal", "intersect", "user"),
+  sen = NULL,
+  spc = NULL,
+  progress = FALSE
+)
 }
 \arguments{
 \item{distances}{numeric vector containing nearest neighbor distances.}

@@ -4,9 +4,18 @@
 \alias{plotDensityThreshold}
 \title{Plot findThreshold results for the density method}
 \usage{
-plotDensityThreshold(data, cross = NULL, xmin = NULL, xmax = NULL,
-  breaks = NULL, binwidth = NULL, title = NULL, size = 1,
-  silent = FALSE, ...)
+plotDensityThreshold(
+  data,
+  cross = NULL,
+  xmin = NULL,
+  xmax = NULL,
+  breaks = NULL,
+  binwidth = NULL,
+  title = NULL,
+  size = 1,
+  silent = FALSE,
+  ...
+)
 }
 \arguments{
 \item{data}{\link{DensityThreshold} object output by the \code{"density"} method 

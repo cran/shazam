@@ -4,13 +4,21 @@
 \alias{collapseClones}
 \title{Constructs effective clonal sequences for all clones}
 \usage{
-collapseClones(db, cloneColumn = "CLONE",
+collapseClones(
+  db,
+  cloneColumn = "CLONE",
   sequenceColumn = "SEQUENCE_IMGT",
-  germlineColumn = "GERMLINE_IMGT_D_MASK", muFreqColumn = NULL,
-  regionDefinition = NULL, method = c("mostCommon", "thresholdedFreq",
-  "catchAll", "mostMutated", "leastMutated"), minimumFrequency = NULL,
-  includeAmbiguous = FALSE, breakTiesStochastic = FALSE,
-  breakTiesByColumns = NULL, expandedDb = FALSE, nproc = 1)
+  germlineColumn = "GERMLINE_IMGT_D_MASK",
+  muFreqColumn = NULL,
+  regionDefinition = NULL,
+  method = c("mostCommon", "thresholdedFreq", "catchAll", "mostMutated", "leastMutated"),
+  minimumFrequency = NULL,
+  includeAmbiguous = FALSE,
+  breakTiesStochastic = FALSE,
+  breakTiesByColumns = NULL,
+  expandedDb = FALSE,
+  nproc = 1
+)
 }
 \arguments{
 \item{db}{\code{data.frame} containing sequence data. Required.}

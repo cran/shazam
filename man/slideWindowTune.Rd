@@ -4,9 +4,15 @@
 \alias{slideWindowTune}
 \title{Parameter tuning for sliding window approach}
 \usage{
-slideWindowTune(db, sequenceColumn = "SEQUENCE_IMGT",
-  germlineColumn = "GERMLINE_IMGT_D_MASK", dbMutList = NULL,
-  mutThreshRange, windowSizeRange, verbose = TRUE)
+slideWindowTune(
+  db,
+  sequenceColumn = "SEQUENCE_IMGT",
+  germlineColumn = "GERMLINE_IMGT_D_MASK",
+  dbMutList = NULL,
+  mutThreshRange,
+  windowSizeRange,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{db}{\code{data.frame} containing sequence data.}

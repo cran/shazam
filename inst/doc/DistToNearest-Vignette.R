@@ -1,9 +1,9 @@
-## ---- eval=TRUE, warning=FALSE, message=FALSE----------------------------
+## ---- eval=TRUE, warning=FALSE, message=FALSE---------------------------------
 # Subset example data to one sample
 library(shazam)
 data(ExampleDb, package="alakazam")
 
-## ---- eval=TRUE, warning=FALSE-------------------------------------------
+## ---- eval=TRUE, warning=FALSE------------------------------------------------
 # Use nucleotide Hamming distance and normalize by junction length
 dist_ham <- distToNearest(ExampleDb, vCallColumn="V_CALL_GENOTYPED", 
                           model="ham", normalize="len", nproc=1)
@@ -12,7 +12,7 @@ dist_ham <- distToNearest(ExampleDb, vCallColumn="V_CALL_GENOTYPED",
 dist_s5f <- distToNearest(ExampleDb, vCallColumn="V_CALL_GENOTYPED", 
                           model="hh_s5f", normalize="none", nproc=1)
 
-## ---- eval=TRUE, warning=FALSE, fig.width=7------------------------------
+## ---- eval=TRUE, warning=FALSE, fig.width=7-----------------------------------
 # Generate Hamming distance histogram
 library(ggplot2)
 p1 <- ggplot(subset(dist_ham, !is.na(DIST_NEAREST)),
@@ -25,7 +25,7 @@ p1 <- ggplot(subset(dist_ham, !is.na(DIST_NEAREST)),
     geom_vline(xintercept=0.12, color="firebrick", linetype=2)
 plot(p1)
 
-## ---- eval=TRUE, warning=FALSE, fig.width=7------------------------------
+## ---- eval=TRUE, warning=FALSE, fig.width=7-----------------------------------
 # Generate HH_S5F distance histogram
 p2 <- ggplot(subset(dist_s5f, !is.na(DIST_NEAREST)),
              aes(x=DIST_NEAREST)) + 
@@ -37,7 +37,7 @@ p2 <- ggplot(subset(dist_s5f, !is.na(DIST_NEAREST)),
     geom_vline(xintercept=7, color="firebrick", linetype=2)
 plot(p2)
 
-## ---- eval=TRUE, warning=FALSE, fig.width=7------------------------------
+## ---- eval=TRUE, warning=FALSE, fig.width=7-----------------------------------
 # Find threshold using density method
 output <- findThreshold(dist_ham$DIST_NEAREST, method="density")
 threshold <- output@threshold
@@ -48,7 +48,7 @@ plot(output, title="Density Method")
 # Print threshold
 print(output)
 
-## ---- eval=TRUE, warning=FALSE, fig.width=7------------------------------
+## ---- eval=TRUE, warning=FALSE, fig.width=7-----------------------------------
 # Find threshold using gmm method
 output <- findThreshold(dist_ham$DIST_NEAREST, method="gmm", model="gamma-gamma")
 
@@ -58,11 +58,11 @@ plot(output, binwidth=0.02, title="GMM Method: gamma-gamma")
 # Print threshold
 print(output)
 
-## ----fields, eval=TRUE, warning=FALSE------------------------------------
+## ----fields, eval=TRUE, warning=FALSE-----------------------------------------
 dist_fields <- distToNearest(ExampleDb, model="ham", normalize="len", 
                              fields="SAMPLE", nproc=1)
 
-## ---- eval=TRUE, warning=FALSE, fig.width=7------------------------------
+## ---- eval=TRUE, warning=FALSE, fig.width=7-----------------------------------
 # Generate grouped histograms
 p4 <- ggplot(subset(dist_fields, !is.na(DIST_NEAREST)), 
              aes(x=DIST_NEAREST)) + 
@@ -74,11 +74,11 @@ p4 <- ggplot(subset(dist_fields, !is.na(DIST_NEAREST)),
     facet_grid(SAMPLE ~ ., scales="free_y")
 plot(p4)
 
-## ----cross, eval=TRUE, warning=FALSE-------------------------------------
+## ----cross, eval=TRUE, warning=FALSE------------------------------------------
 dist_cross <- distToNearest(ExampleDb, model="ham", first=FALSE, 
                             normalize="len", cross="SAMPLE", nproc=1)
 
-## ---- eval=TRUE, warning=FALSE, fig.width=7------------------------------
+## ---- eval=TRUE, warning=FALSE, fig.width=7-----------------------------------
 # Generate cross sample histograms
 p5 <- ggplot(subset(dist_cross, !is.na(CROSS_DIST_NEAREST)), 
              aes(x=CROSS_DIST_NEAREST)) + 
@@ -90,7 +90,7 @@ p5 <- ggplot(subset(dist_cross, !is.na(CROSS_DIST_NEAREST)),
     facet_grid(SAMPLE ~ ., scales="free_y")
 plot(p5)
 
-## ----subsample, eval=TRUE, warning=FALSE---------------------------------
+## ----subsample, eval=TRUE, warning=FALSE--------------------------------------
 # Explore V-J-junction length groups sizes to use subsample
 # Show the size of the largest groups
 library(dplyr)
