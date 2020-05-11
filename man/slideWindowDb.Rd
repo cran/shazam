@@ -6,8 +6,8 @@
 \usage{
 slideWindowDb(
   db,
-  sequenceColumn = "SEQUENCE_IMGT",
-  germlineColumn = "GERMLINE_IMGT_D_MASK",
+  sequenceColumn = "sequence_alignment",
+  germlineColumn = "germline_alignment_d_mask",
   mutThresh,
   windowSize
 )
@@ -41,7 +41,9 @@ sequence.
 data(ExampleDb, package="alakazam")
 
 # Apply the sliding window approach on a subset of ExampleDb
-slideWindowDb(db = ExampleDb[1:10, ], mutThresh=6, windowSize=10)
+slideWindowDb(db=ExampleDb[1:10, ], sequenceColumn="sequence_alignment", 
+              germlineColumn="germline_alignment_d_mask", 
+              mutThresh=6, windowSize=10)
 
 }
 \seealso{

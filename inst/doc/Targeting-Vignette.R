@@ -5,24 +5,45 @@ data(ExampleDb, package="alakazam")
 
 ## ---- eval=FALSE--------------------------------------------------------------
 #  # Create substitution model using silent mutations
-#  sub_matrix <- createSubstitutionMatrix(ExampleDb, model="S")
+#  sub_model <- createSubstitutionMatrix(ExampleDb, model="S",
+#                                         sequenceColumn="sequence_alignment",
+#                                         germlineColumn="germline_alignment_d_mask",
+#                                         vCallColumn="v_call")
+
+## ---- eval=FALSE--------------------------------------------------------------
 #  # Create mutability model using silent mutations
-#  mut_matrix <- createMutabilityMatrix(ExampleDb, sub_matrix, model="S")
-#  
+#  mut_model <- createMutabilityMatrix(ExampleDb, sub_model, model="S",
+#                                       sequenceColumn="sequence_alignment",
+#                                       germlineColumn="germline_alignment_d_mask",
+#                                       vCallColumn="v_call")
+
+## ---- eval=FALSE--------------------------------------------------------------
+#  # Number of silent mutations used for estimating 5-mer mutabilities
+#  mut_model@numMutS
+#  # Number of replacement mutations used for estimating 5-mer mutabilities
+#  mut_model@numMutR
+#  # Mutability and source as a data.frame
+#  head(as.data.frame(mut_model))
+
+## ---- eval=FALSE--------------------------------------------------------------
 #  # Extend models to include ambiguous 5-mers
-#  sub_matrix <- extendSubstitutionMatrix(sub_matrix)
-#  mut_matrix <- extendMutabilityMatrix(mut_matrix)
-#  
-#  # Create targeting model matrix from substitution and mutability matrices
-#  tar_matrix <- createTargetingMatrix(sub_matrix, mut_matrix)
+#  sub_model <- extendSubstitutionMatrix(sub_model)
+#  mut_model <- extendMutabilityMatrix(mut_model)
+
+## ---- eval=FALSE--------------------------------------------------------------
+#  # Create targeting model matrix from substitution and mutability models
+#  tar_matrix <- createTargetingMatrix(sub_model, mut_model)
 
 ## ---- eval=TRUE, warning=FALSE------------------------------------------------
 # Collapse sequences into clonal consensus
-clone_db <- collapseClones(ExampleDb, nproc=1)
+clone_db <- collapseClones(ExampleDb, cloneColumn="clone_id", 
+                           sequenceColumn="sequence_alignment",
+                           germlineColumn="germline_alignment_d_mask",
+                           nproc=1)
 # Create targeting model in one step using only silent mutations
 # Use consensus sequence input and germline columns
-model <- createTargetingModel(clone_db, model="S", sequenceColumn="CLONAL_SEQUENCE", 
-                              germlineColumn="CLONAL_GERMLINE")
+model <- createTargetingModel(clone_db, model="s", sequenceColumn="clonal_sequence", 
+                              germlineColumn="clonal_germline", vCallColumn="v_call")
 
 ## ---- eval=TRUE, warning=FALSE, fig.width=7, fig.height=7.5-------------------
 # Generate hedgehog plot of mutability model

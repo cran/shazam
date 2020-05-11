@@ -6,10 +6,10 @@
 \usage{
 createTargetingModel(
   db,
-  model = c("S", "RS"),
-  sequenceColumn = "SEQUENCE_IMGT",
-  germlineColumn = "GERMLINE_IMGT_D_MASK",
-  vCallColumn = "V_CALL",
+  model = c("s", "rs"),
+  sequenceColumn = "sequence_alignment",
+  germlineColumn = "germline_alignment_d_mask",
+  vCallColumn = "v_call",
   multipleMutation = c("independent", "ignore"),
   minNumMutations = 50,
   minNumSeqMutations = 500,
@@ -23,10 +23,10 @@ createTargetingModel(
 \arguments{
 \item{db}{data.frame containing sequence data.}
 
-\item{model}{type of model to create. The default model, "S", 
-builds a model by counting only silent mutations. \code{model="S"}
+\item{model}{type of model to create. The default model, "s", 
+builds a model by counting only silent mutations. \code{model="s"}
 should be used for data that includes functional sequences.
-Setting \code{model="RS"} creates a model by counting both 
+Setting \code{model="rs"} creates a model by counting both 
 replacement and silent mutations and may be used on fully 
 non-functional sequence data sets.}
 
@@ -79,12 +79,20 @@ A \link{TargetingModel} object.
 \donttest{
 # Subset example data to one isotype and sample as a demo
 data(ExampleDb, package="alakazam")
-db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
+db <- subset(ExampleDb, c_call == "IGHA" & sample_id == "-1h")
 
 # Create model using only silent mutations and ignore multiple mutations
-model <- createTargetingModel(db, model="S", multipleMutation="ignore")
-}
+model <- createTargetingModel(db, model="s", sequenceColumn="sequence_alignment",
+                              germlineColumn="germline_alignment_d_mask",
+                              vCallColumn="v_call", multipleMutation="ignore")
 
+
+# Access and view mutability estimates (not run)
+print(model@mutability)
+
+# View the number of S mutations used for estimating mutabilities
+model@mutability@numMutS
+}
 }
 \references{
 \enumerate{

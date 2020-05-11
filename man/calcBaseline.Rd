@@ -6,8 +6,8 @@
 \usage{
 calcBaseline(
   db,
-  sequenceColumn = "CLONAL_SEQUENCE",
-  germlineColumn = "CLONAL_GERMLINE",
+  sequenceColumn = "clonal_sequence",
+  germlineColumn = "clonal_germline",
   testStatistic = c("local", "focused", "imbalanced"),
   regionDefinition = NULL,
   targetingModel = HH_S5F,
@@ -70,7 +70,7 @@ sequence per clone. Effective clonal sequences can be obtained by calling
 the \link{collapseClones} function.
                   
 If the \code{db} does not contain the 
-required columns to calculate the PDFs (namely MU_COUNT & MU_EXPECTED)
+required columns to calculate the PDFs (namely mu_count & mu_expected)
 then the function will:
   \enumerate{
   \item  Calculate the numbers of observed mutations.
@@ -93,18 +93,19 @@ For further information on the frame of these tests see Uduman et al. (2011).
 \examples{
 # Load and subset example data
 data(ExampleDb, package="alakazam")
-db <- subset(ExampleDb, ISOTYPE == "IgG" & SAMPLE == "+7d")
+db <- subset(ExampleDb, c_call == "IGHG" & sample_id == "+7d")
 
 # Collapse clones
-db <- collapseClones(db, sequenceColumn="SEQUENCE_IMGT",
-                     germlineColumn="GERMLINE_IMGT_D_MASK",
+db <- collapseClones(db, cloneColumn="clone_id", 
+                     sequenceColumn="sequence_alignment",
+                     germlineColumn="germline_alignment_d_mask",
                      method="thresholdedFreq", minimumFrequency=0.6,
                      includeAmbiguous=FALSE, breakTiesStochastic=FALSE)
  
 # Calculate BASELINe
 baseline <- calcBaseline(db, 
-                         sequenceColumn="CLONAL_SEQUENCE",
-                         germlineColumn="CLONAL_GERMLINE", 
+                         sequenceColumn="clonal_sequence",
+                         germlineColumn="clonal_germline", 
                          testStatistic="focused",
                          regionDefinition=IMGT_V,
                          targetingModel=HH_S5F,

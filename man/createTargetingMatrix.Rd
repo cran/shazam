@@ -16,10 +16,13 @@ createTargetingMatrix(substitutionModel, mutabilityModel)
 \link{extendMutabilityMatrix}.}
 }
 \value{
-A matrix with the same dimensions as the input \code{substitutionModel} 
+A \code{TargetingMatrix} with the same dimensions as the input \code{substitutionModel} 
           containing normalized targeting probabilities for each 5-mer motif with 
           row names defining the center nucleotide and column names defining the 
-          5-mer nucleotide sequence.
+          5-mer nucleotide sequence. 
+          
+          If the input \code{mutabilityModel} is of class \code{MutabilityModel}, then the output 
+          \code{TargetingMatrix} will carry over the input \code{numMutS} and \code{numMutR} slots.
 }
 \description{
 \code{createTargetingMatrix} calculates the targeting model matrix as the
@@ -33,11 +36,16 @@ normalized substitution rates for each individual 5-mer.
 \donttest{
 # Subset example data to one isotype and sample as a demo
 data(ExampleDb, package="alakazam")
-db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
+db <- subset(ExampleDb, c_call == "IGHA" & sample_id == "-1h")
 
 # Create 4x1024 models using only silent mutations
-sub_model <- createSubstitutionMatrix(db, model="S")
-mut_model <- createMutabilityMatrix(db, sub_model, model="S")
+sub_model <- createSubstitutionMatrix(db, model="s", sequenceColumn="sequence_alignment",
+                                      germlineColumn="germline_alignment_d_mask",
+                                      vCallColumn="v_call")
+mut_model <- createMutabilityMatrix(db, sub_model, model="s",
+                                    sequenceColumn="sequence_alignment",
+                                    germlineColumn="germline_alignment_d_mask",
+                                    vCallColumn="v_call")
 
 # Extend substitution and mutability to including Ns (5x3125 model)
 sub_model <- extendSubstitutionMatrix(sub_model)
@@ -58,5 +66,5 @@ tar_model <- createTargetingMatrix(sub_model, mut_model)
 \seealso{
 \link{createSubstitutionMatrix}, \link{extendSubstitutionMatrix}, 
           \link{createMutabilityMatrix}, \link{extendMutabilityMatrix}, 
-          \link{createTargetingModel}
+          \link{TargetingMatrix}, \link{createTargetingModel}
 }

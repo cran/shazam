@@ -6,8 +6,8 @@
 \usage{
 observedMutations(
   db,
-  sequenceColumn = "SEQUENCE_IMGT",
-  germlineColumn = "GERMLINE_IMGT_D_MASK",
+  sequenceColumn = "sequence_alignment",
+  germlineColumn = "germline_alignment_d_mask",
   regionDefinition = NULL,
   mutationDefinition = NULL,
   ambiguousMode = c("eitherOr", "and"),
@@ -64,31 +64,31 @@ A modified \code{db} \code{data.frame} with observed mutation counts for each
           \link{IMGT_V} definition, which defines positions for CDR and
           FWR, the following columns are added:
           \itemize{
-            \item  \code{MU_COUNT_CDR_R}:  number of replacement mutations in CDR1 and 
+            \item  \code{mu_count_cdr_r}:  number of replacement mutations in CDR1 and 
                                            CDR2 of the V-segment.
-            \item  \code{MU_COUNT_CDR_S}:  number of silent mutations in CDR1 and CDR2 
+            \item  \code{mu_count_cdr_s}:  number of silent mutations in CDR1 and CDR2 
                                            of the V-segment.
-            \item  \code{MU_COUNT_FWR_R}:  number of replacement mutations in FWR1, 
+            \item  \code{mu_count_fwr_r}:  number of replacement mutations in FWR1, 
                                            FWR2 and FWR3 of the V-segment.
-            \item  \code{MU_COUNT_FWR_S}:  number of silent mutations in FWR1, FWR2 and
+            \item  \code{mu_count_fwr_s}:  number of silent mutations in FWR1, FWR2 and
                                            FWR3 of the V-segment.
           }
           If \code{frequency=TRUE}, R and S mutation frequencies are
           calculated over the number of non-N positions in the speficied regions.
           \itemize{
-            \item  \code{MU_FREQ_CDR_R}:  frequency of replacement mutations in CDR1 and 
+            \item  \code{mu_freq_cdr_r}:  frequency of replacement mutations in CDR1 and 
                                            CDR2 of the V-segment.
-            \item  \code{MU_FREQ_CDR_S}:  frequency of silent mutations in CDR1 and CDR2 
+            \item  \code{mu_freq_cdr_s}:  frequency of silent mutations in CDR1 and CDR2 
                                            of the V-segment.
-            \item  \code{MU_FREQ_FWR_R}:  frequency of replacement mutations in FWR1, 
+            \item  \code{mu_freq_fwr_r}:  frequency of replacement mutations in FWR1, 
                                            FWR2 and FWR3 of the V-segment.
-            \item  \code{MU_FREQ_FWR_S}:  frequency of silent mutations in FWR1, FWR2 and
+            \item  \code{mu_freq_fwr_s}:  frequency of silent mutations in FWR1, FWR2 and
                                            FWR3 of the V-segment.
           } 
           If \code{frequency=TRUE} and \code{combine=TRUE}, the mutations and non-N positions
-          are aggregated and a single \code{MU_FREQ} value is returned
+          are aggregated and a single \code{mu_freq} value is returned
           \itemize{
-            \item  \code{MU_FREQ}:  frequency of replacement and silent mutations in the 
+            \item  \code{mu_freq}:  frequency of replacement and silent mutations in the 
                                      specified region
           }
 }
@@ -112,18 +112,18 @@ additional columns.
 \examples{
 # Subset example data
 data(ExampleDb, package="alakazam")
-db <- subset(ExampleDb, ISOTYPE == "IgG" & SAMPLE == "+7d")
+db <- subset(ExampleDb, c_call == "IGHG" & sample_id == "+7d")
 
 # Calculate mutation frequency over the entire sequence
-db_obs <- observedMutations(db, sequenceColumn="SEQUENCE_IMGT",
-                            germlineColumn="GERMLINE_IMGT_D_MASK",
+db_obs <- observedMutations(db, sequenceColumn="sequence_alignment",
+                            germlineColumn="germline_alignment_d_mask",
                             frequency=TRUE,
                             nproc=1)
 
 # Count of V-region mutations split by FWR and CDR
 # With mutations only considered replacement if charge changes
-db_obs <- observedMutations(db, sequenceColumn="SEQUENCE_IMGT",
-                            germlineColumn="GERMLINE_IMGT_D_MASK",
+db_obs <- observedMutations(db, sequenceColumn="sequence_alignment",
+                            germlineColumn="germline_alignment_d_mask",
                             regionDefinition=IMGT_V,
                             mutationDefinition=CHARGE_MUTATIONS,
                             nproc=1)

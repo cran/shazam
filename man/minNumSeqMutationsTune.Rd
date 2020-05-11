@@ -34,16 +34,22 @@ At a given threshold value of \code{minNumSeqMutations}, for a given 5-mer,
 \donttest{
 # Subset example data to one isotype and sample as a demo
 data(ExampleDb, package="alakazam")
-db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
+db <- subset(ExampleDb, c_call == "IGHA" & sample_id == "-1h")
 
 # Create model using only silent mutations
-sub <- createSubstitutionMatrix(db, model="S", multipleMutation="independent",
+sub <- createSubstitutionMatrix(db, sequenceColumn="sequence_alignment",
+                                germlineColumn="germline_alignment_d_mask",
+                                vCallColumn="v_call", 
+                                model="s", multipleMutation="independent",
                                 returnModel="5mer", numMutationsOnly=FALSE,
                                 minNumMutations=20)
 
 # Count the number of mutations in sequences containing each 5-mer
 mutCount <- createMutabilityMatrix(db, substitutionModel = sub,
-                                   model="S", multipleMutation="independent",
+                                   sequenceColumn="sequence_alignment",
+                                   germlineColumn="germline_alignment_d_mask",
+                                   vCallColumn="v_call",
+                                   model="s", multipleMutation="independent",
                                    numSeqMutationsOnly=TRUE)
 
 # Tune minNumSeqMutations

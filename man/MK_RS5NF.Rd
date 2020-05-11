@@ -4,7 +4,9 @@
 \name{MK_RS5NF}
 \alias{MK_RS5NF}
 \title{Mouse kappa light chain, replacement and silent, 5-mer, non-functional targeting model.}
-\format{\link{TargetingModel} object.}
+\format{
+\link{TargetingModel} object.
+}
 \usage{
 MK_RS5NF
 }

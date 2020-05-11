@@ -4,8 +4,10 @@
 \name{HH_S1F}
 \alias{HH_S1F}
 \title{Human heavy chain, silent, 1-mer, functional substitution model.}
-\format{A 4x4 matrix of nucleotide substitution rates. The rates are normalized,
-          therefore each row sums up to 1.}
+\format{
+A 4x4 matrix of nucleotide substitution rates. The rates are normalized,
+          therefore each row sums up to 1.
+}
 \usage{
 HH_S1F
 }

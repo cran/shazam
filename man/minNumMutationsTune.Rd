@@ -41,10 +41,13 @@ At a given threshold value of \code{minNumMutations}, for a given 5-mer,
 \examples{
 # Subset example data to one isotype and sample as a demo
 data(ExampleDb, package="alakazam")
-db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
+db <- subset(ExampleDb, c_call == "IGHA" & sample_id == "-1h")
 
 # Count the number of mutations per 5-mer
-subCount <- createSubstitutionMatrix(db, model="S", multipleMutation="independent",
+subCount <- createSubstitutionMatrix(db, sequenceColumn="sequence_alignment",
+                                     germlineColumn="germline_alignment_d_mask",
+                                     vCallColumn="v_call",
+                                     model="s", multipleMutation="independent",
                                      returnModel="5mer", numMutationsOnly=TRUE)
 
 # Tune minNumMutations

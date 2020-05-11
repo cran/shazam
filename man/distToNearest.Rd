@@ -6,9 +6,9 @@
 \usage{
 distToNearest(
   db,
-  sequenceColumn = "JUNCTION",
-  vCallColumn = "V_CALL",
-  jCallColumn = "J_CALL",
+  sequenceColumn = "junction",
+  vCallColumn = "v_call",
+  jCallColumn = "j_call",
   model = c("ham", "aa", "hh_s1f", "hh_s5f", "mk_rs1nf", "mk_rs5nf", "m1n_compat",
     "hs1f_compat"),
   normalize = c("len", "none"),
@@ -76,16 +76,16 @@ spanning tree.}
 Subsampling is performed without replacement in each VJL group of heavy chain sequences. 
 If \code{subsample} is larger than the unique number of heavy chain sequences in each 
 VJL group, then the subsampling process is ignored for that group. For each heavy chain
-sequence in \code{db}, the reported \code{DIST_NEAREST} is the distance to the closest
+sequence in \code{db}, the reported \code{dist_nearest} is the distance to the closest
 heavy chain sequence in the subsampled set for the VJL group. If \code{NULL} no 
 subsampling is performed.}
 
 \item{progress}{if \code{TRUE} print a progress bar.}
 
-\item{cellIdColumn}{name of the column containing cell IDs. Only applicable and required for 
+\item{cellIdColumn}{name of the character column containing cell IDs. Only applicable and required for 
 single-cell mode.}
 
-\item{locusColumn}{name of the column containing locus information. Only applicable and 
+\item{locusColumn}{name of the character column containing locus information. Only applicable and 
 required for single-cell mode.}
 
 \item{groupUsingOnlyIGH}{use only heavy chain (\code{IGH}) sequences for VJL grouping, disregarding 
@@ -99,12 +99,15 @@ column indicating grouping based on VJL combinations. Only applicable for
 }
 \value{
 Returns a modified \code{db} data.frame with nearest neighbor distances between heavy chain
-          sequences in the \code{DIST_NEAREST} column if \code{cross=NULL}. If \code{cross} was 
-          specified, distances will be added as the \code{CROSS_DIST_NEAREST} column. 
+          sequences in the \code{dist_nearest} column if \code{cross=NULL}. If \code{cross} was 
+          specified, distances will be added as the \code{cross_dist_nearest} column. 
           
           Note that distances between light chain sequences are not calculated, even if light chains 
           were used for VJL grouping via \code{groupUsingOnlyIGH=FALSE}. Light chain sequences, if any,
-          will have \code{NA} in the \code{DIST_NEAREST} field.
+          will have \code{NA} in the \code{dist_nearest} field.
+          
+          Note that the output \code{vCallColumn} and \code{jCallColumn} columns will be converted to 
+          \code{character} if they were \code{factor} in the input \code{db}.
 }
 \description{
 Get non-zero distance of every heavy chain (\code{IGH}) sequence (as defined by 
@@ -124,7 +127,7 @@ neighbor distances, regardless of the values in the \code{locusColumn} field (if
 For single-cell mode, the input format is the same as that for \link[alakazam]{groupGenes}. 
 Namely, each row represents a sequence/chain. Sequences/chains from the same cell are linked
 by a cell ID in the \code{cellIdColumn} field. Under this mode, there is a choice of whether 
-grouping should be done using only heavy chain (\code{IGH}) sequences only, or using both 
+grouping should be done using heavy chain (\code{IGH}) sequences only, or using both 
 heavy chain (\code{IGH}) and light chain (\code{IGK}, \code{IGL}) sequences. This is governed 
 by \code{groupUsingOnlyIGH}.
 
@@ -166,7 +169,7 @@ of 0), \code{NA}s are returned instead of zero-distances.
 Note on \code{subsample}: Subsampling is performed independently in each VJL group for heavy chain
 sequences. If \code{subsample} is larger than number of heavy chain sequences in the group, it is 
 ignored. In other words, subsampling is performed only on groups in which the number of heavy chain 
-sequences is equal to or greater than \code{subsample}. \code{DIST_NEAREST} has values calculated 
+sequences is equal to or greater than \code{subsample}. \code{dist_nearest} has values calculated 
 using all heavy chain sequences in the group for groups with fewer than \code{subsample} heavy chain
 sequences, and values calculated using a subset of heavy chain sequences for the larger groups. 
 To select a value of \code{subsample}, it can be useful to explore the group sizes in \code{db} 
@@ -175,20 +178,21 @@ To select a value of \code{subsample}, it can be useful to explore the group siz
 \examples{
 # Subset example data to one sample as a demo
 data(ExampleDb, package="alakazam")
-db <- subset(ExampleDb, SAMPLE == "-1h")
+db <- subset(ExampleDb, sample_id == "-1h")
 
 # Use genotyped V assignments, Hamming distance, and normalize by junction length
 # First partition based on V and J assignments, then by junction length
 # Take into consideration ambiguous V and J annotations
-dist <- distToNearest(db, vCallColumn="V_CALL_GENOTYPED", model="ham", 
-                      first=FALSE, VJthenLen=TRUE, normalize="len")
+dist <- distToNearest(db, sequenceColumn="junction", 
+                      vCallColumn="v_call_genotyped", jCallColumn="j_call",
+                      model="ham", first=FALSE, VJthenLen=TRUE, normalize="len")
                            
 # Plot histogram of non-NA distances
-p1 <- ggplot(data=subset(dist, !is.na(DIST_NEAREST))) + 
+p1 <- ggplot(data=subset(dist, !is.na(dist_nearest))) + 
       theme_bw() + 
       ggtitle("Distance to nearest: Hamming") + 
       xlab("distance") +
-      geom_histogram(aes(x=DIST_NEAREST), binwidth=0.025, 
+      geom_histogram(aes(x=dist_nearest), binwidth=0.025, 
                      fill="steelblue", color="white")
 plot(p1)
 

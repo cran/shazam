@@ -54,6 +54,12 @@ is stored as a 5x3125 matrix. Rows define
 the mutated nucleotide at the center of each 5-mer, one of 
 \code{c("A", "C", "G", "T", "N")}, and columns define the complete 5-mer 
 of the unmutated nucleotide sequence.}
+
+\item{\code{numMutS}}{number indicating the number of silent mutations used for 
+estimating mutability.}
+
+\item{\code{numMutR}}{number indicating the number of replacement mutations used 
+for estimating mutability.}
 }}
 
 \seealso{

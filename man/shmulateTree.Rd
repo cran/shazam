@@ -48,10 +48,10 @@ be introduced. Default: last position (sequence length).}
 \value{
 A \code{data.frame} of simulated sequences with columns:
           \itemize{
-            \item \code{NAME}:      name of the corresponding node in the input 
+            \item \code{name}:      name of the corresponding node in the input 
                                     \code{graph}.  
-            \item \code{SEQUENCE}:  mutated sequence.
-            \item \code{DISTANCE}:  Hamming distance of the mutated sequence from 
+            \item \code{sequence}:  mutated sequence.
+            \item \code{distance}:  Hamming distance of the mutated sequence from 
                                     the seed \code{sequence}.
           }
 }
@@ -75,7 +75,7 @@ shmulateTree(sequence, graph)
 # Exclude nodes without a sample identifier
 # Add 20\% mutation rate to the immediate offsprings of the MRCA
 shmulateTree(sequence, graph, targetingModel=MK_RS5NF,
-             field="SAMPLE", exclude=NA, junctionWeight=0.2)
+             field="sample_id", exclude=NA, junctionWeight=0.2)
  
 }
 \seealso{

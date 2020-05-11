@@ -6,8 +6,8 @@
 \usage{
 expectedMutations(
   db,
-  sequenceColumn = "SEQUENCE_IMGT",
-  germlineColumn = "GERMLINE_IMGT_D_MASK",
+  sequenceColumn = "sequence_alignment",
+  germlineColumn = "germline_alignment_d_mask",
   targetingModel = HH_S5F,
   regionDefinition = NULL,
   mutationDefinition = NULL,
@@ -47,13 +47,13 @@ A modified \code{db} \code{data.frame} with expected mutation frequencies
           definition, which defines positions for CDR and FWR, the following columns are
           added:  
           \itemize{
-            \item  \code{MU_EXPECTED_CDR_R}:  number of replacement mutations in CDR1 and 
+            \item  \code{mu_expected_cdr_r}:  number of replacement mutations in CDR1 and 
                                            CDR2 of the V-segment.
-            \item  \code{MU_EXPECTED_CDR_S}:  number of silent mutations in CDR1 and CDR2 
+            \item  \code{mu_expected_cdr_s}:  number of silent mutations in CDR1 and CDR2 
                                            of the V-segment.
-            \item  \code{MU_EXPECTED_FWR_R}:  number of replacement mutations in FWR1, 
+            \item  \code{mu_expected_fwr_r}:  number of replacement mutations in FWR1, 
                                            FWR2 and FWR3 of the V-segment.
-            \item  \code{MU_EXPECTED_FWR_S}:  number of silent mutations in FWR1, FWR2 and
+            \item  \code{mu_expected_fwr_s}:  number of silent mutations in FWR1, FWR2 and
                                            FWR3 of the V-segment.
           }
 }
@@ -69,19 +69,19 @@ positions beyond 312 will be ignored.
 \examples{
 # Subset example data
 data(ExampleDb, package="alakazam")
-db <- subset(ExampleDb, ISOTYPE \%in\% c("IgA", "IgG") & SAMPLE == "+7d")
+db <- subset(ExampleDb, c_call \%in\% c("IGHA", "IGHG") & sample_id == "+7d")
 
 # Calculate expected mutations over V region
 db_exp <- expectedMutations(db,
-                            sequenceColumn="SEQUENCE_IMGT",
-                            germlineColumn="GERMLINE_IMGT_D_MASK",
+                            sequenceColumn="sequence_alignment",
+                            germlineColumn="germline_alignment_d_mask",
                             regionDefinition=IMGT_V,
                             nproc=1)
 
 # Calculate hydropathy expected mutations over V region
 db_exp <- expectedMutations(db,
-                           sequenceColumn="SEQUENCE_IMGT",
-                           germlineColumn="GERMLINE_IMGT_D_MASK",
+                           sequenceColumn="sequence_alignment",
+                           germlineColumn="germline_alignment_d_mask",
                            regionDefinition=IMGT_V,
                            mutationDefinition=HYDROPATHY_MUTATIONS,
                            nproc=1)

@@ -37,13 +37,13 @@ A \code{numeric} vector of the expected frequencies of mutations in the
           \link{IMGT_V} definition, which defines positions for CDR and 
           FWR, the following columns are calculated:
           \itemize{
-             \item  \code{MU_EXPECTED_CDR_R}:  number of replacement mutations in CDR1 and 
+             \item  \code{mu_expected_cdr_r}:  number of replacement mutations in CDR1 and 
                                             CDR2 of the V-segment.
-             \item  \code{MU_EXPECTED_CDR_S}:  number of silent mutations in CDR1 and CDR2 
+             \item  \code{mu_expected_cdr_s}:  number of silent mutations in CDR1 and CDR2 
                                             of the V-segment.
-             \item  \code{MU_EXPECTED_FWR_R}:  number of replacement mutations in FWR1, 
+             \item  \code{mu_expected_fwr_r}:  number of replacement mutations in FWR1, 
                                             FWR2 and FWR3 of the V-segment.
-             \item  \code{MU_EXPECTED_FWR_S}:  number of silent mutations in FWR1, FWR2 and
+             \item  \code{mu_expected_fwr_s}:  number of silent mutations in FWR1, FWR2 and
                                             FWR3 of the V-segment.
            }
 }
@@ -65,17 +65,17 @@ positions beyond 312 will be ignored.
 data(ExampleDb, package="alakazam")
 
 # Use first entry in the exampled data for input and germline sequence
-in_seq <- ExampleDb[["SEQUENCE_IMGT"]][1]
-germ_seq <-  ExampleDb[["GERMLINE_IMGT_D_MASK"]][1]
+in_seq <- ExampleDb[["sequence_alignment"]][1]
+germ_seq <-  ExampleDb[["germline_alignment_d_mask"]][1]
 
 # Identify all mutations in the sequence
-calcExpectedMutations(in_seq, germ_seq)
+calcExpectedMutations(germ_seq,in_seq)
 
 # Identify only mutations the V segment minus CDR3
-calcExpectedMutations(in_seq, germ_seq, regionDefinition=IMGT_V)
+calcExpectedMutations(germ_seq, in_seq, regionDefinition=IMGT_V)
 
 # Define mutations based on hydropathy
-calcExpectedMutations(in_seq, germ_seq, regionDefinition=IMGT_V,
+calcExpectedMutations(germ_seq, in_seq, regionDefinition=IMGT_V,
                       mutationDefinition=HYDROPATHY_MUTATIONS)
 
 }

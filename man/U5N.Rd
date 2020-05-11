@@ -4,7 +4,9 @@
 \name{U5N}
 \alias{U5N}
 \title{Uniform 5-mer null targeting model.}
-\format{A \link{TargetingModel} object.}
+\format{
+A \link{TargetingModel} object.
+}
 \usage{
 U5N
 }

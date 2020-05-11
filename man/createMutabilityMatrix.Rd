@@ -7,14 +7,13 @@
 createMutabilityMatrix(
   db,
   substitutionModel,
-  model = c("S", "RS"),
-  sequenceColumn = "SEQUENCE_IMGT",
-  germlineColumn = "GERMLINE_IMGT_D_MASK",
-  vCallColumn = "V_CALL",
+  model = c("s", "rs"),
+  sequenceColumn = "sequence_alignment",
+  germlineColumn = "germline_alignment_d_mask",
+  vCallColumn = "v_call",
   multipleMutation = c("independent", "ignore"),
   minNumSeqMutations = 500,
-  numSeqMutationsOnly = FALSE,
-  returnSource = FALSE
+  numSeqMutationsOnly = FALSE
 )
 }
 \arguments{
@@ -22,13 +21,13 @@ createMutabilityMatrix(
 
 \item{substitutionModel}{matrix of 5-mer substitution rates built by 
 \link{createSubstitutionMatrix}. Note, this model will
-only impact mutability scores when \code{model="S"}
+only impact mutability scores when \code{model="s"}
 (using only silent mutations).}
 
-\item{model}{type of model to create. The default model, "S", 
-builds a model by counting only silent mutations. \code{model="S"}
+\item{model}{type of model to create. The default model, "s", 
+builds a model by counting only silent mutations. \code{model="s"}
 should be used for data that includes functional sequences.
-Setting \code{model="RS"} creates a model by counting both 
+Setting \code{model="rs"} creates a model by counting both 
 replacement and silent mutations and may be used on fully 
 non-functional sequence data sets.}
 
@@ -55,14 +54,11 @@ observed mutations in sequences containing each 5-mer. This
 option can be used for parameter tuning for \code{minNumSeqMutations} 
 during preliminary analysis using \link{minNumSeqMutationsTune}. 
 Default is \code{FALSE}.}
-
-\item{returnSource}{return the sources of 5-mer mutabilities (measured vs.
-inferred). Default is \code{FALSE}.}
 }
 \value{
-When \code{numSeqMutationsOnly} is \code{FALSE}, a named numeric vector of 1024 
-          normalized mutability rates for each 5-mer motif with names defining the 5-mer 
-          nucleotide sequence. 
+When \code{numSeqMutationsOnly} is \code{FALSE}, a \code{MutabilityModel} containing a
+          named numeric vector of 1024 normalized mutability rates for each 5-mer motif with names 
+          defining the 5-mer nucleotide sequence.
           
           When \code{numSeqMutationsOnly} is \code{TRUE}, a named numeric
           vector of length 1024 counting the number of observed mutations in sequences containing 
@@ -82,17 +78,30 @@ the number of mutations occuring in the center position for all 5-mer motifs.
 \donttest{
 # Subset example data to one isotype and sample as a demo
 data(ExampleDb, package="alakazam")
-db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
+db <- subset(ExampleDb, c_call == "IGHA" & sample_id == "-1h")
 
 # Create model using only silent mutations
-sub_model <- createSubstitutionMatrix(db, model="S")
-mut_model <- createMutabilityMatrix(db, sub_model, model="S", 
+sub_model <- createSubstitutionMatrix(db, sequenceColumn="sequence_alignment",
+                                      germlineColumn="germline_alignment_d_mask",
+                                      vCallColumn="v_call",model="s")
+mut_model <- createMutabilityMatrix(db, sub_model, model="s", 
+                                    sequenceColumn="sequence_alignment",
+                                    germlineColumn="germline_alignment_d_mask",
+                                    vCallColumn="v_call",
                                     minNumSeqMutations=200,
                                     numSeqMutationsOnly=FALSE)
+# View mutability esimates (not run)
+# print(mut_model)
+
+# View the number of S mutations used for estimating mutabilities
+mut_model@numMutS
 
 # Count the number of mutations in sequences containing each 5-mer
-mut_count <- createMutabilityMatrix(db, sub_model, model="S", 
-                                   numSeqMutationsOnly=TRUE)
+mut_count <- createMutabilityMatrix(db, sub_model, model="s", 
+                                    sequenceColumn="sequence_alignment",
+                                    germlineColumn="germline_alignment_d_mask",
+                                    vCallColumn="v_call",
+                                    numSeqMutationsOnly=TRUE)
 }
 
 }
@@ -104,7 +113,7 @@ mut_count <- createMutabilityMatrix(db, sub_model, model="S",
  }
 }
 \seealso{
-\link{extendMutabilityMatrix}, \link{createSubstitutionMatrix}, 
+\link{MutabilityModel}, \link{extendMutabilityMatrix}, \link{createSubstitutionMatrix}, 
           \link{createTargetingMatrix}, \link{createTargetingModel},
           \link{minNumSeqMutationsTune}
 }

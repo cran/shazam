@@ -56,8 +56,8 @@ For \code{returnRaw=FALSE}, an \code{array} with the numbers of replacement (R)
           
           For \code{returnRaw=TRUE}, a list containing 
           \itemize{
-               \item \code{$pos}: A data frame whose columns (\code{position}, \code{R}, 
-                     \code{S}, and \code{region}) indicate, respecitively, the nucleotide 
+               \item \code{$pos}: A data frame whose columns (\code{position}, \code{r}, 
+                     \code{s}, and \code{region}) indicate, respecitively, the nucleotide 
                      position, the number of R mutations at that position, the number of S 
                      mutations at that position, and the region in which that nucleotide
                      is in.
@@ -164,8 +164,8 @@ are \code{"eitherOr"} and \code{"and"}.
 \examples{
 # Use an entry in the example data for input and germline sequence
 data(ExampleDb, package="alakazam")
-in_seq <- ExampleDb[["SEQUENCE_IMGT"]][100]
-germ_seq <-  ExampleDb[["GERMLINE_IMGT_D_MASK"]][100]
+in_seq <- ExampleDb[["sequence_alignment"]][100]
+germ_seq <-  ExampleDb[["germline_alignment_d_mask"]][100]
 
 # Identify all mutations in the sequence
 ex1_raw <- calcObservedMutations(in_seq, germ_seq, returnRaw=TRUE)
@@ -173,11 +173,11 @@ ex1_raw <- calcObservedMutations(in_seq, germ_seq, returnRaw=TRUE)
 ex1_count <- calcObservedMutations(in_seq, germ_seq, returnRaw=FALSE)
 ex1_freq <- calcObservedMutations(in_seq, germ_seq, returnRaw=FALSE, frequency=TRUE)
 # Compare this with ex1_count
-table(ex1_raw$pos$region, ex1_raw$pos$R)[, "1"]
-table(ex1_raw$pos$region, ex1_raw$pos$S)[, "1"]
+table(ex1_raw$pos$region, ex1_raw$pos$r)[, "1"]
+table(ex1_raw$pos$region, ex1_raw$pos$s)[, "1"]
 # Compare this with ex1_freq
-table(ex1_raw$pos$region, ex1_raw$pos$R)[, "1"]/ex1_raw$nonN
-table(ex1_raw$pos$region, ex1_raw$pos$S)[, "1"]/ex1_raw$nonN
+table(ex1_raw$pos$region, ex1_raw$pos$r)[, "1"]/ex1_raw$nonN
+table(ex1_raw$pos$region, ex1_raw$pos$s)[, "1"]/ex1_raw$nonN
 
 # Identify only mutations the V segment minus CDR3
 ex2_raw <- calcObservedMutations(in_seq, germ_seq, 
@@ -189,11 +189,11 @@ ex2_freq <- calcObservedMutations(in_seq, germ_seq,
                                  regionDefinition=IMGT_V, returnRaw=FALSE,
                                  frequency=TRUE)
 # Compare this with ex2_count
-table(ex2_raw$pos$region, ex2_raw$pos$R)[, "1"]
-table(ex2_raw$pos$region, ex2_raw$pos$S)[, "1"]                              
+table(ex2_raw$pos$region, ex2_raw$pos$r)[, "1"]
+table(ex2_raw$pos$region, ex2_raw$pos$s)[, "1"]                              
 # Compare this with ex2_freq
-table(ex2_raw$pos$region, ex2_raw$pos$R)[, "1"]/ex2_raw$nonN     
-table(ex2_raw$pos$region, ex2_raw$pos$S)[, "1"]/ex2_raw$nonN                                       
+table(ex2_raw$pos$region, ex2_raw$pos$r)[, "1"]/ex2_raw$nonN     
+table(ex2_raw$pos$region, ex2_raw$pos$s)[, "1"]/ex2_raw$nonN                                       
 
 # Identify mutations by change in hydropathy class
 ex3_raw <- calcObservedMutations(in_seq, germ_seq, regionDefinition=IMGT_V,
@@ -207,11 +207,11 @@ ex3_freq <- calcObservedMutations(in_seq, germ_seq, regionDefinition=IMGT_V,
                                  mutationDefinition=HYDROPATHY_MUTATIONS, 
                                  returnRaw=FALSE, frequency=TRUE)
 # Compre this with ex3_count
-table(ex3_raw$pos$region, ex3_raw$pos$R)[, "1"]
-table(ex3_raw$pos$region, ex3_raw$pos$S)[, "1"]
+table(ex3_raw$pos$region, ex3_raw$pos$r)[, "1"]
+table(ex3_raw$pos$region, ex3_raw$pos$s)[, "1"]
 # Compare this with ex3_freq
-table(ex3_raw$pos$region, ex3_raw$pos$R)[, "1"]/ex3_raw$nonN                                        
-table(ex3_raw$pos$region, ex3_raw$pos$S)[, "1"]/ex3_raw$nonN                                        
+table(ex3_raw$pos$region, ex3_raw$pos$r)[, "1"]/ex3_raw$nonN                                        
+table(ex3_raw$pos$region, ex3_raw$pos$s)[, "1"]/ex3_raw$nonN                                        
                                 
 }
 \seealso{

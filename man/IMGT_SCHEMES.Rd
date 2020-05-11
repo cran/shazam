@@ -7,7 +7,8 @@
 \alias{IMGT_V_BY_REGIONS}
 \alias{IMGT_V_BY_SEGMENTS}
 \title{IMGT unique numbering schemes}
-\format{A \link{RegionDefinition} object defining:
+\format{
+A \link{RegionDefinition} object defining:
 \itemize{
   \item  \code{IMGT_V}:              The IMGT numbered V segment up to position nucleotide 312.
                                      This definition combines the CDR1 and CDR2 into a single CDR region,
@@ -23,7 +24,8 @@
   \item  \code{IMGT_V_BY_SEGMENTS}:  The IMGT numbered V segment up to position nucleotide 312.
                                      This definition has no subdivisons and treats the entire V segment
                                      as a single region.
-}}
+}
+}
 \description{
 Sequence region definitions according to the IMGT unique numbering scheme.
 }

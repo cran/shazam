@@ -16,14 +16,14 @@ BASELINe PDFs returned by \link{groupBaseline}.}
 \value{
 A data.frame with test results containing the following columns:
           \itemize{
-            \item  \code{REGION}:  sequence region, such as "CDR" and "FWR".
-            \item  \code{TEST}:    string defining the groups be compared. The
+            \item  \code{region}:  sequence region, such as \code{cdr} and \code{fwr}.
+            \item  \code{test}:    string defining the groups be compared. The
                                    string is formated as the conclusion associated with the
                                    p-value in the form \code{GROUP1 != GROUP2}. Meaning,
                                    the p-value for rejection of the null hypothesis that 
                                    GROUP1 and GROUP2 have equivalent distributions.
-            \item  \code{PVALUE}:  two-sided p-value for the comparison.
-            \item  \code{FDR}:     FDR corrected \code{PVALUE}.
+            \item  \code{pvalue}:  two-sided p-value for the comparison.
+            \item  \code{fdr}:     FDR corrected \code{pvalue}.
           }
 }
 \description{
@@ -34,31 +34,32 @@ posterior probability density functions (PDFs).
 \donttest{
 # Subset example data
 data(ExampleDb, package="alakazam")
-db <- subset(ExampleDb, ISOTYPE \%in\% c("IgM", "IgG", "IgA"))
+db <- subset(ExampleDb, c_call \%in\% c("IGHM", "IGHG", "IGHA"))
 
 # Collapse clones
-db <- collapseClones(db, sequenceColumn="SEQUENCE_IMGT",
-                     germlineColumn="GERMLINE_IMGT_D_MASK",
+db <- collapseClones(db, cloneColumn="clone_id",
+                     sequenceColumn="sequence_alignment",
+                     germlineColumn="germline_alignment_d_mask",
                      method="thresholdedFreq", minimumFrequency=0.6,
                      includeAmbiguous=FALSE, breakTiesStochastic=FALSE)
                      
 # Calculate BASELINe
 baseline <- calcBaseline(db, 
-                         sequenceColumn="CLONAL_SEQUENCE",
-                         germlineColumn="CLONAL_GERMLINE", 
+                         sequenceColumn="clonal_sequence",
+                         germlineColumn="clonal_germline", 
                          testStatistic="focused",
                          regionDefinition=IMGT_V,
                          targetingModel=HH_S5F,
                          nproc=1)
 
 # Group PDFs by the isotype
-grouped <- groupBaseline(baseline, groupBy="ISOTYPE")
+grouped <- groupBaseline(baseline, groupBy="c_call")
 
 # Visualize isotype PDFs
-plot(grouped, "ISOTYPE")
+plot(grouped, "c_call")
 
 # Perform test on isotype PDFs
-testBaseline(grouped, groupBy="ISOTYPE")
+testBaseline(grouped, groupBy="c_call")
 }
 }
 \references{

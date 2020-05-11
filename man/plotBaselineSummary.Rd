@@ -77,34 +77,35 @@ using the BASELINe method.
 \donttest{
 # Subset example data
 data(ExampleDb, package="alakazam")
-db <- subset(ExampleDb, ISOTYPE \%in\% c("IgM", "IgG"))
+db <- subset(ExampleDb, c_call \%in\% c("IGHM", "IGHG"))
 
 # Collapse clones
-db <- collapseClones(db, sequenceColumn="SEQUENCE_IMGT",
-                     germlineColumn="GERMLINE_IMGT_D_MASK",
+db <- collapseClones(db, cloneColumn="clone_id",
+                     sequenceColumn="sequence_alignment",
+                     germlineColumn="germline_alignment_d_mask",
                      method="thresholdedFreq", minimumFrequency=0.6,
                      includeAmbiguous=FALSE, breakTiesStochastic=FALSE)
                      
 # Calculate BASELINe
 baseline <- calcBaseline(db, 
-                         sequenceColumn="CLONAL_SEQUENCE",
-                         germlineColumn="CLONAL_GERMLINE", 
+                         sequenceColumn="clonal_sequence",
+                         germlineColumn="clonal_germline", 
                          testStatistic="focused",
                          regionDefinition=IMGT_V,
                          targetingModel=HH_S5F,
                          nproc=1)
  
 # Grouping the PDFs by sample and isotype annotations
-grouped <- groupBaseline(baseline, groupBy=c("SAMPLE", "ISOTYPE"))
+grouped <- groupBaseline(baseline, groupBy=c("sample_id", "c_call"))
 
 # Plot mean and confidence interval by region with custom group colors
-isotype_colors <- c("IgM"="darkorchid", "IgD"="firebrick", 
-                    "IgG"="seagreen", "IgA"="steelblue")
-plotBaselineSummary(grouped, "SAMPLE", "ISOTYPE", 
+isotype_colors <- c("IGHM"="darkorchid", "IGHD"="firebrick", 
+                    "IGHG"="seagreen", "IGHA"="steelblue")
+plotBaselineSummary(grouped, "sample_id", "c_call", 
                     groupColors=isotype_colors)
 
 # Facet by group instead of region
-plotBaselineSummary(grouped, "SAMPLE", "ISOTYPE", facetBy="group")
+plotBaselineSummary(grouped, "sample_id", "c_call", facetBy="group")
 }
 
 }

@@ -22,10 +22,12 @@ with 5-mers that include Ns by averaging over all corresponding 5-mers without N
 \examples{
 # Subset example data to one isotype and sample as a demo
 data(ExampleDb, package="alakazam")
-db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
+db <- subset(ExampleDb, c_call == "IGHA" & sample_id == "-1h")
 
 # Create model using only silent mutations
-sub_model <- createSubstitutionMatrix(db, model="S")
+sub_model <- createSubstitutionMatrix(db, sequenceColumn="sequence_alignment",
+                                      germlineColumn="germline_alignment_d_mask",
+                                      vCallColumn="v_call",model="s")
 ext_model <- extendSubstitutionMatrix(sub_model)
 
 }

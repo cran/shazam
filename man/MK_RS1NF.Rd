@@ -4,8 +4,10 @@
 \name{MK_RS1NF}
 \alias{MK_RS1NF}
 \title{Mouse kappa chain, replacement and silent, 1-mer, non-functional substitution model.}
-\format{A 4x4 matrix of nucleotide substitution rates. The rates are normalized,
-          therefore each row sums up to 1.}
+\format{
+A 4x4 matrix of nucleotide substitution rates. The rates are normalized,
+          therefore each row sums up to 1.
+}
 \usage{
 MK_RS1NF
 }

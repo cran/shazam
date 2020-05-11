@@ -4,7 +4,9 @@
 \name{HKL_S5F}
 \alias{HKL_S5F}
 \title{Human kappa and lambda light chain, silent, 5-mer, functional targeting model.}
-\format{A \link{TargetingModel} object.}
+\format{
+A \link{TargetingModel} object.
+}
 \usage{
 HKL_S5F
 }

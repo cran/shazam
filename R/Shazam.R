@@ -1,4 +1,4 @@
-# shazam package documentation and import directives
+# Shazam package documentation and import directives
 
 #' The shazam package
 #'
@@ -38,8 +38,8 @@
 #' \itemize{
 #'   \item  \link{createTargetingModel}:     Build a 5-mer targeting model.
 #'   \item  \link{plotMutability}:           Plot 5-mer mutability rates.
-#'   \item  \link{HH_S5F}:                Human 5-mer SHM targeting model.
-#'   \item  \link{MK_RS5NF}:              Mouse 5-mer SHM targeting model.
+#'   \item  \link{HH_S5F}:                   Human 5-mer SHM targeting model.
+#'   \item  \link{MK_RS5NF}:                 Mouse 5-mer SHM targeting model.
 #' }
 #'
 #' @section  Quantification of selection pressure:
@@ -141,13 +141,23 @@
 #'                          dnorm pnorm runif dgamma pgamma uniroot na.exclude
 #'                          as.dist cutree
 #' @importFrom  stringi     stri_dup stri_flatten stri_join stri_length 
-#'                          stri_sub stri_sub<- stri_detect_regex
+#'                          stri_sub stri_sub_replace stri_detect_regex
 #'                          stri_count_boundaries stri_count_regex 
 #'                          stri_extract_all_regex stri_extract_first_regex  
 #'                          stri_replace_all_regex stri_replace_first_regex
 #' @importFrom  tidyr       gather spread
+#' @importFrom  tidyselect  all_of
 NULL
 
+# Package loading actions
+.onAttach <- function(libname, pkgname) {
+    msg <- paste("As of v1.0.0 the AIRR Rearrangement schema is now the default file format.",
+                 "A description of the standard is available at https://docs.airr-community.org.",
+                 "The legacy Change-O format is supported through arguments to each function",
+                 "that allow the input column names to be explicitly defined.",
+                 sep="\n")
+    packageStartupMessage(msg)
+}
 
 #### Sysdata ####
 

@@ -7,7 +7,8 @@
 \alias{POLARITY_MUTATIONS}
 \alias{VOLUME_MUTATIONS}
 \title{Amino acid mutation definitions}
-\format{A \link{MutationDefinition} object defining:
+\format{
+A \link{MutationDefinition} object defining:
 \itemize{
   \item  \code{CHARGE_MUTATIONS}:      Amino acid mutations are defined by changes
                                        in side chain charge class.
@@ -17,7 +18,8 @@
                                        in side chain polarity class.
   \item  \code{VOLUME_MUTATIONS}:      Amino acid mutations are defined by changes
                                        in side chain volume class.
-}}
+}
+}
 \description{
 Definitions of replacement (R) and silent (S) mutations for different amino acid
 physicochemical classes.

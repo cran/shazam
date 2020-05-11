@@ -4,7 +4,9 @@
 \name{HH_S5F}
 \alias{HH_S5F}
 \title{Human heavy chain, silent, 5-mer, functional targeting model.}
-\format{A \link{TargetingModel} object.}
+\format{
+A \link{TargetingModel} object.
+}
 \usage{
 HH_S5F
 }

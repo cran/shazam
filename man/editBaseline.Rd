@@ -23,12 +23,12 @@ A \code{Baseline} object with the field of choice updated.
 \donttest{
 # Subset example data
 data(ExampleDb, package="alakazam")
-db <- subset(ExampleDb, ISOTYPE == "IgG" & SAMPLE == "+7d")
+db <- subset(ExampleDb, c_call == "IGHG" & sample_id == "+7d")
 
 # Make Baseline object
 baseline <- calcBaseline(db, 
-                         sequenceColumn="SEQUENCE_IMGT",
-                         germlineColumn="GERMLINE_IMGT_D_MASK", 
+                         sequenceColumn="sequence_alignment",
+                         germlineColumn="germline_alignment_d_mask", 
                          testStatistic="focused",
                          regionDefinition=IMGT_V,
                          targetingModel=HH_S5F,
@@ -36,7 +36,7 @@ baseline <- calcBaseline(db,
                          
 # Edit the field "description"
 baseline <- editBaseline(baseline, field="description", 
-                         value="+7d IgG")
+                         value="+7d IGHG")
 }
 
 }

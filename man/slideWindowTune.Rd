@@ -6,8 +6,8 @@
 \usage{
 slideWindowTune(
   db,
-  sequenceColumn = "SEQUENCE_IMGT",
-  germlineColumn = "GERMLINE_IMGT_D_MASK",
+  sequenceColumn = "sequence_alignment",
+  germlineColumn = "germline_alignment_d_mask",
   dbMutList = NULL,
   mutThreshRange,
   windowSizeRange,
@@ -74,8 +74,8 @@ slideWindowTune(db, mutThreshRange=2:4, windowSizeRange=2:4,
                                                             
 # Run calcObservedMutations separately
 exDbMutList <- sapply(1:5, function(i) {
-    calcObservedMutations(inputSeq=db[i, "SEQUENCE_IMGT"],
-                          germlineSeq=db[i, "GERMLINE_IMGT_D_MASK"],
+    calcObservedMutations(inputSeq=db[["sequence_alignment"]][i],
+                          germlineSeq=db[["germline_alignment_d_mask"]][i],
                           returnRaw=TRUE)$pos })
 slideWindowTune(db, dbMutList=exDbMutList, 
                 mutThreshRange=2:4, windowSizeRange=2:4)

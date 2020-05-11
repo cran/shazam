@@ -154,6 +154,51 @@ NULL
 
 #### Classes ####
 
+#' S4 class defining a mutability model
+#' 
+#' \code{MutabilityModel} defines a data structure for the 5-mer motif-based SHM targeting
+#' mutability model. 
+#' 
+#' @slot    .Data          numeric vector containing 5-mer mutability estimates
+#' @slot    source         character vector annotating whether the mutability was
+#'                         inferred or directly measured.
+#' @slot    numMutS        a number indicating the number of silent mutations used for 
+#'                         estimating mutability
+#' @slot    numMutR        a number indicating the number of replacement mutations used 
+#'                         for estimating mutability  
+#'                         
+#' @name         MutabilityModel-class
+#' @rdname       MutabilityModel-class
+#' @aliases      MutabilityModel
+#' @exportClass  MutabilityModel
+MutabilityModel <- setClass("MutabilityModel", 
+                            slots=c(source="character",
+                                    numMutS="numeric",
+                                    numMutR="numeric"),
+                            contains="numeric")
+
+
+#' S4 class defining a targeting matrix
+#' 
+#' \code{TargetingMatrix} defines a data structure for just the targeting matrix 
+#' (as opposed to the entire \code{TargetingModel})
+#' 
+#' @slot    .Data          matrix.
+#' @slot    numMutS        number indicating the number of silent mutations used for 
+#'                         estimating mutability.
+#' @slot    numMutR        number indicating the number of replacement mutations used 
+#'                         for estimating mutability. 
+#'                         
+#' @name         TargetingMatrix-class
+#' @rdname       TargetingMatrix-class
+#' @aliases      TargetingMatrix
+#' @exportClass  TargetingMatrix
+TargetingMatrix <- setClass("TargetingMatrix",
+                            slots=c(numMutS="numeric",
+                                    numMutR="numeric"),
+                            contains="matrix")
+
+
 #' S4 class defining a targeting model
 #' 
 #' \code{TargetingModel} defines a common data structure for mutability, substitution and
@@ -182,6 +227,10 @@ NULL
 #'                         the mutated nucleotide at the center of each 5-mer, one of 
 #'                         \code{c("A", "C", "G", "T", "N")}, and columns define the complete 5-mer 
 #'                         of the unmutated nucleotide sequence.
+#' @slot    numMutS        number indicating the number of silent mutations used for 
+#'                         estimating mutability.
+#' @slot    numMutR        number indicating the number of replacement mutations used 
+#'                         for estimating mutability.
 #' 
 #' @seealso  See \link{createTargetingModel} building models from sequencing data.
 #'           
@@ -197,7 +246,9 @@ setClass("TargetingModel",
                  citation="character",
                  mutability="numeric",
                  substitution="matrix",
-                 targeting="matrix"),
+                 targeting="matrix",
+                 numMutS="numeric",
+                 numMutR="numeric"),
          prototype=list(name="name",
                         description="description",
                         species="species",
@@ -205,9 +256,28 @@ setClass("TargetingModel",
                         citation="citation",
                         mutability=numeric(3125),
                         substitution=matrix(0, 5, 3125),
-                        targeting=matrix(0, 5, 3125)))
+                        targeting=matrix(0, 5, 3125),
+                        numMutS=as.numeric(NA),
+                        numMutR=as.numeric(NA)))
+
 
 #### Methods ####
+
+#' @param    x    \code{MutabilityModel} object.
+#' 
+#' @rdname   MutabilityModel-class
+#' @aliases  MutabilityModel-method
+#' @export
+setMethod("print", c(x="MutabilityModel"),
+          function(x) { vec <- x@.Data; names(vec) <- names(x); print(vec) })
+
+#' @param    x    \code{MutabilityModel} object.
+#' 
+#' @rdname   MutabilityModel-class
+#' @aliases  MutabilityModel-method
+#' @export
+setMethod("as.data.frame", c(x="MutabilityModel"),
+          function(x) { data.frame(motif=names(x), mutability=x, source=x@source[names(x)]) })
 
 #' @param    x    \code{TargetingModel} object.
 #' @param    y    ignored.
@@ -229,10 +299,10 @@ setMethod("plot", c(x="TargetingModel", y="missing"),
 #' motifs.
 #'
 #' @param    db                data.frame containing sequence data.
-#' @param    model             type of model to create. The default model, "S", 
-#'                             builds a model by counting only silent mutations. \code{model="S"}
+#' @param    model             type of model to create. The default model, "s", 
+#'                             builds a model by counting only silent mutations. \code{model="s"}
 #'                             should be used for data that includes functional sequences.
-#'                             Setting \code{model="RS"} creates a model by counting both 
+#'                             Setting \code{model="rs"} creates a model by counting both 
 #'                             replacement and silent mutations and may be used on fully 
 #'                             non-functional sequence data sets.
 #' @param    sequenceColumn    name of the column containing IMGT-gapped sample sequences.
@@ -305,23 +375,29 @@ setMethod("plot", c(x="TargetingModel", y="missing"),
 #' \donttest{
 #' # Subset example data to one isotype and sample as a demo
 #' data(ExampleDb, package="alakazam")
-#' db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
+#' db <- subset(ExampleDb, c_call == "IGHA" & sample_id == "-1h")
 #'
 #' # Count the number of mutations per 5-mer
-#' subCount <- createSubstitutionMatrix(db, model="S", multipleMutation="independent",
+#' subCount <- createSubstitutionMatrix(db, sequenceColumn="sequence_alignment",
+#'                                      germlineColumn="germline_alignment_d_mask",
+#'                                      vCallColumn="v_call",
+#'                                      model="s", multipleMutation="independent",
 #'                                      returnModel="5mer", numMutationsOnly=TRUE)
 #'
 #' # Create model using only silent mutations
-#' sub <- createSubstitutionMatrix(db, model="S", multipleMutation="independent",
+#' sub <- createSubstitutionMatrix(db, sequenceColumn="sequence_alignment",
+#'                                 germlineColumn="germline_alignment_d_mask",
+#'                                 vCallColumn="v_call",
+#'                                 model="s", multipleMutation="independent",
 #'                                 returnModel="5mer", numMutationsOnly=FALSE,
 #'                                 minNumMutations=20)
 #' }
 #' 
 #' @export
-createSubstitutionMatrix <- function(db, model=c("S", "RS"), 
-                                     sequenceColumn="SEQUENCE_IMGT",
-                                     germlineColumn="GERMLINE_IMGT_D_MASK",
-                                     vCallColumn="V_CALL",
+createSubstitutionMatrix <- function(db, model=c("s", "rs"), 
+                                     sequenceColumn="sequence_alignment",
+                                     germlineColumn="germline_alignment_d_mask",
+                                     vCallColumn="v_call",
                                      multipleMutation=c("independent", "ignore"),
                                      returnModel=c("5mer", "1mer", "1mer_raw"),
                                      minNumMutations=50,
@@ -375,7 +451,7 @@ createSubstitutionMatrix <- function(db, model=c("S", "RS"),
                                        multipleMutation=multipleMutation,
                                        model=model)
     
-    if (model == "S") { # Silent model
+    if (model == "s") { # Silent model
         for(index in 1:length(mutations)) {
             cSeq <-  s2c(db[[sequenceColumn]][index])
             cGL  <-  s2c(db[[germlineColumn]][index])
@@ -399,18 +475,18 @@ createSubstitutionMatrix <- function(db, model=c("S", "RS"),
                     codonPermutate <- apply(codonPermutate,1,paste,collapse="")
                     codonPermutate <- matrix( c( codonPermutate, rep(c2s(codonGL),3) ), ncol=2, byrow=F)
                     # not intended to be used where input sequences have 
-                    # ambiguous characters; it assumes that only 1 entry (R/S/Stop/na) from
+                    # ambiguous characters; it assumes that only 1 entry (r/s/stop/na) from
                     # mutationType is non-zero/1
                     muType <- mutationTypeOptimized(codonPermutate)
                     if (!length(grep("N",wrd))) {
-                        if (sum(muType=="S") == length(muType) ){
+                        if (sum(muType=="s") == length(muType) ){
                             substitutionList[[v_fam]][[wrd]][glAtMutation,seqAtMutation] <- (substitutionList[[v_fam]][[wrd]][glAtMutation,seqAtMutation] + 1)
                         }
                     }
                 }
             }
         }
-    } else if (model == "RS") { # RS model (All mutations)
+    } else if (model == "rs") { # RS model (All mutations)
         for (index in 1:length(mutations)) {
             cSeq <-  s2c(db[[sequenceColumn]][index])
             cGL  <-  s2c(db[[germlineColumn]][index])
@@ -608,10 +684,13 @@ createSubstitutionMatrix <- function(db, model=c("S", "RS"),
 #' @examples
 #' # Subset example data to one isotype and sample as a demo
 #' data(ExampleDb, package="alakazam")
-#' db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
+#' db <- subset(ExampleDb, c_call == "IGHA" & sample_id == "-1h")
 #'
 #' # Count the number of mutations per 5-mer
-#' subCount <- createSubstitutionMatrix(db, model="S", multipleMutation="independent",
+#' subCount <- createSubstitutionMatrix(db, sequenceColumn="sequence_alignment",
+#'                                      germlineColumn="germline_alignment_d_mask",
+#'                                      vCallColumn="v_call",
+#'                                      model="s", multipleMutation="independent",
 #'                                      returnModel="5mer", numMutationsOnly=TRUE)
 #' 
 #' # Tune minNumMutations
@@ -653,12 +732,12 @@ minNumMutationsTune <- function(subCount, minNumMutationsRange) {
 #' @param    db                  data.frame containing sequence data.
 #' @param    substitutionModel   matrix of 5-mer substitution rates built by 
 #'                               \link{createSubstitutionMatrix}. Note, this model will
-#'                               only impact mutability scores when \code{model="S"}
+#'                               only impact mutability scores when \code{model="s"}
 #'                               (using only silent mutations).
-#' @param    model               type of model to create. The default model, "S", 
-#'                               builds a model by counting only silent mutations. \code{model="S"}
+#' @param    model               type of model to create. The default model, "s", 
+#'                               builds a model by counting only silent mutations. \code{model="s"}
 #'                               should be used for data that includes functional sequences.
-#'                               Setting \code{model="RS"} creates a model by counting both 
+#'                               Setting \code{model="rs"} creates a model by counting both 
 #'                               replacement and silent mutations and may be used on fully 
 #'                               non-functional sequence data sets.
 #' @param    sequenceColumn      name of the column containing IMGT-gapped sample sequences.
@@ -679,12 +758,10 @@ minNumMutationsTune <- function(subCount, minNumMutationsRange) {
 #'                               option can be used for parameter tuning for \code{minNumSeqMutations} 
 #'                               during preliminary analysis using \link{minNumSeqMutationsTune}. 
 #'                               Default is \code{FALSE}.                              
-#' @param    returnSource        return the sources of 5-mer mutabilities (measured vs.
-#'                               inferred). Default is \code{FALSE}.                          
 #'
-#' @return   When \code{numSeqMutationsOnly} is \code{FALSE}, a named numeric vector of 1024 
-#'           normalized mutability rates for each 5-mer motif with names defining the 5-mer 
-#'           nucleotide sequence. 
+#' @return   When \code{numSeqMutationsOnly} is \code{FALSE}, a \code{MutabilityModel} containing a
+#'           named numeric vector of 1024 normalized mutability rates for each 5-mer motif with names 
+#'           defining the 5-mer nucleotide sequence.
 #'           
 #'           When \code{numSeqMutationsOnly} is \code{TRUE}, a named numeric
 #'           vector of length 1024 counting the number of observed mutations in sequences containing 
@@ -702,7 +779,7 @@ minNumMutationsTune <- function(subCount, minNumMutationsRange) {
 #'            Front Immunol. 2013 4(November):358.
 #'  }
 #' 
-#' @seealso  \link{extendMutabilityMatrix}, \link{createSubstitutionMatrix}, 
+#' @seealso  \link{MutabilityModel}, \link{extendMutabilityMatrix}, \link{createSubstitutionMatrix}, 
 #'           \link{createTargetingMatrix}, \link{createTargetingModel},
 #'           \link{minNumSeqMutationsTune}
 #' 
@@ -710,30 +787,42 @@ minNumMutationsTune <- function(subCount, minNumMutationsRange) {
 #' \donttest{
 #' # Subset example data to one isotype and sample as a demo
 #' data(ExampleDb, package="alakazam")
-#' db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
+#' db <- subset(ExampleDb, c_call == "IGHA" & sample_id == "-1h")
 #'
 #' # Create model using only silent mutations
-#' sub_model <- createSubstitutionMatrix(db, model="S")
-#' mut_model <- createMutabilityMatrix(db, sub_model, model="S", 
+#' sub_model <- createSubstitutionMatrix(db, sequenceColumn="sequence_alignment",
+#'                                       germlineColumn="germline_alignment_d_mask",
+#'                                       vCallColumn="v_call",model="s")
+#' mut_model <- createMutabilityMatrix(db, sub_model, model="s", 
+#'                                     sequenceColumn="sequence_alignment",
+#'                                     germlineColumn="germline_alignment_d_mask",
+#'                                     vCallColumn="v_call",
 #'                                     minNumSeqMutations=200,
 #'                                     numSeqMutationsOnly=FALSE)
+#' # View mutability esimates (not run)
+#' # print(mut_model)
+#' 
+#' # View the number of S mutations used for estimating mutabilities
+#' mut_model@numMutS
 #' 
 #' # Count the number of mutations in sequences containing each 5-mer
-#' mut_count <- createMutabilityMatrix(db, sub_model, model="S", 
-#'                                    numSeqMutationsOnly=TRUE)
+#' mut_count <- createMutabilityMatrix(db, sub_model, model="s", 
+#'                                     sequenceColumn="sequence_alignment",
+#'                                     germlineColumn="germline_alignment_d_mask",
+#'                                     vCallColumn="v_call",
+#'                                     numSeqMutationsOnly=TRUE)
 #' }
 #' 
 #' @export
-createMutabilityMatrix <- function(db, substitutionModel, model=c("S", "RS"),
-                                   sequenceColumn="SEQUENCE_IMGT", 
-                                   germlineColumn="GERMLINE_IMGT_D_MASK",
-                                   vCallColumn="V_CALL",
+createMutabilityMatrix <- function(db, substitutionModel, model=c("s", "rs"),
+                                   sequenceColumn="sequence_alignment", 
+                                   germlineColumn="germline_alignment_d_mask",
+                                   vCallColumn="v_call",
                                    multipleMutation=c("independent", "ignore"),
                                    minNumSeqMutations=500, 
-                                   numSeqMutationsOnly=FALSE,
-                                   returnSource=FALSE) {
-    # substitutionModel=sub_model; model="S"; sequenceColumn="SEQUENCE_IMGT"; germlineColumn="GERMLINE_IMGT_D_MASK"
-    # vCallColumn="V_CALL"; multipleMutation="ignore"; minNumSeqMutations=10; returnSource=FALSE
+                                   numSeqMutationsOnly=FALSE) {
+    # substitutionModel=sub_model; model="s"; sequenceColumn="sequence_alignment"; germlineColumn="germline_alignment_d_mask"
+    # vCallColumn="v_call"; multipleMutation="ignore"; minNumSeqMutations=10
     
     # Evaluate argument choices
     model <- match.arg(model)
@@ -847,8 +936,8 @@ createMutabilityMatrix <- function(db, substitutionModel, model=c("S", "RS"),
                     muType <- CODON_TABLE[1:4 + 4*(muCodonPos - 1), stri_flatten(codonGL)]
 
                     # Set characters that meet mutation criteria
-                    if (model == "S") {
-                        muChars <- nuc_chars[1:4][nuc_chars[1:4] != glAtMutation & muType == "S"]
+                    if (model == "s") {
+                        muChars <- nuc_chars[1:4][nuc_chars[1:4] != glAtMutation & muType == "s"]
                     } else { 
                         muChars <- nuc_chars[1:4][nuc_chars[1:4] != glAtMutation]
                     }
@@ -874,6 +963,13 @@ createMutabilityMatrix <- function(db, substitutionModel, model=c("S", "RS"),
         Mutability[[i]] <- list(mut_mat, wgt_mat)
     }
     
+    # total counts of mutations
+    # each list item is the total S and R mutation counts in a seq
+    mutationsTotalLst <- lapply(mutations, function(m){ 
+        return( c(S=sum(m=="s", na.rm=T), R=sum(m=="r", na.rm=T)) ) 
+    })
+    # total S and R mutation counts across seqs
+    mutationsTotalRS <- Reduce("+", mutationsTotalLst)
     
     # Aggregate mutability
     MutabilityMatrix <- sapply(Mutability, function(x) x[[1]])
@@ -956,18 +1052,18 @@ createMutabilityMatrix <- function(db, substitutionModel, model=c("S", "RS"),
     
     # Normalize
     Mutability_Mean_Complete <- Mutability_Mean_Complete / sum(Mutability_Mean_Complete, na.rm=TRUE)
-    
-    # Return whether the 5-mer mutability is measured or inferred
-    if (returnSource) {
-        Mutability_Mean_Complete_Source <- data.frame(Fivemer = names(Mutability_Mean_Complete),
-                                                     Mutability = Mutability_Mean_Complete)
-        Mutability_Mean_Complete_Source$Source <- "Measured"
-        Mutability_Mean_Complete_Source[Mutability_Mean_Complete_Source$Fivemer %in% 
-                                            names(which(is.na(Mutability_Mean))), "Source"] <- "Inferred"
-        return(Mutability_Mean_Complete_Source)
-    }
-    
-    return(Mutability_Mean_Complete)
+
+    # Define whether the 5-mer mutability is measured or inferred
+    mut_names <- names(Mutability_Mean_Complete)
+    mut_source <- setNames(rep("Measured", length(mut_names)), mut_names)
+    mut_source[mut_names %in% names(which(is.na(Mutability_Mean)))] <- "Inferred"
+  
+    # Return MutabilityModel
+    mut_model <- MutabilityModel(Mutability_Mean_Complete,
+                                 source=mut_source,
+                                 numMutS=mutationsTotalRS[["S"]],
+                                 numMutR=mutationsTotalRS[["R"]])
+    return(mut_model)
 }
 
 
@@ -1008,16 +1104,22 @@ createMutabilityMatrix <- function(db, substitutionModel, model=c("S", "RS"),
 #' \donttest{
 #' # Subset example data to one isotype and sample as a demo
 #' data(ExampleDb, package="alakazam")
-#' db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
+#' db <- subset(ExampleDb, c_call == "IGHA" & sample_id == "-1h")
 #'
 #' # Create model using only silent mutations
-#' sub <- createSubstitutionMatrix(db, model="S", multipleMutation="independent",
+#' sub <- createSubstitutionMatrix(db, sequenceColumn="sequence_alignment",
+#'                                 germlineColumn="germline_alignment_d_mask",
+#'                                 vCallColumn="v_call", 
+#'                                 model="s", multipleMutation="independent",
 #'                                 returnModel="5mer", numMutationsOnly=FALSE,
 #'                                 minNumMutations=20)
 #'
 #' # Count the number of mutations in sequences containing each 5-mer
 #' mutCount <- createMutabilityMatrix(db, substitutionModel = sub,
-#'                                    model="S", multipleMutation="independent",
+#'                                    sequenceColumn="sequence_alignment",
+#'                                    germlineColumn="germline_alignment_d_mask",
+#'                                    vCallColumn="v_call",
+#'                                    model="s", multipleMutation="independent",
 #'                                    numSeqMutationsOnly=TRUE)
 #' 
 #' # Tune minNumSeqMutations
@@ -1057,10 +1159,12 @@ minNumSeqMutationsTune <- function(mutCount, minNumSeqMutationsRange) {
 #' @examples
 #' # Subset example data to one isotype and sample as a demo
 #' data(ExampleDb, package="alakazam")
-#' db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
+#' db <- subset(ExampleDb, c_call == "IGHA" & sample_id == "-1h")
 #'
 #' # Create model using only silent mutations
-#' sub_model <- createSubstitutionMatrix(db, model="S")
+#' sub_model <- createSubstitutionMatrix(db, sequenceColumn="sequence_alignment",
+#'                                       germlineColumn="germline_alignment_d_mask",
+#'                                       vCallColumn="v_call",model="s")
 #' ext_model <- extendSubstitutionMatrix(sub_model)
 #' 
 #' @export
@@ -1110,22 +1214,33 @@ extendSubstitutionMatrix <- function(substitutionModel) {
 #' @param    mutabilityModel  vector of 5-mer mutability rates built by 
 #'                            \link{createMutabilityMatrix}.
 #' 
-#' @return   A 3125 vector of normalized mutability rates for each 5-mer motif with 
-#'           names defining the 5-mer nucleotide sequence. Note that "normalized" means
-#'           that the mutability rates for the 1024 5-mers that contain no "N" at any
-#'           position sums up to 1 (as opposed to the entire vector summing up to 1).
+#' @return   A \code{MutabilityModel} containing a 3125 vector of normalized 
+#'           mutability rates for each 5-mer motif with names defining the 5-mer 
+#'           nucleotide sequence. Note that "normalized" means that the mutability 
+#'           rates for the 1024 5-mers that contain no "N" at any position sums up 
+#'           to 1 (as opposed to the entire vector summing up to 1). 
+#'           
+#'           If the input \code{mutabilityModel} is of class \code{MutabilityModel}, 
+#'           then the output \code{MutabilityModel} will carry over the input 
+#'           \code{numMutS} and \code{numMutR} slots.
 #' 
-#' @seealso  \link{createMutabilityMatrix}, \link{extendSubstitutionMatrix}
+#' @seealso  \link{createMutabilityMatrix}, \link{extendSubstitutionMatrix}, 
+#'           \link{MutabilityModel}
 #' 
 #' @examples
 #' \donttest{
 #' # Subset example data to one isotype and sample as a demo
 #' data(ExampleDb, package="alakazam")
-#' db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
+#' db <- subset(ExampleDb, c_call == "IGHA" & sample_id == "-1h")
 #'
 #' # Create model using only silent mutations and ignore multiple mutations
-#' sub_model <- createSubstitutionMatrix(db, model="S")
-#' mut_model <- createMutabilityMatrix(db, sub_model, model="S")
+#' sub_model <- createSubstitutionMatrix(db, model="s", sequenceColumn="sequence_alignment",
+#'                                       germlineColumn="germline_alignment_d_mask",
+#'                                       vCallColumn="v_call")
+#' mut_model <- createMutabilityMatrix(db, sub_model, model="s", 
+#'                                     sequenceColumn="sequence_alignment",
+#'                                     germlineColumn="germline_alignment_d_mask",
+#'                                     vCallColumn="v_call")
 #' ext_model <- extendMutabilityMatrix(mut_model)
 #' }
 #' 
@@ -1164,7 +1279,31 @@ extendMutabilityMatrix <- function(mutabilityModel) {
     #extend_mat <- extend_mat / sum(extend_mat, na.rm=TRUE)
     extend_mat[!is.finite(extend_mat)] <- NA
     
-    return(extend_mat)
+    # Carry over @numMutS and @numMutR, if any
+    if (all(c("numMutS", "numMutR") %in% slotNames(mutabilityModel))) {
+        mut_s <- mutabilityModel@numMutS
+        mut_r <- mutabilityModel@numMutR
+    } else {
+        mut_s <- as.numeric(NA) 
+        mut_r <- as.numeric(NA)
+    }
+    
+    # Carry over @source
+    if ("source" %in% slotNames(mutabilityModel)) {
+        mut_names <- names(extend_mat)
+        mut_source <- setNames(rep("Extended", length(mut_names)), mut_names)
+        mut_source[names(mutabilityModel@source)] <- mutabilityModel@source
+    } else {
+        mut_source <- as.character(NA)  
+    }
+    
+    # Return extended MutabilityModel
+    extend_model <- MutabilityModel(extend_mat,
+                                    source=mut_source,
+                                    numMutS=mut_s,
+                                    numMutR=mut_r)
+
+    return(extend_model)
 }
  
 
@@ -1180,10 +1319,13 @@ extendMutabilityMatrix <- function(mutabilityModel) {
 #'                              \link{createMutabilityMatrix} or 
 #'                              \link{extendMutabilityMatrix}.
 #' 
-#' @return   A matrix with the same dimensions as the input \code{substitutionModel} 
+#' @return   A \code{TargetingMatrix} with the same dimensions as the input \code{substitutionModel} 
 #'           containing normalized targeting probabilities for each 5-mer motif with 
 #'           row names defining the center nucleotide and column names defining the 
-#'           5-mer nucleotide sequence.
+#'           5-mer nucleotide sequence. 
+#'           
+#'           If the input \code{mutabilityModel} is of class \code{MutabilityModel}, then the output 
+#'           \code{TargetingMatrix} will carry over the input \code{numMutS} and \code{numMutR} slots.
 #' 
 #' @details
 #' Targeting rates are calculated by multiplying the normalized mutability rate by the 
@@ -1198,17 +1340,22 @@ extendMutabilityMatrix <- function(mutabilityModel) {
 #' 
 #' @seealso  \link{createSubstitutionMatrix}, \link{extendSubstitutionMatrix}, 
 #'           \link{createMutabilityMatrix}, \link{extendMutabilityMatrix}, 
-#'           \link{createTargetingModel}
+#'           \link{TargetingMatrix}, \link{createTargetingModel}
 #' 
 #' @examples
 #' \donttest{
 #' # Subset example data to one isotype and sample as a demo
 #' data(ExampleDb, package="alakazam")
-#' db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
+#' db <- subset(ExampleDb, c_call == "IGHA" & sample_id == "-1h")
 #'
 #' # Create 4x1024 models using only silent mutations
-#' sub_model <- createSubstitutionMatrix(db, model="S")
-#' mut_model <- createMutabilityMatrix(db, sub_model, model="S")
+#' sub_model <- createSubstitutionMatrix(db, model="s", sequenceColumn="sequence_alignment",
+#'                                       germlineColumn="germline_alignment_d_mask",
+#'                                       vCallColumn="v_call")
+#' mut_model <- createMutabilityMatrix(db, sub_model, model="s",
+#'                                     sequenceColumn="sequence_alignment",
+#'                                     germlineColumn="germline_alignment_d_mask",
+#'                                     vCallColumn="v_call")
 #' 
 #' # Extend substitution and mutability to including Ns (5x3125 model)
 #' sub_model <- extendSubstitutionMatrix(sub_model)
@@ -1227,6 +1374,18 @@ createTargetingMatrix <- function(substitutionModel, mutabilityModel) {
     #tar_mat <- tar_mat / sum(tar_mat, na.rm=TRUE)
     tar_mat[!is.finite(tar_mat)] <- NA
     
+    # carry over @numMutS and @numMutR, if any
+    if (all(c("numMutS", "numMutR") %in% slotNames(mutabilityModel))) {
+        tar_mat <- TargetingMatrix(tar_mat,
+                                   numMutS=mutabilityModel@numMutS,
+                                   numMutR=mutabilityModel@numMutR)
+    } else {
+        tar_mat <- TargetingMatrix(tar_mat,
+                                   # NA is of class logical by default
+                                   numMutS=as.numeric(NA), 
+                                   numMutR=as.numeric(NA))
+    }
+    
     return(tar_mat)
 }
 
@@ -1236,10 +1395,10 @@ createTargetingMatrix <- function(substitutionModel, mutabilityModel) {
 #' \code{createTargetingModel} creates a 5-mer \code{TargetingModel}.
 #'
 #' @param    db                  data.frame containing sequence data.
-#' @param    model               type of model to create. The default model, "S", 
-#'                               builds a model by counting only silent mutations. \code{model="S"}
+#' @param    model               type of model to create. The default model, "s", 
+#'                               builds a model by counting only silent mutations. \code{model="s"}
 #'                               should be used for data that includes functional sequences.
-#'                               Setting \code{model="RS"} creates a model by counting both 
+#'                               Setting \code{model="rs"} creates a model by counting both 
 #'                               replacement and silent mutations and may be used on fully 
 #'                               non-functional sequence data sets.
 #' @param    sequenceColumn      name of the column containing IMGT-gapped sample sequences.
@@ -1289,16 +1448,24 @@ createTargetingMatrix <- function(substitutionModel, mutabilityModel) {
 #' \donttest{
 #' # Subset example data to one isotype and sample as a demo
 #' data(ExampleDb, package="alakazam")
-#' db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
+#' db <- subset(ExampleDb, c_call == "IGHA" & sample_id == "-1h")
 #'
 #' # Create model using only silent mutations and ignore multiple mutations
-#' model <- createTargetingModel(db, model="S", multipleMutation="ignore")
-#' }
+#' model <- createTargetingModel(db, model="s", sequenceColumn="sequence_alignment",
+#'                               germlineColumn="germline_alignment_d_mask",
+#'                               vCallColumn="v_call", multipleMutation="ignore")
 #' 
+#' 
+#' # Access and view mutability estimates (not run)
+#' print(model@mutability)
+#' 
+#' # View the number of S mutations used for estimating mutabilities
+#' model@mutability@numMutS
+#' }
 #' @export
-createTargetingModel <- function(db, model=c("S", "RS"), sequenceColumn="SEQUENCE_IMGT",
-                                 germlineColumn="GERMLINE_IMGT_D_MASK",
-                                 vCallColumn="V_CALL",
+createTargetingModel <- function(db, model=c("s", "rs"), sequenceColumn="sequence_alignment",
+                                 germlineColumn="germline_alignment_d_mask",
+                                 vCallColumn="v_call",
                                  multipleMutation=c("independent", "ignore"),
                                  minNumMutations=50, minNumSeqMutations=500,
                                  modelName="", modelDescription="", modelSpecies="", 
@@ -1335,8 +1502,7 @@ createTargetingModel <- function(db, model=c("S", "RS"), sequenceColumn="SEQUENC
                                       germlineColumn=germlineColumn,
                                       vCallColumn=vCallColumn,
                                       multipleMutation=multipleMutation,
-                                      minNumSeqMutations=minNumSeqMutations,
-                                      returnSource=FALSE)
+                                      minNumSeqMutations=minNumSeqMutations)
 
     # Extend 5-mers with Ns
     sub_mat <- extendSubstitutionMatrix(sub_mat)
@@ -1354,7 +1520,7 @@ createTargetingModel <- function(db, model=c("S", "RS"), sequenceColumn="SEQUENC
                      citation=modelCitation,
                      substitution=sub_mat,
                      mutability=mut_mat,
-                     targeting=tar_mat)
+                     targeting=tar_mat@.Data)
 
     return(model_obj)
 }
@@ -1375,10 +1541,10 @@ createTargetingModel <- function(db, model=c("S", "RS"), sequenceColumn="SEQUENC
 #' \donttest{
 #' # Subset example data to one isotype and sample as a demo
 #' data(ExampleDb, package="alakazam")
-#' db <- subset(ExampleDb, ISOTYPE == "IgA" & SAMPLE == "-1h")
+#' db <- subset(ExampleDb, c_call == "IGHA" & sample_id == "-1h")
 #'
 #' # Calculate mutability of germline sequences using \link{HH_S5F} model
-#' mutability <- calculateMutability(sequences=db$GERMLINE_IMGT_D_MASK, model=HH_S5F)
+#' mutability <- calculateMutability(sequences=db[["germline_alignment_d_mask"]], model=HH_S5F)
 #' }
 #' 
 #' @export
@@ -1412,7 +1578,7 @@ calculateMutability <- function(sequences, model=HH_S5F, progress=FALSE) {
 
 
 # Create model and rescale mutabilities
-# model <- createTargetingModel(db, model="S", multipleMutation="ignore")
+# model <- createTargetingModel(db, model="s", multipleMutation="ignore")
 # mut <- rescaleMutability(model)
 rescaleMutability <- function(model, mean=1.0) {
     if (is(model, "TargetingModel")) {
@@ -2241,15 +2407,19 @@ plotMutability <- function(model, nucleotides=c("A", "C", "G", "T"), mark=NULL,
 #' \donttest{
 #' # Subset example data to one isotype and sample as demos
 #' data(ExampleDb, package="alakazam")
-#' db <- subset(ExampleDb, ISOTYPE == "IgA")
+#' db <- subset(ExampleDb, c_call == "IGHA")
 #' 
 #' tuneMtx = list()
-#' for (i in 1:length(unique(db$SAMPLE))) {
+#' for (i in 1:length(unique(db$sample_id))) {
 #'     # Get data corresponding to current sample
-#'     curDb = db[db$SAMPLE==unique(db$SAMPLE)[i], ]
+#'     curDb = db[db[["sample_id"]] == unique(db[["sample_id"]])[i], ]
 #'     
 #'     # Count the number of mutations per 5-mer
-#'     subCount = createSubstitutionMatrix(db=curDb, model="S", multipleMutation="independent",
+#'     subCount = createSubstitutionMatrix(db=curDb, model="s", 
+#'                                         sequenceColumn="sequence_alignment",
+#'                                         germlineColumn="germline_alignment_d_mask",
+#'                                         vCallColumn="v_call",
+#'                                         multipleMutation="independent",
 #'                                         returnModel="5mer", numMutationsOnly=TRUE)
 #'     
 #'     # Tune over minNumMutations = 5..50
@@ -2259,7 +2429,7 @@ plotMutability <- function(model, nucleotides=c("A", "C", "G", "T"), mark=NULL,
 #' }
 #'
 #' # Name tuneMtx after sample names 
-#' names(tuneMtx) = unique(db$SAMPLE)
+#' names(tuneMtx) = unique(db[["sample_id"]])
 #' 
 #' # plot with legend for both samples for a subset of minNumMutations values
 #' plotTune(tuneMtx, thresh=c(5, 15, 25, 40), criterion="3mer",
@@ -2382,10 +2552,10 @@ canMutateTo <- function(nuc) {
 # Compute the mutations types
 # matOfCodons: nx2; n=pairs of codons; 1st col=codonTo, 2nd col=codonFrom
 # NOTE: this function is not intended to be used where input sequences have 
-#       ambiguous characters; it assumes that only 1 entry (R/S/Stop/na) from
+#       ambiguous characters; it assumes that only 1 entry (r/s/stop/na) from
 #       mutationType is non-zero/1
 mutationTypeOptimized <- function(matOfCodons) {
-    # mutType: 4xn; rows: R/S/Stop/na
+    # mutType: 4xn; rows: r/s/stop/na
     mutType <- apply(matOfCodons, 1, function(x) { mutationType(x[2], x[1]) })
     idx <- apply(mutType, 2, function(y){which(y>0)[1]})
     mutType <- rownames(mutType)[idx]
@@ -2430,7 +2600,7 @@ analyzeMutations2NucUri <- function(in_matrix) {
             Seqcodons <-   apply(codonSeq,2,c2s)
             mutationInfo <- apply(rbind(GLcodons , Seqcodons),2,function(x){
                 # not intended to be used where input sequences have 
-                # ambiguous characters; it assumes that only 1 entry (R/S/Stop/na) from
+                # ambiguous characters; it assumes that only 1 entry (r/s/stop/na) from
                 # mutationType is non-zero/1
                 mutType <- mutationType(c2s(x[1]),c2s(x[2]))
                 mutType <- names(mutType)[which(mutType>0)]
@@ -2472,8 +2642,8 @@ listMutations <- function(seqInput, seqGL, multipleMutation, model) {
        codonsWithMultipleMutations <- as.numeric(names(tableMutationCodons[tableMutationCodons>1]))
        mutations <- mutations[!(mutationCodons %in% codonsWithMultipleMutations)]
     }
-    if (model == "S") {
-       mutations <- mutations[mutations == "S"]
+    if (model == "s") {
+       mutations <- mutations[mutations == "s"]
     }
     if (length(mutations) > 0) {
         return(mutations)
@@ -2492,10 +2662,10 @@ listMutations <- function(seqInput, seqGL, multipleMutation, model) {
 # @param   germlineColumn  The name of the germline column.
 # 
 # @return  list of mutations in each clone
-listObservedMutations <- function(db, sequenceColumn="SEQUENCE_IMGT", 
-                                  germlineColumn="GERMLINE_IMGT_D_MASK",
+listObservedMutations <- function(db, sequenceColumn="sequence_alignment", 
+                                  germlineColumn="germline_alignment_d_mask",
                                   multipleMutation=c("independent", "ignore"),
-                                  model = c("RS", "S"))  {
+                                  model = c("rs", "s"))  {
     
     # Make sure the columns specified exist 
     if (!(sequenceColumn %in% names(db))) {
@@ -2519,7 +2689,7 @@ listObservedMutations <- function(db, sequenceColumn="SEQUENCE_IMGT",
 # @param   nmut  number of mutations per sequence
 # @param   nmer  number of 5-mers per sequence (sequence length = 5 * nmer)
 #
-# @return  a data.frame with columns SEQUENCE_ID, SEQUENCE_IMGT, GERMLINE_IMGT_D_MASK, V_CALL.
+# @return  a data.frame with columns sequence_id, sequence_alignment, germline_alignment_d_mask, v_call.
 # 
 # @examples
 # db <- makeTargetingTestDb(500)
@@ -2535,10 +2705,10 @@ makeTargetingTestDb <- function(nseq=10, nmut=40, nmers=50) {
     
     seq <- apply(replicate(nseq, sample(seqinr::words(5, nuc_chars), nmers)), 2, paste, collapse="")
     germ <- sapply(seq, .mut, n=nmut)
-    db <- data.frame(SEQUENCE_ID=paste0("SEQ", 1:nseq),
-                     SEQUENCE_IMGT=seq,
-                     GERMLINE_IMGT_D_MASK=germ,
-                     V_CALL="Homsap IGHV3-66*02 F", stringsAsFactors=FALSE)
+    db <- data.frame(sequence_id=paste0("SEQ", 1:nseq),
+                     sequence_alignment=seq,
+                     germline_alignment_d_mask=germ,
+                     v_call="Homsap IGHV3-66*02 F", stringsAsFactors=FALSE)
     rownames(db) <- NULL
     
     return(db)

@@ -22,10 +22,10 @@ determine the number of regions.}
 
 \item{\code{seqLength}}{length of the sequence.}
 
-\item{\code{regions}}{levels of the boundaries; e.g, \code{c("CDR", "FWR")}.}
+\item{\code{regions}}{levels of the boundaries; e.g, \code{c("cdr", "fwr")}.}
 
 \item{\code{labels}}{labels for the boundary and mutations combinations;
-e.g., \code{c("CDR_R", "CDR_S", "FWR_R", "FWR_S")}.}
+e.g., \code{c("cdr_r", "cdr_s", "fwr_r", "fwr_s")}.}
 
 \item{\code{citation}}{publication source.}
 }}

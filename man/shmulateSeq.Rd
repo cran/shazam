@@ -9,7 +9,8 @@ shmulateSeq(
   numMutations,
   targetingModel = HH_S5F,
   start = 1,
-  end = nchar(sequence)
+  end = nchar(sequence),
+  frequency = FALSE
 )
 }
 \arguments{
@@ -17,7 +18,10 @@ shmulateSeq(
 Accepted alphabet: \code{\{A, T, G, C, N, .\}}. Note
 that \code{-} is not accepted.}
 
-\item{numMutations}{number of mutations to be introduced into \code{sequence}.}
+\item{numMutations}{a whole number indicating the number of mutations to be 
+introduced into \code{sequence}, if \code{frequency=FALSE}.
+A fraction bewteen 0 and 1 indicating the mutation frequency
+if \code{frequency=TRUE}.}
 
 \item{targetingModel}{5-mer \link{TargetingModel} object to be used for computing 
 probabilities of mutations at each position. Defaults to
@@ -28,6 +32,8 @@ be introduced. Default: 1}
 
 \item{end}{Last position in \code{sequence} where mutations can 
 be introduced. Default: last position (sequence length).}
+
+\item{frequency}{If \code{TRUE}, treat \code{numMutations} as a frequency.}
 }
 \value{
 A string defining the mutated sequence.
@@ -42,13 +48,21 @@ to the last codon. For example, \code{ATGCATGC} will be trimmed to \code{ATGCAT}
 
 Mutations are not introduced to positions in the input \code{sequence} that contain 
 \code{.} or \code{N}.
+
+With \code{frequency=TRUE}, the number of mutations introduced is the \code{floor} of 
+the length of the sequence multiplied by the mutation frequency specified via
+\code{numMutations}.
 }
 \examples{
 # Define example input sequence
 sequence <- "NGATCTGACGACACGGCCGTGTATTACTGTGCGAGAGATA.TTTA"
 
 # Simulate using the default human 5-mer targeting model
-shmulateSeq(sequence, numMutations=6)
+# Introduce 6 mutations
+shmulateSeq(sequence, numMutations=6, frequency=FALSE)
+
+# Introduction 5\% mutations
+shmulateSeq(sequence, numMutations=0.05, frequency=TRUE)
 
 }
 \seealso{
