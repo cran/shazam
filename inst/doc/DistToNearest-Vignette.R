@@ -17,9 +17,9 @@ dist_s5f <- distToNearest(ExampleDb, sequenceColumn="junction",
 ## ---- eval=FALSE, warning=FALSE-----------------------------------------------
 #  # Single-cell mode
 #  # Group cells in a one-stage process (VJthenLen=FALSE) and using
-#  # both heavy and light chain sequences (groupUsingOnlyIGH=FALSE)
+#  # both heavy and light chain sequences (onlyHeavy=FALSE)
 #  dist_sc <- distToNearest(db, cellIdColumn="cell", locusColumn="locus",
-#                           VJthenLen=FALSE, groupUsingOnlyIGH=FALSE)
+#                           VJthenLen=FALSE, onlyHeavy=FALSE)
 
 ## ---- eval=TRUE, warning=FALSE, fig.width=7-----------------------------------
 # Generate Hamming distance histogram
@@ -107,24 +107,23 @@ plot(p5)
 library(dplyr)
 library(alakazam)
 top_10_sizes <- ExampleDb %>%
-     group_by(junction_length) %>% # group by junction length
-     do(alakazam::groupGenes(., first=TRUE)) %>% # group by V and J call
-     mutate(GROUP_ID=paste(junction_length, vj_group, sep="_")) %>% # Create group ids based on junction length and VJ calls
+     group_by(junction_length) %>% # Group by junction length
+     do(alakazam::groupGenes(., first=TRUE)) %>% # Group by V and J call
+     mutate(GROUP_ID=paste(junction_length, vj_group, sep="_")) %>% # Create group ids
      ungroup() %>%
-     group_by(GROUP_ID) %>% # group by GROUP_ID
-     distinct(junction) %>% # for each group, we want to count unique junctions, so keep distinct
-     summarize(SIZE=n()) %>% # get the size of the group, the number of sequences
-     arrange(desc(SIZE)) %>% # sort by decreasing size
+     group_by(GROUP_ID) %>% # Group by GROUP_ID
+     distinct(junction) %>% # Vount unique junctions per group
+     summarize(SIZE=n()) %>% # Get the size of the group
+     arrange(desc(SIZE)) %>% # Sort by decreasing size
      select(SIZE) %>% 
-     top_n(10) # show the top 10
+     top_n(10) # Filter to the top 10
 top_10_sizes
 
 # Use 30 to subsample
-# NOTE. This is a toy example. To use 30 with real data 
-# is probably not a good choice.
+# NOTE: This is a toy example. Subsampling to 30 sequence with real data is unwise
 dist <- distToNearest(ExampleDb, sequenceColumn="junction", 
                       vCallColumn="v_call_genotyped", jCallColumn="j_call",
                       model="ham", 
                       first=FALSE, normalize="len",
-                      subsample = 30)
+                      subsample=30)
 

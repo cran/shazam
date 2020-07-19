@@ -22,8 +22,8 @@ distToNearest(
   subsample = NULL,
   progress = FALSE,
   cellIdColumn = NULL,
-  locusColumn = NULL,
-  groupUsingOnlyIGH = TRUE,
+  locusColumn = "locus",
+  onlyHeavy = TRUE,
   keepVJLgroup = TRUE
 )
 }
@@ -31,9 +31,9 @@ distToNearest(
 \item{db}{data.frame containing sequence data.}
 
 \item{sequenceColumn}{name of the column containing the junction for grouping and for calculating
-nearest neighbot distances. Note that while both heavy and light chain junctions
-may be used for VJL grouping, only the heavy chain junction is used to calculate 
-distances.}
+nearest neighbor distances. Note that while both heavy/long and light/short chain junctions
+may be used for V-J-length grouping, only the heavy/long chain (IGH, TRB, TRD) junction is 
+used to calculate distances.}
 
 \item{vCallColumn}{name of the column containing the V-segment allele calls.}
 
@@ -55,11 +55,11 @@ is used. if \code{FALSE} the union of ambiguous gene
 assignments is used to group all sequences with any 
 overlapping gene calls.}
 
-\item{VJthenLen}{a Boolean value specifying whether to perform partitioning as a 2-stage
+\item{VJthenLen}{logical value specifying whether to perform partitioning as a 2-stage
 process. If \code{TRUE}, partitions are made first based on V and J
-annotations, and then further split based on junction lengths corresponding 
+gene, and then further split based on junction lengths corresponding 
 to \code{sequenceColumn}. If \code{FALSE}, perform partition as a 1-stage 
-process during which V annotation, J annotation, and junction length are used 
+process during which V gene, J gene, and junction length are used 
 to create partitions simultaneously. Defaults to \code{TRUE}.}
 
 \item{nproc}{number of cores to distribute the function over.}
@@ -73,27 +73,32 @@ distances across groups. Meaning the columns that define self versus others.}
 spanning tree.}
 
 \item{subsample}{number of sequences to subsample for speeding up pairwise-distance-matrix calculation. 
-Subsampling is performed without replacement in each VJL group of heavy chain sequences. 
+Subsampling is performed without replacement in each V-J-length group of heavy chain sequences. 
 If \code{subsample} is larger than the unique number of heavy chain sequences in each 
 VJL group, then the subsampling process is ignored for that group. For each heavy chain
 sequence in \code{db}, the reported \code{dist_nearest} is the distance to the closest
-heavy chain sequence in the subsampled set for the VJL group. If \code{NULL} no 
+heavy chain sequence in the subsampled set for the V-J-length group. If \code{NULL} no 
 subsampling is performed.}
 
 \item{progress}{if \code{TRUE} print a progress bar.}
 
-\item{cellIdColumn}{name of the character column containing cell IDs. Only applicable and required for 
-single-cell mode.}
+\item{cellIdColumn}{name of the character column containing cell identifiers or barcodes. 
+If specified, grouping will be performed in single-cell mode
+with the behavior governed by the \code{locusColumn} and 
+\code{onlyHeavy} arguments. If set to \code{NULL} then the 
+bulk sequencing data is assumed.}
 
-\item{locusColumn}{name of the character column containing locus information. Only applicable and 
-required for single-cell mode.}
+\item{locusColumn}{name of the column containing locus information. 
+Only applicable to single-cell data.
+Ignored if \code{cellIdColumn=NULL}.}
 
-\item{groupUsingOnlyIGH}{use only heavy chain (\code{IGH}) sequences for VJL grouping, disregarding 
-light chains. Only applicable and required for single-cell mode. 
-Default is \code{TRUE}. Also see \link[alakazam]{groupGenes}.}
+\item{onlyHeavy}{use only the IGH (BCR) or TRB/TRD (TCR) sequences 
+for grouping. Only applicable to single-cell data.
+Ignored if \code{cellIdColumn=NULL}. 
+See \link[alakazam]{groupGenes} for further details.}
 
-\item{keepVJLgroup}{a Boolean value specifying whether to keep in the output the the column 
-column indicating grouping based on VJL combinations. Only applicable for
+\item{keepVJLgroup}{logical value specifying whether to keep in the output the the column 
+column indicating grouping based on V-J-length combinations. Only applicable for
 1-stage partitioning (i.e. \code{VJthenLen=FALSE}). Also see 
 \link[alakazam]{groupGenes}.}
 }
@@ -102,40 +107,44 @@ Returns a modified \code{db} data.frame with nearest neighbor distances between 
           sequences in the \code{dist_nearest} column if \code{cross=NULL}. If \code{cross} was 
           specified, distances will be added as the \code{cross_dist_nearest} column. 
           
-          Note that distances between light chain sequences are not calculated, even if light chains 
-          were used for VJL grouping via \code{groupUsingOnlyIGH=FALSE}. Light chain sequences, if any,
-          will have \code{NA} in the \code{dist_nearest} field.
+          Note that distances between light/short (IGK, IGL, TRA, TRG) chain sequences are not calculated, 
+          even if light/short chains were used for V-J-length grouping via \code{onlyHeavy=FALSE}. 
+          Light/short chain sequences, if any, will have \code{NA} in the \code{dist_nearest} output column.
           
           Note that the output \code{vCallColumn} and \code{jCallColumn} columns will be converted to 
-          \code{character} if they were \code{factor} in the input \code{db}.
+          type \code{character} if they were type \code{factor} in the input \code{db}.
 }
 \description{
 Get non-zero distance of every heavy chain (\code{IGH}) sequence (as defined by 
 \code{sequenceColumn}) to its nearest sequence in a partition of heavy chains sharing the same 
-V gene, J gene, and junction length (VJL), or in a partition of single cells with heavy chains
-sharing the same heavy chain VJL combination, or of single cells with heavy and light chains 
-sharing the same heavy chain VJL and light chain VJL combinations.
+V gene, J gene, and junction length (V-J-length), or in a partition of single cells with heavy/long chains
+sharing the same heavy/long chain V-J-length combination, or of single cells with heavy/long and light/short chains 
+sharing the same heavy/long chain V-J-length and light/short chain V-J-length combinations.
 }
 \details{
-To invoke single-cell mode, both \code{cellIdColumn} and \code{locusColumn} must be supplied. 
-Otherwise, the function will run under non-single-cell mode.
+To invoke single-cell mode the \code{cellIdColumn} argument must be specified and \code{locusColumn} 
+must be correct. Otherwise, \code{distToNearest} will be run with bulk sequencing assumptions, 
+using all input sequences regardless of the values in the \code{locusColumn} column.
 
-Under single-cell mode, only heavy chain sequences will be used for calculating nearest neighbor
-distances. Under non-single-cell mode, all input sequences will be used for calculating nearest
-neighbor distances, regardless of the values in the \code{locusColumn} field (if present).
+Under single-cell mode, only heavy/long chain (IGH, TRB, TRD) sequences will be used for calculating 
+nearest neighbor distances. Under non-single-cell mode, all input sequences will be used for 
+calculating nearest neighbor distances, regardless of the values in the \code{locusColumn} field (if present).
+
+Values in the \code{locusColumn} must be one of \code{c("IGH", "IGI", "IGK", "IGL")} for BCR 
+or \code{c("TRA", "TRB", "TRD", "TRG")} for TCR sequences. Otherwise, the function returns an 
+error message and stops.
 
 For single-cell mode, the input format is the same as that for \link[alakazam]{groupGenes}. 
 Namely, each row represents a sequence/chain. Sequences/chains from the same cell are linked
-by a cell ID in the \code{cellIdColumn} field. Under this mode, there is a choice of whether 
-grouping should be done using heavy chain (\code{IGH}) sequences only, or using both 
-heavy chain (\code{IGH}) and light chain (\code{IGK}, \code{IGL}) sequences. This is governed 
-by \code{groupUsingOnlyIGH}.
+by a cell ID in the \code{cellIdColumn} field. In this mode, there is a choice of whether 
+grouping should be done by (a) using IGH (BCR) or TRB/TRD (TCR) sequences only or
+(b) using IGH plus IGK/IGL (BCR) or TRB/TRD plus TRA/TRG (TCR). 
+This is governed by the \code{onlyHeavy} argument.
 
-If used, values in the \code{locusColumn} column must be one of \code{"IGH"}, \code{"IGK"}, and \code{"IGL"}.
+Note, \code{distToNearest} required that each cell (each unique value in \code{cellIdColumn})
+correspond to only a single \code{IGH} (BCR) or \code{TRB/TRD} (TCR) sequence.
 
-Note that for \code{distToNearest}, a cell with multiple heavy chains is not allowed.
-
-The distance to nearest (heavy chain) neighbor can be used to estimate a threshold for assigning 
+The distance to nearest neighbor can be used to estimate a threshold for assigning 
 Ig sequences to clonal groups. A histogram of the resulting vector is often bimodal, with the 
 ideal threshold being a value that separates the two modes.
 
@@ -159,21 +168,21 @@ The following distance measures are accepted by the \code{model} parameter.
                                SHazaM v0.1.4 and Change-O v0.3.3.
 }
 
-Note on \code{NA}s: if, for a given combination of V gene, J gene, and sequence length,
+Note on \code{NA}s: if, for a given combination of V gene, J gene, and junction length,
 there is only 1  heavy chain sequence (as defined by \code{sequenceColumn}), \code{NA} is 
-returned instead of a distance (since it has no heavy chain neighbor). If for a given combination 
-there are multiple heavy chain sequences but only 1 unique one, (in which case every heavy cahin 
+returned instead of a distance (since it has no heavy/long chain neighbor). If for a given combination 
+there are multiple heavy/long chain sequences but only 1 unique one, (in which case every heavy/long cahin 
 sequence in this group is the de facto nearest neighbor to each other, thus giving rise to distances 
 of 0), \code{NA}s are returned instead of zero-distances.
 
-Note on \code{subsample}: Subsampling is performed independently in each VJL group for heavy chain
-sequences. If \code{subsample} is larger than number of heavy chain sequences in the group, it is 
-ignored. In other words, subsampling is performed only on groups in which the number of heavy chain 
-sequences is equal to or greater than \code{subsample}. \code{dist_nearest} has values calculated 
-using all heavy chain sequences in the group for groups with fewer than \code{subsample} heavy chain
-sequences, and values calculated using a subset of heavy chain sequences for the larger groups. 
-To select a value of \code{subsample}, it can be useful to explore the group sizes in \code{db} 
-(and the number of heavy chain sequences in those groups).
+Note on \code{subsample}: Subsampling is performed independently in each V-J-length group for 
+heavy/long chain sequences. If \code{subsample} is larger than number of heavy/long chain sequences 
+in the group, it is ignored. In other words, subsampling is performed only on groups in which the 
+number of heavy/long chain sequences is equal to or greater than \code{subsample}. \code{dist_nearest} 
+has values calculated using all heavy chain sequences in the group for groups with fewer than 
+\code{subsample} heavy/long chain sequences, and values calculated using a subset of heavy/long chain 
+sequences for the larger groups. To select a value of \code{subsample}, it can be useful to explore 
+the group sizes in \code{db} (and the number of heavy/long chain sequences in those groups).
 }
 \examples{
 # Subset example data to one sample as a demo

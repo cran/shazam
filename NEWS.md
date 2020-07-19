@@ -1,3 +1,12 @@
+Version 1.0.1: July 18, 2020
+-------------------------------------------------------------------------------
+
+Distance Profiling:
+
++ Added support for TCR genes to `distToNearest`. 
++ Renamed the `groupUsingOnlyIGH` argument of `distToNearest` to `onlyHeavy`.
+
+
 Version 1.0.0 May 9, 2020
 -------------------------------------------------------------------------------
 
