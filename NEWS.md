@@ -1,3 +1,18 @@
+Version 1.0.2: August 10, 2020
+-------------------------------------------------------------------------------
+
+Mutation Profiling:
+
++ Fixed a bug in `observedMutations` and `calcObservedMutations` causing 
+  mutation counting to fail when there are gap (`-`) characters in the 
+  germline sequence.
+
+Targeting Models:
+
++ Fixed a bug in `createTargetingModel` causing empty counts in the 
+  `numMutS` and `numMutR` slots.
+
+
 Version 1.0.1: July 18, 2020
 -------------------------------------------------------------------------------
 

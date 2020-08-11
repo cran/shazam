@@ -90,8 +90,9 @@ mut_model <- createMutabilityMatrix(db, sub_model, model="s",
                                     vCallColumn="v_call",
                                     minNumSeqMutations=200,
                                     numSeqMutationsOnly=FALSE)
-# View mutability esimates (not run)
-# print(mut_model)
+                                    
+# View top 5 mutability estimates
+head(sort(mut_model, decreasing=TRUE), 5)
 
 # View the number of S mutations used for estimating mutabilities
 mut_model@numMutS
