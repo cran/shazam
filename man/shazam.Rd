@@ -26,6 +26,7 @@ models, can also be performed along with model driven simulations of SHM.
   \item  \link{expectedMutations}:        Compute expected mutation frequencies.
   \item  \link{shmulateSeq}:              Simulate mutations in a single sequence.
   \item  \link{shmulateTree}:             Simulate mutations over a lineage tree.
+  \item  \link{setRegionBoundaries}:      Extends a region definition to include CDR3 and FWR4.
 }
 }
 

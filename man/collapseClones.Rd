@@ -18,7 +18,9 @@ collapseClones(
   breakTiesStochastic = FALSE,
   breakTiesByColumns = NULL,
   expandedDb = FALSE,
-  nproc = 1
+  nproc = 1,
+  juncLengthColumn = "junction_length",
+  fields = NULL
 )
 }
 \arguments{
@@ -87,6 +89,13 @@ to returning just one sequence per clone).}
 \item{nproc}{Number of cores to distribute the operation over. If the 
 \code{cluster} has already been set earlier, then pass the 
 \code{cluster}. This will ensure that it is not reset.}
+
+\item{juncLengthColumn}{\code{character} name of the column containing the junction length.
+Needed when \code{regionDefinition} includes CDR3 and FWR4.}
+
+\item{fields}{additional fields used for grouping. Use sample_id, to
+avoid combining sequences with the same clone_id 
+that belong to different sample_id.}
 }
 \value{
 A modified \code{db} with the following additional columns: 
@@ -296,7 +305,7 @@ group and appends columns containing the consensus sequences to the input
                     representing all of the characters present, regardless of whether 
                     \code{"N"}, \code{"-"}, or \code{"."} is present.
               \item If a position contains only \code{"-"} and \code{"."} across sequences, 
-                    the consensus at thatp osition is taken to be \code{"-"}. 
+                    the consensus at that position is taken to be \code{"-"}. 
               \item If a position contains only one of \code{"-"} or \code{"."} across 
                     sequences, the consensus at that position is taken to be the character 
                     present. 

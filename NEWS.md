@@ -1,3 +1,34 @@
+Version 1.1.0: July 8, 2021
+-------------------------------------------------------------------------------
+
+General:
+
++ Updated dependencies to alakazam >= 1.1.0 and ggplot2 >= 3.3.4.
+
+Selection Analysis:
+
++ `observedMutations`, `expectedMutations`, and `calcBaseline` can analyze 
+  mutations in all regions (CDR1, CDR2, CDR3, FWR1, FWR2, FWR3 and FWR4) by 
+  specifying `regionDefinition=IMGT_VDJ` or 
+  `regionDefinition=IMGT_VDJ_BY_REGIONS`.
++ Added the function `setRegionBoundaries` to build sequence-specific 
+  `RegionDefinition` objects extending to CDR3 and FWR4.
++ Added the function `makeGraphDf` to facilitate mutational analysis on 
+  lineage trees.
+
+Distance Profiling:
+
++ Fixed a bug in `distToNearest` where TRB and TRD sequences where ignored in 
+  distance calculation.
++ Fixed a bug in `distToNearest` causing a fatal error when `cross` was set.
++ Fixed a bug in `nearestDist` causing a fatal error when using `model="aa"` 
+  and `crossGroups`.
+
+Targeting Models:
+
++ Fixed an incompatibility with newer versions of ggplot2 in `plotMutability`.
+
+
 Version 1.0.2: August 10, 2020
 -------------------------------------------------------------------------------
 
@@ -123,7 +154,7 @@ Mutation Profiling:
 + `shmulateTree` has new arguments, `start` and `end`, to specify the region
   in the sequence where mutations can be introduced. 
 
-Selection Analysis
+Selection Analysis:
 
 + Added the function `consensusSequence` which can be used to build a 
   consensus sequence using a variety of methods.
@@ -160,7 +191,7 @@ Distance Calculation:
 + Fixed a bug in `plotDensityThreshold` and `plotGmmThreshold` wherein the
   `breaks` argument was ignored when specifying `xmax` and/or `xmin`.
 
-Selection Analsis:
+Selection Analysis:
 
 + Fixed a plotting bug in `plotBaselineDensity` arising when the `groupColumn` 
   and `idColumn` arguments were set to the same column.

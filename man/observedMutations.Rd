@@ -13,7 +13,9 @@ observedMutations(
   ambiguousMode = c("eitherOr", "and"),
   frequency = FALSE,
   combine = FALSE,
-  nproc = 1
+  nproc = 1,
+  cloneColumn = "clone_id",
+  juncLengthColumn = "junction_length"
 )
 }
 \arguments{
@@ -29,7 +31,9 @@ characters for DNA are supported.}
 
 \item{regionDefinition}{\link{RegionDefinition} object defining the regions
 and boundaries of the Ig sequences. If NULL, mutations 
-are counted for entire sequence.}
+are counted for entire sequence. To use regions definitions,
+sequences in \code{sequenceColum} and \code{germlineColumn}
+must be aligned, following the IMGT schema.}
 
 \item{mutationDefinition}{\link{MutationDefinition} object defining replacement
 and silent mutation criteria. If \code{NULL} then 
@@ -56,6 +60,10 @@ multiple values. Default is \code{FALSE}.}
 cluster has already been set the call function with 
 \code{nproc} = 0 to not reset or reinitialize. Default is 
 \code{nproc} = 1.}
+
+\item{cloneColumn}{clone id column name in \code{db}}
+
+\item{juncLengthColumn}{junction length column name in \code{db}}
 }
 \value{
 A modified \code{db} \code{data.frame} with observed mutation counts for each 
@@ -74,7 +82,7 @@ A modified \code{db} \code{data.frame} with observed mutation counts for each
                                            FWR3 of the V-segment.
           }
           If \code{frequency=TRUE}, R and S mutation frequencies are
-          calculated over the number of non-N positions in the speficied regions.
+          calculated over the number of non-N positions in the specified regions.
           \itemize{
             \item  \code{mu_freq_cdr_r}:  frequency of replacement mutations in CDR1 and 
                                            CDR2 of the V-segment.
@@ -97,9 +105,8 @@ A modified \code{db} \code{data.frame} with observed mutation counts for each
 sequence in the input \code{data.frame}.
 }
 \details{
-Mutation counts are determined by comparing the input sequences (in the column specified 
-by \code{sequenceColumn}) to the germline sequence (in the column specified by 
-\code{germlineColumn}). See \link{calcObservedMutations} for more technical details, 
+Mutation counts are determined by comparing a reference sequence to the input sequences in the 
+column specified by \code{sequenceColumn}. See \link{calcObservedMutations} for more technical details, 
 \strong{including criteria for which sequence differences are included in the mutation 
 counts and which are not}.
 
@@ -108,11 +115,15 @@ regions of the sequences as defined by \code{regionDefinition}. Typically, this 
 be the framework (FWR) and complementarity determining (CDR) regions of IMGT-gapped 
 nucleotide sequences. Mutation counts are appended to the input \code{db} as 
 additional columns.
+
+If \code{db} includes lineage information, such as the \code{parent_sequence} column created by 
+\link{makeGraphDf}, the reference sequence can be set to use that field as reference sequence 
+using the \code{germlineColumn} argument.
 }
 \examples{
 # Subset example data
 data(ExampleDb, package="alakazam")
-db <- subset(ExampleDb, c_call == "IGHG" & sample_id == "+7d")
+db <- ExampleDb[1:10, ]
 
 # Calculate mutation frequency over the entire sequence
 db_obs <- observedMutations(db, sequenceColumn="sequence_alignment",
@@ -127,11 +138,30 @@ db_obs <- observedMutations(db, sequenceColumn="sequence_alignment",
                             regionDefinition=IMGT_V,
                             mutationDefinition=CHARGE_MUTATIONS,
                             nproc=1)
-                     
+                            
+# Count of VDJ-region mutations, split by FWR and CDR
+db_obs <- observedMutations(db, sequenceColumn="sequence_alignment",
+                            germlineColumn="germline_alignment_d_mask",
+                            regionDefinition=IMGT_VDJ,
+                            nproc=1)
+                            
+# Extend data with lineage information
+data(ExampleTrees, package="alakazam")
+graph <- ExampleTrees[[17]]
+clone <- alakazam::makeChangeoClone(subset(ExampleDb, clone_id == graph$clone))
+gdf <- makeGraphDf(graph, clone)
+
+# Count of mutations between observed sequence and immediate ancenstor
+db_obs <- observedMutations(gdf, sequenceColumn="sequence",
+                            germlineColumn="parent_sequence",
+                            regionDefinition=IMGT_VDJ,
+                            nproc=1)    
+    
 }
 \seealso{
 \link{calcObservedMutations} is called by this function to get the number of mutations 
 in each sequence grouped by the \link{RegionDefinition}. 
 See \link{IMGT_SCHEMES} for a set of predefined \link{RegionDefinition} objects.
 See \link{expectedMutations} for calculating expected mutation frequencies.
+See \link{makeGraphDf} for creating the field \code{parent_sequence}.
 }

@@ -14,12 +14,14 @@ dist_s5f <- distToNearest(ExampleDb, sequenceColumn="junction",
                           vCallColumn="v_call_genotyped", jCallColumn="j_call",
                           model="hh_s5f", normalize="none", nproc=1)
 
-## ---- eval=FALSE, warning=FALSE-----------------------------------------------
-#  # Single-cell mode
-#  # Group cells in a one-stage process (VJthenLen=FALSE) and using
-#  # both heavy and light chain sequences (onlyHeavy=FALSE)
-#  dist_sc <- distToNearest(db, cellIdColumn="cell", locusColumn="locus",
-#                           VJthenLen=FALSE, onlyHeavy=FALSE)
+## ---- eval=TRUE, warning=FALSE------------------------------------------------
+# Single-cell mode 
+# Group cells in a one-stage process (VJthenLen=FALSE) and using
+# both heavy and light chain sequences (onlyHeavy=FALSE)
+
+data(Example10x, package="alakazam")
+dist_sc <- distToNearest(Example10x, cellIdColumn="cell_id", locusColumn="locus", 
+                         VJthenLen=FALSE, onlyHeavy=FALSE)
 
 ## ---- eval=TRUE, warning=FALSE, fig.width=7-----------------------------------
 # Generate Hamming distance histogram

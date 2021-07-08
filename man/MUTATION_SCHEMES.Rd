@@ -13,7 +13,7 @@ A \link{MutationDefinition} object defining:
   \item  \code{CHARGE_MUTATIONS}:      Amino acid mutations are defined by changes
                                        in side chain charge class.
   \item  \code{HYDROPATHY_MUTATIONS}:  Amino acid mutations are defined by changes
-                                       in side chain hydrophobicitity class.
+                                       in side chain hydrophobicity class.
   \item  \code{POLARITY_MUTATIONS}:    Amino acid mutations are defined by changes
                                        in side chain polarity class.
   \item  \code{VOLUME_MUTATIONS}:      Amino acid mutations are defined by changes

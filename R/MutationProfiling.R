@@ -65,7 +65,11 @@ NULL
 #' @param   nproc               Number of cores to distribute the operation over. If the 
 #'                              \code{cluster} has already been set earlier, then pass the 
 #'                              \code{cluster}. This will ensure that it is not reset.
-#'                              
+#' @param   juncLengthColumn          \code{character} name of the column containing the junction length.
+#'                              Needed when \code{regionDefinition} includes CDR3 and FWR4.    
+#' @param    fields             additional fields used for grouping. Use sample_id, to
+#'                              avoid combining sequences with the same clone_id 
+#'                              that belong to different sample_id.                                                       
 #' 
 #' @return   A modified \code{db} with the following additional columns: 
 #'           \itemize{
@@ -266,7 +270,7 @@ NULL
 #'                     representing all of the characters present, regardless of whether 
 #'                     \code{"N"}, \code{"-"}, or \code{"."} is present.
 #'               \item If a position contains only \code{"-"} and \code{"."} across sequences, 
-#'                     the consensus at thatp osition is taken to be \code{"-"}. 
+#'                     the consensus at that position is taken to be \code{"-"}. 
 #'               \item If a position contains only one of \code{"-"} or \code{"."} across 
 #'                     sequences, the consensus at that position is taken to be the character 
 #'                     present. 
@@ -346,20 +350,19 @@ NULL
 #'                          method="mostCommon", expandedDb=TRUE)
 #' 
 #' @export
-collapseClones <- function(db, 
-                           cloneColumn="clone_id", 
-                           sequenceColumn="sequence_alignment",
-                           germlineColumn="germline_alignment_d_mask",
-                           muFreqColumn=NULL,
+collapseClones <- function(db, cloneColumn = "clone_id", 
+                           sequenceColumn = "sequence_alignment",
+                           germlineColumn = "germline_alignment_d_mask",
+                           muFreqColumn = NULL,
                            regionDefinition=NULL,
-                           method=c("mostCommon", "thresholdedFreq", "catchAll", 
-                                    "mostMutated", "leastMutated"),
-                           minimumFrequency=NULL,
-                           includeAmbiguous=FALSE,
-                           breakTiesStochastic=FALSE,
-                           breakTiesByColumns=NULL,
-                           expandedDb=FALSE,
-                           nproc=1) {
+                           method = c("mostCommon","thresholdedFreq","catchAll","mostMutated","leastMutated"),
+                           minimumFrequency = NULL, 
+                           includeAmbiguous = FALSE, 
+                           breakTiesStochastic = FALSE, breakTiesByColumns = NULL, 
+                           expandedDb = FALSE, nproc = 1,
+                           juncLengthColumn="junction_length",
+                           fields=NULL) {
+
     # Hack for visibility of foreach index variables
     idx <- NULL
     
@@ -447,7 +450,7 @@ collapseClones <- function(db,
     }
     
     # Check for valid columns
-    check <- checkColumns(db, c(cloneColumn, sequenceColumn, germlineColumn))
+    check <- checkColumns(db, c(cloneColumn, sequenceColumn, germlineColumn, fields))
     if (check != TRUE) { stop(check) }
     
     # Check region definition
@@ -471,10 +474,23 @@ collapseClones <- function(db,
     # Convert clone identifiers to strings
     db[[cloneColumn]] <- as.character(db[[cloneColumn]])
     
+    db$tmp_colclones_row_id <- 1:nrow(db)
+    
+    # use `fields` information to id clones
+    db$fields_clone_id <- db %>%
+        group_by(!!!rlang::syms(c(fields, cloneColumn))) %>%
+        dplyr::group_indices()
+    db$fields_clone_id <- as.character(db$fields_clone_id)
+    
     # get row indices in db for each unique clone
-    uniqueClones <- unique(db[[cloneColumn]])
+    uniqueClones <- unique(db[["fields_clone_id"]])
     # crucial to have simplify=FALSE (otherwise won't return a list if uniqueClones has length 1)
-    uniqueClonesIdx <- sapply(uniqueClones, function(i){which(db[[cloneColumn]]==i)}, simplify=FALSE)
+    uniqueClonesIdx <- sapply(uniqueClones, function(i){which(db[["fields_clone_id"]]==i)}, simplify=FALSE)
+    
+    regionDefinitionName <- ""
+    if (!is.null(regionDefinition)) {
+        regionDefinitionName <- regionDefinition@name
+    }
     
     # if method is most/leastMutated and muFreqColumn not specified,
     # first calculate mutation frequency ($mu_freq)
@@ -487,6 +503,7 @@ collapseClones <- function(db,
                                 germlineColumn=germlineColumn, 
                                 regionDefinition=regionDefinition,
                                 frequency=TRUE, combine=TRUE, 
+                                cloneColumn = "fields_clone_id",
                                 mutationDefinition=NULL, nproc=nproc)
         muFreqColumn <- "mu_freq"
     }
@@ -507,12 +524,12 @@ collapseClones <- function(db,
             cluster <- parallel::makeCluster(nproc, type= "PSOCK")
         }
         parallel::clusterExport(cluster, 
-                                list('db', 'cloneColumn', 'sequenceColumn', 'germlineColumn', 'muFreqColumn',
-                                     'regionDefinition', 'method', 'minimumFrequency','includeAmbiguous',
+                                list('db', 'sequenceColumn', 'germlineColumn', 'muFreqColumn','juncLengthColumn',
+                                     'regionDefinition', 'regionDefinitionName', 'method', 'minimumFrequency','includeAmbiguous',
                                      'breakTiesStochastic', 'breakTiesByColumns', 
                                      'calcClonalConsensus', 'consensusSequence', 'breakTiesHelper',
                                      'chars2Ambiguous', 'nucs2IUPAC', 'IUPAC_DNA_2',  'NUCLEOTIDES_AMBIGUOUS',
-                                     'uniqueClonesIdx', 'c2s', 's2c'), 
+                                     'uniqueClonesIdx', 'c2s', 's2c','getCloneRegion'), 
                                 envir=environment() )
         registerDoParallel(cluster)
     }
@@ -529,13 +546,30 @@ collapseClones <- function(db,
                             
                             cloneIdx <- uniqueClonesIdx[[idx]]
                             cloneDb <- db[cloneIdx, ]
+                            clone_num <- unique(cloneDb[['fields_clone_id']])
+                            
+                            # Verify the assumption that all sequences in the clone have the same
+                            # junction length.
+                            if (length(unique(cloneDb[[juncLengthColumn]])) > 1 ) {
+                                stop("Expecting all sequences in the same clone with the same junction lenght.")
+                            }
+                            
+                            cloneRegionDefinition <- regionDefinition
+                            if (regionDefinitionName %in% c("IMGT_VDJ_BY_REGIONS","IMGT_VDJ")) { 
+                                cloneRegionDefinition <- getCloneRegion(clone_num=clone_num, 
+                                                                        db=cloneDb, 
+                                                                        seq_col=sequenceColumn, 
+                                                                        juncLengthColumn=juncLengthColumn, 
+                                                                        clone_col='fields_clone_id', 
+                                                                        regionDefinition=regionDefinition)
+                            }
                             
                             # collapse clone
                             calcClonalConsensus(db=cloneDb,
                                                 sequenceColumn=sequenceColumn,
                                                 germlineColumn=germlineColumn,
                                                 muFreqColumn=muFreqColumn,
-                                                regionDefinition=regionDefinition,
+                                                regionDefinition=cloneRegionDefinition,
                                                 method=method,
                                                 minimumFrequency=minimumFrequency,
                                                 includeAmbiguous=includeAmbiguous,
@@ -553,7 +587,7 @@ collapseClones <- function(db,
     # Build return data.frame
     if (expandedDb) { 
         # Fill all rows with the consensus sequence
-        clone_index <- match(db[[cloneColumn]], uniqueClones)
+        clone_index <- match(db[["fields_clone_id"]], uniqueClones)
         cons_db <- db
         cons_db$clonal_sequence <- unlist(cons_mat[, 1])[clone_index]
         cons_db$clonal_germline <- unlist(cons_mat[, 2])[clone_index]
@@ -564,7 +598,7 @@ collapseClones <- function(db,
         }
     } else {
         # Return only the first row of each clone
-        clone_index <- match(uniqueClones, db[[cloneColumn]])
+        clone_index <- match(uniqueClones, db[["fields_clone_id"]])
         cons_db <- db[clone_index, ]
         cons_db$clonal_sequence <- unlist(cons_mat[, 1])
         cons_db$clonal_germline <- unlist(cons_mat[, 2])
@@ -575,7 +609,9 @@ collapseClones <- function(db,
         }
     }
     
-    return(cons_db)
+    cons_db %>%
+        arrange(!!rlang::sym("tmp_colclones_row_id")) %>%
+        select(-!!rlang::sym("tmp_colclones_row_id"), -!!rlang::sym("fields_clone_id"))
 }
 
 
@@ -663,6 +699,9 @@ breakTiesHelper <- function(idx, cols, funs, db) {
 #'                               and required for the \code{"thresholdedFreq"} and \code{"mostCommon"}
 #'                               methods. Default is \code{FALSE}. See "Choosing ambiguous characters"
 #'                               under \link{collapseClones} for rules on choosing ambiguous characters.
+#'                               Note: this argument refers to the use of ambiguous nucleotides in the 
+#'                               output consensus sequence. Ambiguous nucleotides in the input sequences
+#'                               are allowed for methods catchAll, mostMutated and leastMutated.
 #' @param   breakTiesStochastic  In case of ties, whether to randomly pick a sequence from sequences that
 #'                               fulfill the criteria as consensus. Applicable to and required for all methods
 #'                               except for \code{"catchAll"}. Default is \code{FALSE}. See "Methods"
@@ -858,15 +897,34 @@ consensusSequence <- function(sequences, db=NULL,
         ##### tabulation matrix
         # col: nucleotide position
         # row: A,T,G,C,N,.,-,na (to distinguish from NA)
-        tabMtxRownames <- c("A","T","G","C","N",".","-","na")
-        tabMtx <- matrix(0, ncol=lenMax, nrow=8, 
+        if (method != "catchAll") {
+            tabMtxRownames <- c("A","T","G","C","N",".","-","na")
+        } else {
+            # Allow for input ambiguous characters
+            tabMtxRownames <- c(NUCLEOTIDES_AMBIGUOUS,"na")
+        }
+        tabMtx <- matrix(0, ncol=lenMax, nrow=length(tabMtxRownames), 
                         dimnames=list(tabMtxRownames, NULL))
         ## across sequences, at each nuc position, how many A, T, G, C, N, ., -? 
         # this does not capture NA
-        for (j in 1:ncol(seqsMtx)) {
-            tab <- table(seqsMtx[, j])
-            tabMtx[match(names(tab), tabMtxRownames), j] <- tab
+        # for (j in 1:ncol(seqsMtx)) {
+        #     tab <- table(seqsMtx[, j])
+        #     r <- match(names(tab), tabMtxRownames)
+        #     if (any(is.na(r))) {
+        #         stop("Ambiguous nucleotides or unexpected characters found in `sequences`.")
+        #     }
+        #     tabMtx[r, j] <- tab
+        # }
+        # This is faster:
+        if (!all(na.omit(as.vector(seqsMtx)) %in% tabMtxRownames)) {
+            stop("Ambiguous nucleotides or unexpected characters found in `sequences`.")
         }
+        tabMtx <- apply(seqsMtx, 2, function(j) {
+            sapply(tabMtxRownames, function(nt){
+                sum(j == nt, na.rm=T)
+            })
+        })
+        
         ## across sequences, at each nuc position, how many NAs?
         numNAs <- colSums(is.na(seqsMtx))
         tabMtx["na", ] <- numNAs
@@ -964,6 +1022,8 @@ consensusSequence <- function(sequences, db=NULL,
             consensus <- apply(as.matrix(tabMtx), 2, function(x){
                 # all characters that appear at a position across sequences
                 nonZeroNucs <- rownames(tabMtx)[x>0]
+                # Disambiguate, except N
+                nonZeroNucs <- unique(unlist(c(IUPAC_DNA[names(IUPAC_DNA)!="N"],"."=".","-"="-","N"="N")[nonZeroNucs]))
                 # convert characters to (ambiguous) characters
                 return(chars2Ambiguous(nonZeroNucs))
             })
@@ -1272,7 +1332,9 @@ calcClonalConsensus <- function(db,
 #'                               characters for DNA are supported.
 #' @param    regionDefinition    \link{RegionDefinition} object defining the regions
 #'                               and boundaries of the Ig sequences. If NULL, mutations 
-#'                               are counted for entire sequence.
+#'                               are counted for entire sequence. To use regions definitions,
+#'                               sequences in \code{sequenceColum} and \code{germlineColumn}
+#'                               must be aligned, following the IMGT schema.
 #' @param    mutationDefinition  \link{MutationDefinition} object defining replacement
 #'                               and silent mutation criteria. If \code{NULL} then 
 #'                               replacement and silent are determined by exact 
@@ -1294,6 +1356,8 @@ calcClonalConsensus <- function(db,
 #'                               cluster has already been set the call function with 
 #'                               \code{nproc} = 0 to not reset or reinitialize. Default is 
 #'                               \code{nproc} = 1.
+#' @param    cloneColumn         clone id column name in \code{db}
+#' @param    juncLengthColumn    junction length column name in \code{db}
 #' 
 #' @return   A modified \code{db} \code{data.frame} with observed mutation counts for each 
 #'           sequence listed. The columns names are dynamically created based on the
@@ -1311,7 +1375,7 @@ calcClonalConsensus <- function(db,
 #'                                            FWR3 of the V-segment.
 #'           }
 #'           If \code{frequency=TRUE}, R and S mutation frequencies are
-#'           calculated over the number of non-N positions in the speficied regions.
+#'           calculated over the number of non-N positions in the specified regions.
 #'           \itemize{
 #'             \item  \code{mu_freq_cdr_r}:  frequency of replacement mutations in CDR1 and 
 #'                                            CDR2 of the V-segment.
@@ -1330,9 +1394,8 @@ calcClonalConsensus <- function(db,
 #'           }     
 #'                                  
 #' @details
-#' Mutation counts are determined by comparing the input sequences (in the column specified 
-#' by \code{sequenceColumn}) to the germline sequence (in the column specified by 
-#' \code{germlineColumn}). See \link{calcObservedMutations} for more technical details, 
+#' Mutation counts are determined by comparing a reference sequence to the input sequences in the 
+#' column specified by \code{sequenceColumn}. See \link{calcObservedMutations} for more technical details, 
 #' \strong{including criteria for which sequence differences are included in the mutation 
 #' counts and which are not}.
 #' 
@@ -1342,18 +1405,21 @@ calcClonalConsensus <- function(db,
 #' nucleotide sequences. Mutation counts are appended to the input \code{db} as 
 #' additional columns.
 #' 
+#' If \code{db} includes lineage information, such as the \code{parent_sequence} column created by 
+#' \link{makeGraphDf}, the reference sequence can be set to use that field as reference sequence 
+#' using the \code{germlineColumn} argument.
 #' 
 #' @seealso  
 #' \link{calcObservedMutations} is called by this function to get the number of mutations 
 #' in each sequence grouped by the \link{RegionDefinition}. 
 #' See \link{IMGT_SCHEMES} for a set of predefined \link{RegionDefinition} objects.
 #' See \link{expectedMutations} for calculating expected mutation frequencies.
-#'           
+#' See \link{makeGraphDf} for creating the field \code{parent_sequence}.
 #' 
 #' @examples
 #' # Subset example data
 #' data(ExampleDb, package="alakazam")
-#' db <- subset(ExampleDb, c_call == "IGHG" & sample_id == "+7d")
+#' db <- ExampleDb[1:10, ]
 #'
 #' # Calculate mutation frequency over the entire sequence
 #' db_obs <- observedMutations(db, sequenceColumn="sequence_alignment",
@@ -1368,25 +1434,63 @@ calcClonalConsensus <- function(db,
 #'                             regionDefinition=IMGT_V,
 #'                             mutationDefinition=CHARGE_MUTATIONS,
 #'                             nproc=1)
-#'                      
-#' @export
-observedMutations <- function(db, 
-                              sequenceColumn="sequence_alignment",
-                              germlineColumn="germline_alignment_d_mask",
-                              regionDefinition=NULL,
-                              mutationDefinition=NULL,
-                              ambiguousMode=c("eitherOr", "and"),
-                              frequency=FALSE,
-                              combine=FALSE,
-                              nproc=1) {
-    # Hack for visibility of foreach index variable
-    idx <- NULL
+#'                             
+#' # Count of VDJ-region mutations, split by FWR and CDR
+#' db_obs <- observedMutations(db, sequenceColumn="sequence_alignment",
+#'                             germlineColumn="germline_alignment_d_mask",
+#'                             regionDefinition=IMGT_VDJ,
+#'                             nproc=1)
+#'                             
+#' # Extend data with lineage information
+#' data(ExampleTrees, package="alakazam")
+#' graph <- ExampleTrees[[17]]
+#' clone <- alakazam::makeChangeoClone(subset(ExampleDb, clone_id == graph$clone))
+#' gdf <- makeGraphDf(graph, clone)
+#' 
+#' # Count of mutations between observed sequence and immediate ancenstor
+#' db_obs <- observedMutations(gdf, sequenceColumn="sequence",
+#'                             germlineColumn="parent_sequence",
+#'                             regionDefinition=IMGT_VDJ,
+#'                             nproc=1)    
+#'     
+#' @export 
+observedMutations <- function(db,sequenceColumn = "sequence_alignment", 
+                               germlineColumn = "germline_alignment_d_mask",
+                               regionDefinition=NULL, mutationDefinition = NULL, 
+                               ambiguousMode = c("eitherOr", "and"), 
+                               frequency = FALSE, combine = FALSE, nproc = 1,
+                               cloneColumn = "clone_id", 
+                               juncLengthColumn = "junction_length") {
+    
     
     ambiguousMode <- match.arg(ambiguousMode)
-    
-    # Check for valid columns
+
     check <- checkColumns(db, c(sequenceColumn, germlineColumn))
     if (check != TRUE) { stop(check) }
+    
+    regionDefinitionName <- ""
+    if (!is.null(regionDefinition)) {
+        regionDefinitionName <- regionDefinition@name
+        
+        # Message if sequences don't have gaps or Ns (because makeChangeo clone
+        # masks IMGT gaps) as a proxy to detect not IMGT aligned sequences
+        if (all(!grepl("[\\.Nn]",db[[sequenceColumn]]))) {
+            warning("No IMGT gaps detected in ",sequenceColumn,".\nSequences in ", 
+                    sequenceColumn," and ", germlineColumn, 
+                    " should be aligned, with gaps (.,N or n) following the IMGT numbering scheme.")
+        }
+        if (all(!grepl("[\\.Nn]",db[[germlineColumn]]))) {
+            warning("No IMGT gaps detected in ",germlineColumn,
+                    ".\nSequences in ", sequenceColumn," and ", germlineColumn, 
+                    " should be aligned, with gaps (., N or n) following the IMGT numbering scheme.")
+        }        
+        
+        not_na <- !is.na(db[[germlineColumn]])
+        if (!all.equal(nchar(db[[sequenceColumn]][not_na]), nchar(db[[germlineColumn]][not_na]))) {
+            warning("Pairs of ", sequenceColumn, " and ", germlineColumn, " sequences with different lengths found.")
+            stop("Expecting IMGT aligned, same length sequences in ", sequenceColumn, " and ", germlineColumn,".")
+        }
+    }
     
     # Check region definition
     if (!is.null(regionDefinition) & !is(regionDefinition, "RegionDefinition")) {
@@ -1423,15 +1527,17 @@ observedMutations <- function(db,
         db[,label_exists] <- NULL
     }
     
-    
     # Check mutation definition
     if (!is.null(mutationDefinition) & !is(mutationDefinition, "MutationDefinition")) {
         stop(deparse(substitute(mutationDefinition)), " is not a valid MutationDefinition object")
     }
     
+    
     # Convert sequence columns to uppercase
     db <- toupperColumns(db, c(sequenceColumn, germlineColumn))
+    db$tmp_obsmu_row_id <- 1:nrow(db)
     
+
     # If the user has previously set the cluster and does not wish to reset it
     if(!is.numeric(nproc)){ 
         cluster <- nproc 
@@ -1446,7 +1552,8 @@ observedMutations <- function(db,
     if (nproc > 1) {        
         cluster <- parallel::makeCluster(nproc, type = "PSOCK")
         parallel::clusterExport(cluster, list('db', 'sequenceColumn', 'germlineColumn', 
-                                              'regionDefinition', 'frequency', 'combine',
+                                              'regionDefinition', 'regionDefinitionName',
+                                              'frequency', 'combine',
                                               'ambiguousMode', 
                                               'calcObservedMutations','s2c','c2s','NUCLEOTIDES',
                                               'NUCLEOTIDES_AMBIGUOUS', 'IUPAC2nucs',
@@ -1454,7 +1561,7 @@ observedMutations <- function(db,
                                               'makeNullRegionDefinition', 'mutationDefinition',
                                               'getCodonPos','getContextInCodon','mutationType',
                                               'AMINO_ACIDS',
-                                              'binMutationsByRegion', 'countNonNByRegion'), 
+                                              'binMutationsByRegion', 'countNonNByRegion','setRegionBoundaries','IMGT_V_BY_REGIONS'), 
                                 envir=environment())
         registerDoParallel(cluster)
     } else if (nproc == 1) {
@@ -1463,6 +1570,7 @@ observedMutations <- function(db,
         registerDoSEQ()
     }
     
+
     # Printing status to console
     #cat("Calculating observed number of mutations...\n")
     
@@ -1470,61 +1578,84 @@ observedMutations <- function(db,
     numbOfSeqs <- nrow(db)
     observedMutations_list <-
         foreach(idx=iterators::icount(numbOfSeqs)) %dopar% {
+            rd <- regionDefinition
+            if (regionDefinitionName %in% c("IMGT_VDJ_BY_REGIONS","IMGT_VDJ")) {
+                rd <- setRegionBoundaries(juncLength = db[[juncLengthColumn]][idx],
+                           sequenceImgt = db[[sequenceColumn]][idx],
+                           regionDefinition=regionDefinition)
+            }
             oM <- calcObservedMutations(db[[sequenceColumn]][idx], 
                                         db[[germlineColumn]][idx],
                                         frequency=frequency & !combine,
-                                        regionDefinition=regionDefinition,
+                                        regionDefinition=rd,
                                         mutationDefinition=mutationDefinition,
                                         returnRaw=combine,
                                         ambiguousMode=ambiguousMode)
+            this_row_id <- db[['tmp_obsmu_row_id']][idx]
+            
             if (combine) {
                 num_mutations <- 0
                 if (!all(is.na(oM$pos))) {
                     num_mutations <- sum(oM$pos$r, oM$pos$s)
                 }
                 if (!frequency) {
-                    num_mutations
+                    c("mu_count"=num_mutations, "tmp_obsmu_row_id"=this_row_id)
                 } else {
                     num_nonN <- sum(oM$nonN)
                     mu_freq <- num_mutations/num_nonN
-                    mu_freq
+                    c("mu_freq"=mu_freq, "tmp_obsmu_row_id"=this_row_id)
                 }
             } else {
+                oM['tmp_obsmu_row_id'] <- this_row_id
                 oM
             }
         }
-    
     # Convert list of mutations to data.frame
     if (combine) {
-        labels_length <- 1
+        labels_length <- 2 # mutation count and tmp_obsmu_row_id
     } else if (!is.null(regionDefinition)) {
-        labels_length <- length(regionDefinition@labels)
+        labels_length <- length(regionDefinition@labels) + 1 # +1 for tmp_obsmu_row_id
     } else{
         #labels_length=1
-        labels_length <- length(makeNullRegionDefinition()@labels)
+        labels_length <- length(makeNullRegionDefinition()@labels) +1 # +1 for tmp_obsmu_row_id
     }
+    
     # Convert mutation vector list to a matrix
-    observed_mutations <- do.call(rbind, lapply(observedMutations_list, function(x) { 
-        length(x) <- labels_length 
-        return(x) }))
+    observed_mutations <- as.data.frame(do.call(rbind, lapply(observedMutations_list, function(x) { 
+         length(x) <- labels_length 
+         return(x) })), stringsAsFactors=F)
     #observed_mutations <- t(sapply(observedMutations_list, c))
-
+    
     sep <- "_"
-    if (ncol(observed_mutations) > 1) sep <- "_"
+    if (ncol(observed_mutations) > 2) sep <- "_"
     observed_mutations[is.na(observed_mutations)] <- 0
+    
+    col_names <- colnames(observed_mutations)
+    mu_col_names <- col_names != "tmp_obsmu_row_id"
     if (frequency == TRUE) {
-        colnames(observed_mutations) <- gsub("_$","",paste("mu_freq", colnames(observed_mutations), sep=sep))
+        idx <- which(colnames(observed_mutations)[mu_col_names] != "mu_freq")
+        if (length(idx)>0){
+            colnames(observed_mutations)[mu_col_names][idx] <- gsub("_$","",paste("mu_freq", col_names[mu_col_names][idx], sep=sep))   
+        }
     } else {
-        colnames(observed_mutations) <- gsub("_$","",paste("mu_count", colnames(observed_mutations), sep=sep))
+        idx <- which(colnames(observed_mutations)[mu_col_names] != "mu_count")
+        if (length(idx)>0) {
+            colnames(observed_mutations)[mu_col_names] <- gsub("_$","",paste("mu_count", col_names[mu_col_names][idx], sep=sep))   
+        }
     }
     
     # Properly shutting down the cluster
     if (nproc > 1) { parallel::stopCluster(cluster) }
     
     # Bind the observed mutations to db
-    db_new <- cbind(db, observed_mutations)
-    return(db_new)    
-}
+    db_new <- db %>%
+        ungroup() %>%
+        left_join(observed_mutations, by="tmp_obsmu_row_id") %>%
+        arrange(!!rlang::sym("tmp_obsmu_row_id")) %>%
+        select(-!!rlang::sym("tmp_obsmu_row_id"))
+    
+    return(db_new)
+} 
 
 
 #' Count the number of observed mutations in a sequence.
@@ -1727,6 +1858,14 @@ calcObservedMutations <- function(inputSeq, germlineSeq,
                                   returnRaw=FALSE, frequency=FALSE) {
     
     ambiguousMode <- match.arg(ambiguousMode)
+    
+    if (is.na(inputSeq)) {
+        inputSeq <- ""
+    }
+    
+    if (is.na(germlineSeq)) {
+        inputSeq <- ""
+    }
     
     # Check region definition
     if (!is.null(regionDefinition) & !is(regionDefinition, "RegionDefinition")) {
@@ -2262,7 +2401,7 @@ slideWindowDb <- function(db, sequenceColumn="sequence_alignment",
 #' 
 #' @seealso  \link{slideWindowDb} is called on \code{db} for tuning. See \link{slideWindowTunePlot} 
 #'           for visualization. See \link{calcObservedMutations} for generating \code{dbMutList}.
-#' 
+#'           
 #' @examples
 #' # Load and subset example data
 #' data(ExampleDb, package="alakazam")
@@ -2283,7 +2422,6 @@ slideWindowDb <- function(db, sequenceColumn="sequence_alignment",
 #'                           returnRaw=TRUE)$pos })
 #' slideWindowTune(db, dbMutList=exDbMutList, 
 #'                 mutThreshRange=2:4, windowSizeRange=2:4)
-#'                                                            
 #' @export
 slideWindowTune <- function(db, sequenceColumn="sequence_alignment", 
                             germlineColumn="germline_alignment_d_mask",
@@ -2520,7 +2658,6 @@ slideWindowTunePlot <- function(tuneList, plotFiltered = TRUE, percentage = FALS
     
 }
 
-
 #### Expected frequencies calculating functions ####
 
 #' Calculate expected mutation frequencies
@@ -2535,7 +2672,9 @@ slideWindowTunePlot <- function(tuneList, plotFiltered = TRUE, percentage = FALS
 #'                               the germline or reference sequence.
 #' @param    targetingModel      \link{TargetingModel} object. Default is \link{HH_S5F}.
 #' @param    regionDefinition    \link{RegionDefinition} object defining the regions
-#'                               and boundaries of the Ig sequences.
+#'                               and boundaries of the Ig sequences. To use regions definitions,
+#'                               sequences in \code{sequenceColum} and \code{germlineColumn}
+#'                               must be aligned, following the IMGT schema.
 #' @param    mutationDefinition  \link{MutationDefinition} object defining replacement
 #'                               and silent mutation criteria. If \code{NULL} then 
 #'                               replacement and silent are determined by exact 
@@ -2544,6 +2683,8 @@ slideWindowTunePlot <- function(tuneList, plotFiltered = TRUE, percentage = FALS
 #'                               over. If the cluster has already been set the call function with 
 #'                               \code{nproc} = 0 to not reset or reinitialize. Default is 
 #'                               \code{nproc} = 1.
+#' @param    cloneColumn         clone id column name in \code{db}
+#' @param    juncLengthColumn    junction length column name in \code{db}
 #' 
 #' @return   A modified \code{db} \code{data.frame} with expected mutation frequencies 
 #'           for each region defined in \code{regionDefinition}.
@@ -2595,19 +2736,44 @@ slideWindowTunePlot <- function(tuneList, plotFiltered = TRUE, percentage = FALS
 #'                            nproc=1)
 #'
 #' @export
-expectedMutations <- function(db, 
-                              sequenceColumn="sequence_alignment",
-                              germlineColumn="germline_alignment_d_mask",
-                              targetingModel=HH_S5F,
-                              regionDefinition=NULL,
-                              mutationDefinition=NULL,
-                              nproc=1) {
+#'
+expectedMutations <- function(db,sequenceColumn = "sequence_alignment", 
+                               germlineColumn = "germline_alignment", 
+                               targetingModel = HH_S5F, 
+                               regionDefinition=NULL, mutationDefinition = NULL, 
+                               nproc = 1,
+                               cloneColumn = "clone_id", 
+                               juncLengthColumn = "junction_length") {
+    
     # Hack for visibility of foreach index variable
     idx <- NULL
-    
-    # Check for valid columns
+
     check <- checkColumns(db, c(sequenceColumn, germlineColumn))
     if (check != TRUE) { stop(check) }
+    
+    regionDefinitionName <- ""
+    if (!is.null(regionDefinition)) {
+        regionDefinitionName <- regionDefinition@name
+        
+        # Message if sequences don't have gaps or Ns (because makeChangeo clone
+        # masks IMGT gaps) as a proxy to detect not IMGT aligned sequences
+        if (all(!grepl("[\\.Nn]",db[[sequenceColumn]]))) {
+            warning("No IMGT gaps detected in ",sequenceColumn,".\nSequences in ", 
+                    sequenceColumn," and ", germlineColumn, 
+                    " should be aligned, with gaps (.,N or n) following the IMGT numbering scheme.")
+        }
+        if (all(!grepl("[\\.Nn]",db[[germlineColumn]]))) {
+            warning("No IMGT gaps detected in ",germlineColumn,
+                    ".\nSequences in ", sequenceColumn," and ", germlineColumn, 
+                    " should be aligned, with gaps (., N or n) following the IMGT numbering scheme.")
+        }        
+        
+        not_na <- !is.na(db[[germlineColumn]])
+        if (!all.equal(nchar(db[[sequenceColumn]][not_na]), nchar(db[[germlineColumn]][not_na]))) {
+            warning("Pairs of ", sequenceColumn, " and ", germlineColumn, " sequences with different lengths found.")
+            stop("Expecting IMGT aligned, same length sequences in ", sequenceColumn, " and ", germlineColumn,".")
+        }
+    }
     
     # Check region definition
     if (!is.null(regionDefinition) & !is(regionDefinition, "RegionDefinition")) {
@@ -2635,13 +2801,15 @@ expectedMutations <- function(db,
                        paste(label_exists, collapse=", "),
                        " exist and will be overwritten")
         )
-        db[label_exists] <- NULL
+        db[,label_exists] <- NULL
     }    
     
     # Check targeting model
     if (!is(targetingModel, "TargetingModel")) {
         stop(deparse(substitute(targetingModel)), " is not a valid TargetingModel object")
     }
+    
+    db$tmp_expmu_row_id <- 1:nrow(db)
     
     # Convert sequence columns to uppercase
     db <- toupperColumns(db, c(sequenceColumn, germlineColumn))
@@ -2661,10 +2829,11 @@ expectedMutations <- function(db,
     if (nproc > 1) {        
         cluster <- parallel::makeCluster(nproc, type = "PSOCK")
         parallel::clusterExport(cluster, list('db', 'sequenceColumn', 'germlineColumn', 
+                                              'regionDefinitionName', 'juncLengthColumn', 'setRegionBoundaries',
                                               'regionDefinition','targetingModel',
                                               'calcExpectedMutations','calculateTargeting',
                                               's2c','c2s','NUCLEOTIDES','HH_S5F',
-                                              'calculateMutationalPaths','CODON_TABLE'),
+                                              'calculateMutationalPaths','CODON_TABLE','IMGT_V_BY_REGIONS'),
                                 envir=environment() )
         registerDoParallel(cluster)
     } else if (nproc == 1) {
@@ -2675,7 +2844,7 @@ expectedMutations <- function(db,
     
     
     # Printing status to console
-    cat("Calculating the expected frequencies of mutations...\n")
+    # cat("Calculating the expected frequencies of mutations...\n")
     
     # Calculate targeting for each sequence (based on the germline)
     # Should be a 5 x N matrix where N in the number of nucleotides defined by
@@ -2684,35 +2853,49 @@ expectedMutations <- function(db,
     
     targeting_list <-
         foreach (idx=iterators::icount(numbOfSeqs)) %dopar% {
-            calcExpectedMutations(germlineSeq=db[[germlineColumn]][idx],
+            rd <- regionDefinition
+            if (regionDefinitionName %in% c("IMGT_VDJ_BY_REGIONS","IMGT_VDJ")) {
+                rd <- setRegionBoundaries(juncLength = db[[juncLengthColumn]][idx],
+                           sequenceImgt = db[[sequenceColumn]][idx],
+                           regionDefinition=regionDefinition)
+            }
+            
+            eM <- calcExpectedMutations(germlineSeq=db[[germlineColumn]][idx],
                                   inputSeq=db[[sequenceColumn]][idx],
                                   targetingModel=targetingModel,
-                                  regionDefinition=regionDefinition,
+                                  regionDefinition=rd,
                                   mutationDefinition=mutationDefinition)
+            eM['tmp_expmu_row_id'] <- db[['tmp_expmu_row_id']][idx]
+            eM
         }
     
     # Convert list of expected mutation freq to data.frame
     if (is.null(regionDefinition)) {
-        labels_length <- length(makeNullRegionDefinition()@labels)
+        labels_length <- length(makeNullRegionDefinition()@labels) + 1 # +1 for tmp row_id
     } else {
-        labels_length <- length(regionDefinition@labels)
+        labels_length <- length(regionDefinition@labels) + 1
     }
-    expectedMutationFrequencies <- do.call(rbind, lapply(targeting_list, function(x) { 
-        length(x) <- labels_length 
-        return(x) })) 
+    expectedMutationFrequencies <- as.data.frame(do.call(rbind, lapply(targeting_list, function(x) { 
+        length(x) <- labels_length
+        return(x) })), stringsAsFactors=F) 
     
     expectedMutationFrequencies[is.na(expectedMutationFrequencies)] <- 0
-    colnames(expectedMutationFrequencies) <- paste0("mu_expected_", colnames(expectedMutationFrequencies))
+    
+    col_names <- colnames(expectedMutationFrequencies)
+    mu_col_names <- col_names != "tmp_expmu_row_id"
+    colnames(expectedMutationFrequencies)[mu_col_names] <- paste0("mu_expected_", colnames(expectedMutationFrequencies)[mu_col_names])
     
     # Properly shutting down the cluster
     if(nproc>1){ parallel::stopCluster(cluster) }
     
     # Bind the observed mutations to db
-    db_new <- cbind(db, expectedMutationFrequencies)
-    return(db_new)    
-    
-}
-
+    db_new <- db %>%
+        ungroup() %>%
+        left_join(expectedMutationFrequencies, by="tmp_expmu_row_id") %>%
+        arrange(!!rlang::sym("tmp_expmu_row_id")) %>%
+        select(-!!rlang::sym("tmp_expmu_row_id"))
+    return(db_new) 
+} 
 
 #' Calculate expected mutation frequencies of a sequence
 #'
@@ -3255,5 +3438,4 @@ checkAmbiguousExist <- function(seqs) {
     bool <- stri_detect_regex(str=seqs, pattern="[^atgcnATGCN\\-\\.]")
     return(bool)
 }
-
 

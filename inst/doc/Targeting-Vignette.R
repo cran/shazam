@@ -3,19 +3,22 @@
 library(shazam)
 data(ExampleDb, package="alakazam")
 
+# Subset to IGHG for faster usage demonstration
+db <- subset(ExampleDb, c_call == "IGHG")
+
 ## ---- eval=FALSE--------------------------------------------------------------
 #  # Create substitution model using silent mutations
-#  sub_model <- createSubstitutionMatrix(ExampleDb, model="S",
-#                                         sequenceColumn="sequence_alignment",
-#                                         germlineColumn="germline_alignment_d_mask",
-#                                         vCallColumn="v_call")
+#  sub_model <- createSubstitutionMatrix(db, model="s",
+#                                        sequenceColumn="sequence_alignment",
+#                                        germlineColumn="germline_alignment_d_mask",
+#                                        vCallColumn="v_call")
 
 ## ---- eval=FALSE--------------------------------------------------------------
 #  # Create mutability model using silent mutations
-#  mut_model <- createMutabilityMatrix(ExampleDb, sub_model, model="S",
-#                                       sequenceColumn="sequence_alignment",
-#                                       germlineColumn="germline_alignment_d_mask",
-#                                       vCallColumn="v_call")
+#  mut_model <- createMutabilityMatrix(db, sub_model, model="s",
+#                                      sequenceColumn="sequence_alignment",
+#                                      germlineColumn="germline_alignment_d_mask",
+#                                      vCallColumn="v_call")
 
 ## ---- eval=FALSE--------------------------------------------------------------
 #  # Number of silent mutations used for estimating 5-mer mutabilities
@@ -36,7 +39,7 @@ data(ExampleDb, package="alakazam")
 
 ## ---- eval=TRUE, warning=FALSE------------------------------------------------
 # Collapse sequences into clonal consensus
-clone_db <- collapseClones(ExampleDb, cloneColumn="clone_id", 
+clone_db <- collapseClones(db, cloneColumn="clone_id", 
                            sequenceColumn="sequence_alignment",
                            germlineColumn="germline_alignment_d_mask",
                            nproc=1)

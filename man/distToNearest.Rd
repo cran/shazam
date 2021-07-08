@@ -90,7 +90,9 @@ bulk sequencing data is assumed.}
 
 \item{locusColumn}{name of the column containing locus information. 
 Only applicable to single-cell data.
-Ignored if \code{cellIdColumn=NULL}.}
+Ignored if \code{cellIdColumn=NULL}. Valid loci values
+are "IGH", "IGI", "IGK", "IGL", "TRA", "TRB", 
+"TRD", and "TRG".}
 
 \item{onlyHeavy}{use only the IGH (BCR) or TRB/TRD (TCR) sequences 
 for grouping. Only applicable to single-cell data.

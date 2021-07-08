@@ -7,11 +7,13 @@
 expectedMutations(
   db,
   sequenceColumn = "sequence_alignment",
-  germlineColumn = "germline_alignment_d_mask",
+  germlineColumn = "germline_alignment",
   targetingModel = HH_S5F,
   regionDefinition = NULL,
   mutationDefinition = NULL,
-  nproc = 1
+  nproc = 1,
+  cloneColumn = "clone_id",
+  juncLengthColumn = "junction_length"
 )
 }
 \arguments{
@@ -26,7 +28,9 @@ the germline or reference sequence.}
 \item{targetingModel}{\link{TargetingModel} object. Default is \link{HH_S5F}.}
 
 \item{regionDefinition}{\link{RegionDefinition} object defining the regions
-and boundaries of the Ig sequences.}
+and boundaries of the Ig sequences. To use regions definitions,
+sequences in \code{sequenceColum} and \code{germlineColumn}
+must be aligned, following the IMGT schema.}
 
 \item{mutationDefinition}{\link{MutationDefinition} object defining replacement
 and silent mutation criteria. If \code{NULL} then 
@@ -37,6 +41,10 @@ amino acid identity.}
 over. If the cluster has already been set the call function with 
 \code{nproc} = 0 to not reset or reinitialize. Default is 
 \code{nproc} = 1.}
+
+\item{cloneColumn}{clone id column name in \code{db}}
+
+\item{juncLengthColumn}{junction length column name in \code{db}}
 }
 \value{
 A modified \code{db} \code{data.frame} with expected mutation frequencies 

@@ -22,6 +22,7 @@
 #'   \item  \link{expectedMutations}:        Compute expected mutation frequencies.
 #'   \item  \link{shmulateSeq}:              Simulate mutations in a single sequence.
 #'   \item  \link{shmulateTree}:             Simulate mutations over a lineage tree.
+#'   \item  \link{setRegionBoundaries}:      Extends a region definition to include CDR3 and FWR4.
 #' }
 #' 
 #' @section  SHM targeting models:
@@ -112,6 +113,7 @@
 #'                          isValidAASeq translateStrings gridPlot
 #'                          getMRCA getPathLengths tableEdges
 #'                          progressBar baseTheme checkColumns cpuCount
+#'                          makeChangeoClone summarizeSubtrees buildPhylipLineage
 #' @importFrom  ape         mst
 #' @importFrom  diptest     dip.test
 #' @importFrom  doParallel  registerDoParallel
@@ -122,9 +124,11 @@
 #'                          mutate summarize
 #'                          mutate_at summarize_at
 #'                          rename transmute
+#'                          left_join
 #' @importFrom  foreach     foreach %dopar% registerDoSEQ
 #' @importFrom  igraph      V E as_adjacency_matrix graph_from_data_frame
-#'                          vertex_attr set_vertex_attr
+#'                          vertex_attr set_vertex_attr 
+#'                          layout_as_tree V<-
 #' @importFrom  iterators   icount
 #' @importFrom  kedd        h.ucv
 #' @importFrom  KernSmooth  bkde
@@ -228,4 +232,5 @@ NULL
 
 # Add built-in variables to global variables environment
 utils::globalVariables(c("HH_S1F", "HKL_S1F", "MK_RS1NF",
-                         "HH_S5F", "HKL_S5F", "MK_RS5NF", "U5N"), package="shazam")
+                         "HH_S5F", "HKL_S5F", "MK_RS5NF", "U5N",
+                         "IMGT_V_BY_REGIONS"), package="shazam")

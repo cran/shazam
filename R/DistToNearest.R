@@ -581,6 +581,9 @@ nearestDist <- function(sequences, model=c("ham", "aa", "hh_s1f", "hh_s5f", "mk_
             this_group <- crossGroups[i]
             other_groups <-  which(crossGroups != this_group)
             other_seq <- unique(sequences[other_groups])
+            if (model=="aa") {
+                seq_uniq <- names(seq_uniq)
+            }
             other_idx <- match(other_seq, seq_uniq)
             this_idx <- match(sequences[i], seq_uniq)
             
@@ -692,7 +695,9 @@ nearestDist <- function(sequences, model=c("ham", "aa", "hh_s1f", "hh_s5f", "mk_
 #'                           bulk sequencing data is assumed.
 #' @param    locusColumn     name of the column containing locus information. 
 #'                           Only applicable to single-cell data.
-#'                           Ignored if \code{cellIdColumn=NULL}.
+#'                           Ignored if \code{cellIdColumn=NULL}. Valid loci values
+#'                           are "IGH", "IGI", "IGK", "IGL", "TRA", "TRB", 
+#'                           "TRD", and "TRG".
 #' @param    onlyHeavy       use only the IGH (BCR) or TRB/TRD (TCR) sequences 
 #'                           for grouping. Only applicable to single-cell data.
 #'                           Ignored if \code{cellIdColumn=NULL}. 
@@ -1008,9 +1013,9 @@ distToNearest <- function(db, sequenceColumn="junction", vCallColumn="v_call", j
         idx <- uniqueGroupsIdx[[i]]
         
         if (singleCell) {
-            # only use IGH
+            # only use IGH, TRB, TRD
             # wrt idx
-            idxBool <- db[[locusColumn]][idx] == "IGH"
+            idxBool <- db[[locusColumn]][idx] %in% c("IGH", "TRB", "TRD")
         } else {
             idxBool <- rep(TRUE, length(idx))
         }
@@ -1019,9 +1024,8 @@ distToNearest <- function(db, sequenceColumn="junction", vCallColumn="v_call", j
         
         crossGroups <- NULL
         if (!is.null(cross)) {
-            crossGroups <- db_group %>% 
-              dplyr::group_by(!!!rlang::syms(cross)) %>%
-              dplyr::group_indices()
+              x <- dplyr::group_by(db_group, !!!rlang::syms(cross))
+              crossGroups <- dplyr::group_indices(x)
         }
         
         arrSeqs <-  db[[sequenceColumn]][idx]

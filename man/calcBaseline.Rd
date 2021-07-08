@@ -2,7 +2,7 @@
 % Please edit documentation in R/Baseline.R
 \name{calcBaseline}
 \alias{calcBaseline}
-\title{Calculate the BASELINe PDFs}
+\title{Calculate the BASELINe PDFs (including for regions that include CDR3 and FWR4)}
 \usage{
 calcBaseline(
   db,
@@ -13,7 +13,9 @@ calcBaseline(
   targetingModel = HH_S5F,
   mutationDefinition = NULL,
   calcStats = FALSE,
-  nproc = 1
+  nproc = 1,
+  cloneColumn = NULL,
+  juncLengthColumn = NULL
 )
 }
 \arguments{
@@ -49,6 +51,16 @@ summary statistics \code{data.frame} stored in the
 \item{nproc}{number of cores to distribute the operation over. If 
 \code{nproc=0} then the \code{cluster} has already been
 set and will not be reset.}
+
+\item{cloneColumn}{\code{character} name of the column in \code{db} 
+containing clonal identifiers. Relevant only for 
+when regionDefinition includes CDR and FWR4 (else
+this value can be \code{NULL})}
+
+\item{juncLengthColumn}{\code{character} name of the column in \code{db} 
+containing the junction length. Relevant only for 
+when regionDefinition includes CDR and FWR4 (else
+this value can be \code{NULL})}
 }
 \value{
 A \link{Baseline} object containing the modified \code{db} and BASELINe 

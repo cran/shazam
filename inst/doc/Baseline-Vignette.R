@@ -1,6 +1,7 @@
 ## ---- eval=TRUE, warning=FALSE, message=FALSE---------------------------------
 # Load example data
 library(shazam)
+library(alakazam)
 data(ExampleDb, package="alakazam")
 
 ## ---- eval=TRUE, warning=FALSE, results="hide"--------------------------------
@@ -12,6 +13,25 @@ clones <- collapseClones(ExampleDb, cloneColumn="clone_id",
                          method="thresholdedFreq", minimumFrequency=0.6,
                          includeAmbiguous=FALSE, breakTiesStochastic=FALSE, 
                          nproc=1)
+
+## ----eval=F, warning=F, results="hide"----------------------------------------
+#  # Subset to sequences with clone_id=3170
+#  db_3170 <- subset(ExampleDb, clone_id == 3170)
+#  dim(db_3170)
+#  colnames(db_3170)
+#  
+#  # Generate a ChangeoClone object for lineage construction
+#  clone_3170 <- makeChangeoClone(db_3170, seq="sequence_alignment", germ="germline_alignment")
+#  
+#  # Run the lineage reconstruction
+#  dnapars_exec <- "/usr/local/bin/dnapars"
+#  graph_3170 <- buildPhylipLineage(clone_3170, dnapars_exec, rm_temp=TRUE)
+#  
+#  # Generating a data.frame from the lineage tree graph object,
+#  # and merge it with clone data.frame
+#  graph_3170_df <- makeGraphDf(graph_3170, clone_3170)
+#  dim(graph_3170_df)
+#  colnames(graph_3170_df)
 
 ## ---- eval=TRUE, warning=FALSE, results="hide"--------------------------------
 # Count observed mutations and append mu_count columns to the output
@@ -104,7 +124,7 @@ plotBaselineDensity(grouped_2, "c_call", groupColumn="sample_id", colorElement="
 #  # These are the same indices also in the matrices in the fileds "numbOfSeqs",
 #  # "binomK", "binomN", "binomP", and "pdfs"
 #  # In this example, there is one row of IGHA for each sample
-#  dbIgMIndex <- which(grouped_2@db[["c_call"]] == "IGHA")
+#  dbIgMIndex <- which(grouped_2@db[["c_call"]] == "IGHG")
 #  
 #  grouped_2 <- editBaseline(grouped_2, "db", grouped_2@db[-dbIgMIndex, ])
 #  grouped_2 <- editBaseline(grouped_2, "numbOfSeqs", grouped_2@numbOfSeqs[-dbIgMIndex, ])
