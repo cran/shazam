@@ -19,14 +19,17 @@ slideWindowTunePlot(
   legendPos = "topright",
   legendHoriz = FALSE,
   legendCex = 1,
-  title = NULL
+  title = NULL,
+  returnRaw = FALSE
 )
 }
 \arguments{
 \item{tuneList}{a list of logical matrices returned by \link{slideWindowTune}.}
 
-\item{plotFiltered}{whether to plot the number of filtered sequences (as opposed to
-the number of remaining sequences). Default is \code{TRUE}.}
+\item{plotFiltered}{whether to plot the number of filtered (TRUE), 
+or remaining (FALSE) sequences for each mutation threshold. 
+Use `NULL` to plot the number of sequences at each mutation
+value. Default is \code{TRUE}.}
 
 \item{percentage}{whether to plot on the y-axis the percentage of filtered sequences
 (as opposed to the absolute number). Default is \code{FALSE}.}
@@ -58,14 +61,28 @@ numeric vector specifying x-y coordinates, or one of
 \item{legendCex}{numeric values by which legend should be magnified relative to 1.}
 
 \item{title}{plot main title. Default is NULL (no title)}
+
+\item{returnRaw}{Return a data.frame with sequence counts (TRUE) or a
+plot. Default is \code{FALSE}.}
 }
 \description{
 Visualize results from \link{slideWindowTune}
 }
 \details{
-For each \code{windowSize}, the numbers of sequences filtered or remaining after applying
-          the sliding window approach are plotted on the y-axis against thresholds on the number of
-          mutations in a window on the x-axis.
+For each \code{windowSize}, if \code{plotFiltered=TRUE}, the x-axis 
+          represents a mutation threshold range, and the y-axis the number of
+          sequences that have at least that number of mutations. If 
+          \code{plotFiltered=TRUE}, the y-axis represents the number of sequences
+          that have less mutations than the mutation threshold range. For the same
+          window size, a sequence can be included in the counts for different
+          mutation thresholds. For example, sequence "CCACCAAAA" with germline
+          "AAAAAAAAA" has 4 mutations. This sequence has at least 2 mutations 
+          and at least 3 mutations, in a window of size 4. the sequence will
+          be included in the sequence count for mutation thresholds 2 and 3.
+          If \code{plotFiltered=TRUE}, the sequences are counted only once for
+          each window size, at their largest mutation threshold. The above 
+          example sequence would be included in the sequence count for 
+          mutation threshold 3. 
           
           When plotting, a user-defined \code{amount} of jittering can be applied on values plotted
           on either axis or both axes via adjusting \code{jitter.x}, \code{jitter.y}, 
@@ -107,7 +124,6 @@ slideWindowTunePlot(tuneList, pchs=1:3, ltys=1:3, cols=1:3,
 slideWindowTunePlot(tuneList, pchs=1:3, ltys=1:3, cols=1:3,
                     plotFiltered=TRUE, percentage=TRUE, 
                     jitter.y=TRUE, jitter.y.amt=0.01)
-                                                            
 }
 \seealso{
 See \link{slideWindowTune} for how to get \code{tuneList}. See \link{jitter} for 

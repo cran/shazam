@@ -11,7 +11,8 @@ slideWindowTune(
   dbMutList = NULL,
   mutThreshRange,
   windowSizeRange,
-  verbose = TRUE
+  verbose = TRUE,
+  nproc = 1
 )
 }
 \arguments{
@@ -36,11 +37,17 @@ must be at least 2.}
 
 \item{verbose}{whether to print out messages indicating current progress. Default
 is \code{TRUE}.}
+
+\item{nproc}{Number of cores to distribute the operation over. If the 
+\code{cluster} has already been set earlier, then pass the 
+\code{cluster}. This will ensure that it is not reset.}
 }
 \value{
 a list of logical matrices. Each matrix corresponds to a \code{windowSize} in 
           \code{windowSizeRange}. Each column in a matrix corresponds to a \code{mutThresh} in
-          \code{mutThreshRange}.
+          \code{mutThreshRange}. Each row corresponds to a sequence. \code{TRUE} values
+          mean the sequences has at least the number of mutations specified in the column name,
+          for that \code{windowSize}.
 }
 \description{
 Apply \link{slideWindowDb} over a search grid made of combinations of \code{mutThresh} and 

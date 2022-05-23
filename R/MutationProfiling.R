@@ -67,7 +67,7 @@ NULL
 #'                              \code{cluster}. This will ensure that it is not reset.
 #' @param   juncLengthColumn          \code{character} name of the column containing the junction length.
 #'                              Needed when \code{regionDefinition} includes CDR3 and FWR4.    
-#' @param    fields             additional fields used for grouping. Use sample_id, to
+#' @param   fields             additional fields used for grouping. Use sample_id, to
 #'                              avoid combining sequences with the same clone_id 
 #'                              that belong to different sample_id.                                                       
 #' 
@@ -452,6 +452,13 @@ collapseClones <- function(db, cloneColumn = "clone_id",
     # Check for valid columns
     check <- checkColumns(db, c(cloneColumn, sequenceColumn, germlineColumn, fields))
     if (check != TRUE) { stop(check) }
+    
+    # Check for NAs
+    na_rows <- which(is.na(db[,c(cloneColumn, sequenceColumn, germlineColumn)] ), arr.ind=T)
+    if (nrow(na_rows)>0) {
+        na_cols <- c(cloneColumn, sequenceColumn, germlineColumn)[unique(na_rows[,2])]
+        stop("NA values found in column(s): ", paste(na_cols, collapse=", "),". ",length(unique(na_rows[,1])), " sequence(s) affected.")
+    }
     
     # Check region definition
     if (!is.null(regionDefinition) & !is(regionDefinition, "RegionDefinition")) {
@@ -2266,7 +2273,7 @@ countNonNByRegion <- function(regDef, ambiMode, inputChars, germChars,
 #' 
 #' # Determine if in_seq has 6 or more mutations in 10 consecutive nucleotides
 #' slideWindowSeq(inputSeq=in_seq, germlineSeq=germ_seq, mutThresh=6, windowSize=10)
-#'                                 
+#' slideWindowSeq(inputSeq="TCGTCGAAAA", germlineSeq="AAAAAAAAAA", mutThresh=6, windowSize=10)
 #' @export
 slideWindowSeq <- function(inputSeq, germlineSeq, mutThresh, windowSize){
     # identify all R and S mutations in input sequence
@@ -2293,7 +2300,6 @@ slideWindowSeq <- function(inputSeq, germlineSeq, mutThresh, windowSize){
 #
 # @return   \code{TRUE} if there are equal to or more than \code{mutThresh} number of mutations
 #           in any window of \code{windowSize} consecutive nucleotides; \code{FALSE} if otherwise.
-#
 slideWindowSeqHelper <- function(mutPos, mutThresh, windowSize){
     # check preconditions
     stopifnot(mutThresh >= 1 & mutThresh <= windowSize & windowSize>=2)
@@ -2333,6 +2339,9 @@ slideWindowSeqHelper <- function(mutPos, mutThresh, windowSize){
 #'                               consecutive nucleotides. Must be between 1 and \code{windowSize} 
 #'                               inclusive. 
 #' @param    windowSize          length of consecutive nucleotides. Must be at least 2.
+#' @param    nproc                Number of cores to distribute the operation over. If the 
+#'                               \code{cluster} has already been set earlier, then pass the 
+#'                               \code{cluster}. This will ensure that it is not reset.
 #'                               
 #' @return   a logical vector. The length of the vector matches the number of input sequences in 
 #'           \code{db}. Each entry in the vector indicates whether the corresponding input sequence
@@ -2348,19 +2357,70 @@ slideWindowSeqHelper <- function(mutPos, mutThresh, windowSize){
 #' # Apply the sliding window approach on a subset of ExampleDb
 #' slideWindowDb(db=ExampleDb[1:10, ], sequenceColumn="sequence_alignment", 
 #'               germlineColumn="germline_alignment_d_mask", 
-#'               mutThresh=6, windowSize=10)
+#'               mutThresh=6, windowSize=10, nproc=1)
 #' 
 #' @export
-slideWindowDb <- function(db, sequenceColumn="sequence_alignment", 
+slideWindowDb <- function(db, sequenceColumn="sequence_alignment",
                           germlineColumn="germline_alignment_d_mask",
-                          mutThresh, windowSize){
-    db_filter <- sapply(1:nrow(db), function(i) { slideWindowSeq(inputSeq = db[i, sequenceColumn],
-                                                                 germlineSeq = db[i, germlineColumn],
-                                                                 mutThresh = mutThresh,
-                                                                 windowSize = windowSize)})
-    return(db_filter)
-}
+                          mutThresh=6, windowSize=10, nproc=1){
+    # Hack for visibility of foreach index variables
+    i <- NULL
+    
+    # Check input
+    check <- checkColumns(db, c(sequenceColumn, germlineColumn))
+    if (check != TRUE) { stop(check) }
 
+    db <- db[,c(sequenceColumn, germlineColumn)]
+    # If the user has previously set the cluster and does not wish to reset it
+    if(!is.numeric(nproc)){
+        stop_cluster <- FALSE
+        cluster <- nproc
+        nproc <- 0
+    } else {
+        stop_cluster <- TRUE
+    }
+
+    # Ensure that the nproc does not exceed the number of cores/CPUs available
+    nproc <- min(nproc, cpuCount())
+
+    # If user wants to paralellize this function and specifies nproc > 1, then
+    # initialize and register slave R processes/clusters &
+    # export all nesseary environment variables, functions and packages.
+    if (nproc == 1) {
+        # If needed to run on a single core/cpu then, register DoSEQ
+        # (needed for 'foreach' in non-parallel mode)
+        registerDoSEQ()
+    } else {
+        cluster_type <- "FORK"
+        if (.Platform$OS.type == "windows") {
+            cluster_type <- "PSOCK"
+        }
+        if (nproc != 0) {
+            #cluster <- makeCluster(nproc, type="SOCK")
+            cluster <- parallel::makeCluster(nproc, type= cluster_type)
+        }
+        if (cluster_type == "PSOCK") {
+            parallel::clusterExport(cluster,
+                                    list('db', 'sequenceColumn', 'germlineColumn',
+                                         'mutThresh', 'windowSize','slideWindowSeq'),
+                                    envir=environment() )
+        }
+        registerDoParallel(cluster)
+    }
+
+    filter <- unlist(foreach(i=1:nrow(db),
+                   .verbose=FALSE, .errorhandling='stop') %dopar% {
+                       slideWindowSeq(inputSeq = db[i, sequenceColumn],
+                                      germlineSeq = db[i, germlineColumn],
+                                      mutThresh = mutThresh,
+                                      windowSize = windowSize)
+                   })
+    if (stop_cluster & !is.numeric(nproc)) {
+        parallel::stopCluster(cluster)
+    }
+    filter
+
+}
 
 #' Parameter tuning for sliding window approach
 #'
@@ -2384,10 +2444,14 @@ slideWindowDb <- function(db, sequenceColumn="sequence_alignment",
 #'                               must be at least 2.
 #' @param    verbose             whether to print out messages indicating current progress. Default
 #'                               is \code{TRUE}.              
-#'                               
+#' @param    nproc                Number of cores to distribute the operation over. If the 
+#'                               \code{cluster} has already been set earlier, then pass the 
+#'                               \code{cluster}. This will ensure that it is not reset.
 #' @return   a list of logical matrices. Each matrix corresponds to a \code{windowSize} in 
 #'           \code{windowSizeRange}. Each column in a matrix corresponds to a \code{mutThresh} in
-#'           \code{mutThreshRange}.
+#'           \code{mutThreshRange}. Each row corresponds to a sequence. \code{TRUE} values
+#'           mean the sequences has at least the number of mutations specified in the column name,
+#'           for that \code{windowSize}.
 #' 
 #' @details  If, in a given combination of \code{mutThresh} and \code{windowSize}, \code{mutThresh} 
 #'           is greater than \code{windowSize}, \code{NA}s will be returned for that particular
@@ -2426,7 +2490,11 @@ slideWindowDb <- function(db, sequenceColumn="sequence_alignment",
 slideWindowTune <- function(db, sequenceColumn="sequence_alignment", 
                             germlineColumn="germline_alignment_d_mask",
                             dbMutList=NULL,
-                            mutThreshRange, windowSizeRange, verbose=TRUE){
+                            mutThreshRange, windowSizeRange, verbose=TRUE,
+                            nproc=1){
+    # Hack for visibility of foreach index variables
+    i <- NULL
+    
     # check preconditions
     stopifnot(!is.null(db))
     stopifnot(min(mutThreshRange) >= 1 & 
@@ -2434,54 +2502,112 @@ slideWindowTune <- function(db, sequenceColumn="sequence_alignment",
                   min(windowSizeRange) >= 2)
     
     
+    db <- db[,c(sequenceColumn, germlineColumn)]
+    # If the user has previously set the cluster and does not wish to reset it
+    if(!is.numeric(nproc)){
+        stop_cluster <- FALSE
+        cluster <- nproc
+        nproc <- 0
+    } else {
+        stop_cluster <- TRUE
+    }
+    
+    # Ensure that the nproc does not exceed the number of cores/CPUs available
+    nproc <- min(nproc, cpuCount())
+    
+    # If user wants to paralellize this function and specifies nproc > 1, then
+    # initialize and register slave R processes/clusters &
+    # export all nesseary environment variables, functions and packages.
+    if (nproc == 1) {
+        # If needed to run on a single core/cpu then, regsiter DoSEQ
+        # (needed for 'foreach' in non-parallel mode)
+        registerDoSEQ()
+    } else {
+        
+        cluster_type <- "FORK"
+        if (.Platform$OS.type == "windows") {
+            cluster_type <- "PSOCK"
+        }
+        
+        if (nproc != 0) {
+            #cluster <- makeCluster(nproc, type="SOCK")
+            cluster <- parallel::makeCluster(nproc, type= cluster_type)
+        }
+        if (cluster_type == "PSOCK") {
+            parallel::clusterExport(cluster,
+                                    list('db', 'sequenceColumn', 'germlineColumn',
+                                         'calcObservedMutations','slideWindowSeqHelper'),
+                                    envir=environment() )
+        }
+        registerDoParallel(cluster)
+    }
+    
     # get positions of R/S mutations for sequences in db
     # do this here and then call slideWindowSeqHelper (so it's done only once)
     # instead of calling slideWindowDb which does this every time it is called
     if (is.null(dbMutList)) {
-        inputMutList <- sapply(1:nrow(db), 
-                              function(i){
-                                  calcObservedMutations(inputSeq=db[i, sequenceColumn],
-                                                        germlineSeq=db[i, germlineColumn],
-                                                        returnRaw=T)$pos})    
+        if (verbose) {cat(paste0("Identifying mutated positions\n"))}
+        pb <- txtProgressBar(0, nrow(db), style = 3 )
+        inputMutList <- foreach(i=1:nrow(db),
+                .verbose=FALSE, .errorhandling='stop') %dopar% {
+                    setTxtProgressBar(pb, i)
+                    calcObservedMutations(inputSeq=db[i, sequenceColumn],
+                                          germlineSeq=db[i, germlineColumn],
+                                          returnRaw=T)$pos
+                }
     } else {
         if (verbose) {cat("dbMutList supplied; skipped calling calcObservedMutations()\n")}
         inputMutList <- dbMutList
     }
     
-    # apply slideWindow on combinations of windowSize and mutThresh
-    for (size in windowSizeRange) {
-        if (verbose) {cat(paste0("now computing for windowSize = ", size, "\n"))}
-        
-        for (thresh in mutThreshRange) {
-            if (thresh <= size){
-                if (verbose) {cat(paste0(">>> mutThresh = ", thresh, "\n"))}
-                # apply slideWindow using current pair of parameters
-                cur.logical <- unlist(lapply(inputMutList,
-                                            slideWindowSeqHelper,
-                                            mutThresh = thresh, windowSize = size))
-            } else {
-                if (verbose) {cat(paste0(">>> mutThresh = ", thresh, " > windowSize = ", 
-                                         size, " (skipped)\n"))}
-                # NA if skipped
-                cur.logical <- rep(NA, nrow(db))
-            }
-            # store results for each thresh as a column in a logical matrix
-            if (thresh == mutThreshRange[1]) {
-                cur.mtx <- matrix(data=cur.logical, nrow=length(cur.logical))
-            } else {
-                cur.mtx <- cbind(cur.mtx, cur.logical)
-            }
-        }
-        colnames(cur.mtx) <- as.character(mutThreshRange)
-        
-        # store results for each size (and threshes under that size) as a logical matrix in a list
-        if (size == windowSizeRange[1]) {
-            cur.list <- list(cur.mtx)
-        } else {
-            cur.list <- c(cur.list, list(cur.mtx))
-        }
+    # if (nproc != 1) {
+    #     parallel::clusterExport(cluster,
+    #                             list('dbMutList'),
+    #                             envir=environment() )
+    # }
+    
+    # Get window-threshold combinations
+    combs <- expand.grid(windowSizeRange, mutThreshRange)
+    pb2 <- txtProgressBar(0, nrow(combs), style = 3 )
+    if (verbose) {cat(paste0("\nAnalyzing combinations of windowSizeRange and mutThreshRange\n"))}
+    tmp <- foreach(i=1:nrow(combs),
+                   .verbose=FALSE, .combine=rbind, .errorhandling='stop') %dopar% {
+                       setTxtProgressBar(pb2, i)
+                       size <- combs[i,1]
+                       thresh <- combs[i,2]
+                       if (thresh <= size){
+                           # apply slideWindow using current pair of parameters
+                           cur.logical <- unlist(lapply(inputMutList,
+                                                        slideWindowSeqHelper,
+                                                        mutThresh = thresh, windowSize = size))
+                       } else {
+                           if (verbose) {cat(paste0(">>> mutThresh = ", thresh, " > windowSize = ",
+                                                    size, " (skipped)\n"))}
+                           # NA if skipped
+                           cur.logical <- rep(NA, nrow(db))
+                       }
+                       data.frame(list(
+                           "windowSize"=size,
+                           "mutThreshold"=thresh,
+                           "cur_logical"=cur.logical,
+                           "row_idx"=1:length(cur.logical)
+                       ))
+                   }
+
+    cur.list <- lapply(split(tmp, f=tmp[['windowSize']]), function(x) {
+        x <- x[,colnames(x) != "windowSize"]
+        pivot_wider(x, names_from=!!rlang::sym("mutThreshold"), 
+                       values_from=!!rlang::sym("cur_logical"), 
+                       id_cols=!!rlang::sym("row_idx")) %>%
+            arrange(!!rlang::sym("row_idx")) %>%
+            select(-!!rlang::sym("row_idx")) %>%
+            as.matrix()
+    })
+    
+    
+    if (stop_cluster & !is.numeric(nproc)) {
+        parallel::stopCluster(cluster)
     }
-    names(cur.list) <- as.character(windowSizeRange)
     
     return(cur.list)
 }
@@ -2492,8 +2618,10 @@ slideWindowTune <- function(db, sequenceColumn="sequence_alignment",
 #' Visualize results from \link{slideWindowTune}
 #' 
 #' @param    tuneList            a list of logical matrices returned by \link{slideWindowTune}.
-#' @param    plotFiltered        whether to plot the number of filtered sequences (as opposed to
-#'                               the number of remaining sequences). Default is \code{TRUE}.
+#' @param    plotFiltered        whether to plot the number of filtered (TRUE), 
+#'                               or remaining (FALSE) sequences for each mutation threshold. 
+#'                               Use `NULL` to plot the number of sequences at each mutation
+#'                               value. Default is \code{TRUE}.
 #' @param    percentage          whether to plot on the y-axis the percentage of filtered sequences
 #'                               (as opposed to the absolute number). Default is \code{FALSE}.                             
 #' @param    jitter.x            whether to jitter x-axis values. Default is \code{FALSE}.                               
@@ -2512,10 +2640,23 @@ slideWindowTune <- function(db, sequenceColumn="sequence_alignment",
 #' @param    legendHoriz         whether to make legend horizontal. Default is \code{FALSE}.
 #' @param    legendCex           numeric values by which legend should be magnified relative to 1.
 #' @param    title               plot main title. Default is NULL (no title)
+#' @param    returnRaw           Return a data.frame with sequence counts (TRUE) or a
+#'                               plot. Default is \code{FALSE}.
 #' 
-#' @details  For each \code{windowSize}, the numbers of sequences filtered or remaining after applying
-#'           the sliding window approach are plotted on the y-axis against thresholds on the number of
-#'           mutations in a window on the x-axis.
+#' @details  For each \code{windowSize}, if \code{plotFiltered=TRUE}, the x-axis 
+#'           represents a mutation threshold range, and the y-axis the number of
+#'           sequences that have at least that number of mutations. If 
+#'           \code{plotFiltered=TRUE}, the y-axis represents the number of sequences
+#'           that have less mutations than the mutation threshold range. For the same
+#'           window size, a sequence can be included in the counts for different
+#'           mutation thresholds. For example, sequence "CCACCAAAA" with germline
+#'           "AAAAAAAAA" has 4 mutations. This sequence has at least 2 mutations 
+#'           and at least 3 mutations, in a window of size 4. the sequence will
+#'           be included in the sequence count for mutation thresholds 2 and 3.
+#'           If \code{plotFiltered=TRUE}, the sequences are counted only once for
+#'           each window size, at their largest mutation threshold. The above 
+#'           example sequence would be included in the sequence count for 
+#'           mutation threshold 3. 
 #'           
 #'           When plotting, a user-defined \code{amount} of jittering can be applied on values plotted
 #'           on either axis or both axes via adjusting \code{jitter.x}, \code{jitter.y}, 
@@ -2560,20 +2701,26 @@ slideWindowTune <- function(db, sequenceColumn="sequence_alignment",
 #' slideWindowTunePlot(tuneList, pchs=1:3, ltys=1:3, cols=1:3,
 #'                     plotFiltered=TRUE, percentage=TRUE, 
 #'                     jitter.y=TRUE, jitter.y.amt=0.01)
-#'                                                             
 #' @export
 slideWindowTunePlot <- function(tuneList, plotFiltered = TRUE, percentage = FALSE,
                                jitter.x = FALSE, jitter.x.amt = 0.1,
                                jitter.y = FALSE, jitter.y.amt = 0.1,
                                pchs = 1, ltys = 2, cols = 1,
                                plotLegend = TRUE, legendPos = "topright", 
-                               legendHoriz = FALSE, legendCex = 1, title=NULL){
+                               legendHoriz = FALSE, legendCex = 1, title=NULL,
+                               returnRaw=FALSE){
     
-    # invert (!) tuneList if plotting retained sequences
-    ylab.part.2 <- "filtered"
-    if (!plotFiltered) {
-        tuneList <- lapply(tuneList, function(x){!x})
-        ylab.part.2 <- "remaining"}
+    if (!is.null(plotFiltered)) {
+        # invert (!) tuneList if plotting retained sequences
+        ylab.part.2 <- "filtered"
+        xlab <- "Threshold on number of mutations"
+        if (!plotFiltered) {
+            tuneList <- lapply(tuneList, function(x){!x})
+            ylab.part.2 <- "remaining"}
+    } else {
+        xlab <- "Maximum number of mutations"
+        ylab.part.2 <- NULL
+    }
     
     # if number of pchs/ltys/cols provided does not match number of lines expected
     # expand into vector with repeating values (otherwise legend would break)
@@ -2582,13 +2729,38 @@ slideWindowTunePlot <- function(tuneList, plotFiltered = TRUE, percentage = FALS
     if (length(cols)!=length(tuneList)) {cols <- rep(cols, length.out=length(tuneList))}
     
     # tabulate tuneList (and if applicable convert to percentage)
+    if (is.null(plotFiltered)) {
+        # preprocess tuneList to count each sequence once,
+        # considering the largest number of mutations in the window
+        plotList.tmp <- lapply(tuneList, function(window_df) {
+            # For each sequence
+            bind_rows(lapply(1:nrow(window_df), function(i) {
+                x <- window_df[i,]
+                # Find the mutation thresholds that are T
+                idx <- which(x)
+                # If there are none (all F or NA values) or there is only one, do nothig
+                # If there are more than one, keep the largest index and set the previous values to F
+                if (length(idx) > 1) {
+                    idx <- max(idx)
+                    x[1:(idx-1)] <- F
+                }
+                x
+            }))
+        })
+        tuneList <- plotList.tmp
+    }
     plotList <- lapply(tuneList, colSums)
+    
     if (percentage) {plotList <- lapply(plotList, function(x){x/nrow(tuneList[[1]])})}
+    
+    if (returnRaw) {
+        return (bind_rows(plotList, .id = "windowSize"))
+    }
     
     # get x-axis values (i.e. mutThreshRange; colnames of matrix in tuneList with most columns)
     #threshes = as.numeric(colnames(tuneList[[which.max(lapply(lapply(tuneList, colnames), length))]]))
-    threshes <- as.numeric(colnames(tuneList[[1]]))
-    
+    threshes <- as.numeric(colnames(tuneList[[1]]))   
+
     # plot for first window size
     x1 <- threshes
     if (jitter.x) {x1 <- jitter(x1, amount=jitter.x.amt)}
@@ -2614,7 +2786,7 @@ slideWindowTunePlot <- function(tuneList, plotFiltered = TRUE, percentage = FALS
          ylim = ylims,
          # xlim: +/- jitter.x.amt*2 to accommodate for amount of jittering on x-axis
          xlim = c(min(threshes)-jitter.x.amt*2, max(threshes+jitter.x.amt*2)),
-         xaxt="n", xlab="Threshold on number of mutations",
+         xaxt="n", xlab=xlab,
          ylab=paste(ylab.part.1, ylab.part.2),
          cex.lab=1.5, cex.axis=1.5, type="b", lwd=1.5,
          pch=pchs[1], lty=ltys[1], col=cols[1])

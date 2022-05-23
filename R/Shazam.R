@@ -124,13 +124,12 @@
 #'                          mutate summarize
 #'                          mutate_at summarize_at
 #'                          rename transmute
-#'                          left_join
+#'                          left_join recode pull
 #' @importFrom  foreach     foreach %dopar% registerDoSEQ
 #' @importFrom  igraph      V E as_adjacency_matrix graph_from_data_frame
 #'                          vertex_attr set_vertex_attr 
 #'                          layout_as_tree V<-
 #' @importFrom  iterators   icount
-#' @importFrom  kedd        h.ucv
 #' @importFrom  KernSmooth  bkde
 #' @importFrom  lazyeval    interp
 #' @importFrom  MASS        fitdistr
@@ -143,13 +142,13 @@
 #'                          approx convolve weighted.mean p.adjust
 #'                          dbeta pbeta qbeta rbeta optim optimize
 #'                          dnorm pnorm runif dgamma pgamma uniroot na.exclude
-#'                          as.dist cutree
+#'                          as.dist cutree integrate
 #' @importFrom  stringi     stri_dup stri_flatten stri_join stri_length 
 #'                          stri_sub stri_sub_replace stri_detect_regex
 #'                          stri_count_boundaries stri_count_regex 
 #'                          stri_extract_all_regex stri_extract_first_regex  
 #'                          stri_replace_all_regex stri_replace_first_regex
-#' @importFrom  tidyr       gather spread
+#' @importFrom  tidyr       gather spread pivot_wider
 #' @importFrom  tidyselect  all_of
 NULL
 
@@ -229,6 +228,10 @@ NULL
 
 # TODO: And what is this?
 # BAYESIAN_FITTED
+
+# IMGT-KABAT numbering mapping
+# As described hare http://www.imgt.org/IMGTScientificChart/Numbering/IMGT-Kabat_part1.html
+# CONVERT_NUM_REF
 
 # Add built-in variables to global variables environment
 utils::globalVariables(c("HH_S1F", "HKL_S1F", "MK_RS1NF",
