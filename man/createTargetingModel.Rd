@@ -79,7 +79,7 @@ A \link{TargetingModel} object.
 \donttest{
 # Subset example data to one isotype and sample as a demo
 data(ExampleDb, package="alakazam")
-db <- subset(ExampleDb, c_call == "IGHA" & sample_id == "-1h")
+db <- subset(ExampleDb, c_call == "IGHA" & sample_id == "-1h")[1:80,]
 
 # Create model using only silent mutations and ignore multiple mutations
 model <- createTargetingModel(db, model="s", sequenceColumn="sequence_alignment",

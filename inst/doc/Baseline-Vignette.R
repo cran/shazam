@@ -3,6 +3,8 @@
 library(shazam)
 library(alakazam)
 data(ExampleDb, package="alakazam")
+# Subset for faster demonstration
+ExampleDb <- subset(ExampleDb, c_call %in% c("IGHA", "IGHG"))
 
 ## ---- eval=TRUE, warning=FALSE, results="hide"--------------------------------
 # Collapse clonal groups into single sequences
@@ -51,14 +53,14 @@ expected <- expectedMutations(observed,
 baseline <- calcBaseline(expected, testStatistic="focused", 
                          regionDefinition=IMGT_V, nproc=1)
 
-## ---- eval=TRUE, warning=FALSE, results="hide"--------------------------------
-# Calculate selection scores from scratch
-baseline <- calcBaseline(clones, testStatistic="focused", 
-                         regionDefinition=IMGT_V, nproc=1)
+## ---- eval=FALSE, warning=FALSE, results="hide"-------------------------------
+#  # Calculate selection scores from scratch
+#  baseline <- calcBaseline(clones, testStatistic="focused",
+#                           regionDefinition=IMGT_V, nproc=1)
 
 ## ---- eval=FALSE, warning=FALSE, results="hide"-------------------------------
 #  # Calculate selection on charge class with the mouse 5-mer model
-#  baseline <- calcBaseline(clones, testStatistic="focused",
+#  baseline_mk_rs5nf <- calcBaseline(clones, testStatistic="focused",
 #                           regionDefinition=IMGT_V,
 #                           targetingModel=MK_RS5NF,
 #                           mutationDefinition=CHARGE_MUTATIONS,

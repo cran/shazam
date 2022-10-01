@@ -1,27 +1,31 @@
 ## ---- eval=TRUE, warning=FALSE, message=FALSE---------------------------------
-# Subset example data to one sample
 library(shazam)
+library(dplyr)
 data(ExampleDb, package="alakazam")
+ExampleDb %>%
+    count(sample_id)
 
 ## ---- eval=TRUE, warning=FALSE------------------------------------------------
 # Use nucleotide Hamming distance and normalize by junction length
-dist_ham <- distToNearest(ExampleDb, sequenceColumn="junction", 
+dist_ham <- distToNearest(ExampleDb %>% filter(sample_id == "+7d"), 
+                          sequenceColumn="junction", 
                           vCallColumn="v_call_genotyped", jCallColumn="j_call",
                           model="ham", normalize="len", nproc=1)
 
 # Use genotyped V assignments, a 5-mer model and no normalization
-dist_s5f <- distToNearest(ExampleDb, sequenceColumn="junction", 
+dist_s5f <- distToNearest(ExampleDb %>% filter(sample_id == "+7d"), 
+                          sequenceColumn="junction", 
                           vCallColumn="v_call_genotyped", jCallColumn="j_call",
                           model="hh_s5f", normalize="none", nproc=1)
 
-## ---- eval=TRUE, warning=FALSE------------------------------------------------
-# Single-cell mode 
-# Group cells in a one-stage process (VJthenLen=FALSE) and using
-# both heavy and light chain sequences (onlyHeavy=FALSE)
-
-data(Example10x, package="alakazam")
-dist_sc <- distToNearest(Example10x, cellIdColumn="cell_id", locusColumn="locus", 
-                         VJthenLen=FALSE, onlyHeavy=FALSE)
+## ---- eval=FALSE, warning=FALSE-----------------------------------------------
+#  # Single-cell mode
+#  # Group cells in a one-stage process (VJthenLen=FALSE) and using
+#  # both heavy and light chain sequences (onlyHeavy=FALSE)
+#  
+#  data(Example10x, package="alakazam")
+#  dist_sc <- distToNearest(Example10x, cellIdColumn="cell_id", locusColumn="locus",
+#                           VJthenLen=FALSE, onlyHeavy=FALSE)
 
 ## ---- eval=TRUE, warning=FALSE, fig.width=7-----------------------------------
 # Generate Hamming distance histogram
@@ -106,7 +110,6 @@ plot(p5)
 ## ----subsample, eval=TRUE, warning=FALSE--------------------------------------
 # Explore V-J-junction length groups sizes to use subsample
 # Show the size of the largest groups
-library(dplyr)
 library(alakazam)
 top_10_sizes <- ExampleDb %>%
      group_by(junction_length) %>% # Group by junction length

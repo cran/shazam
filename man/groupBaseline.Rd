@@ -39,10 +39,12 @@ samples. This is accomplished through a fast numerical convolution technique.
 }
 \examples{
  
-\donttest{
-# Subset example data from alakazam
+\dontrun{
+# Subset example data from alakazam as a demo
 data(ExampleDb, package="alakazam")
 db <- subset(ExampleDb, c_call \%in\% c("IGHM", "IGHG"))
+set.seed(112)
+db <- dplyr::slice_sample(db, n=200)
 
 # Collapse clones
 db <- collapseClones(db, cloneColumn="clone_id",
@@ -73,7 +75,6 @@ isotype_colors <- c("IGHM"="darkorchid", "IGHD"="firebrick",
 plotBaselineDensity(grouped2, idColumn="sample_id", groupColumn="c_call",
                     colorElement="group", colorValues=isotype_colors,
                     sigmaLimits=c(-1, 1))
-
 # Collapse previous isotype (within variable) grouped PDFs into sample PDFs
 grouped3 <- groupBaseline(grouped2, groupBy="sample_id")
 sample_colors <- c("-1h"="steelblue", "+7d"="firebrick")

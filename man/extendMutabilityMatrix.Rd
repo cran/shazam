@@ -30,6 +30,8 @@ with 5-mers that include Ns by averaging over all corresponding 5-mers without N
 # Subset example data to one isotype and sample as a demo
 data(ExampleDb, package="alakazam")
 db <- subset(ExampleDb, c_call == "IGHA" & sample_id == "-1h")
+set.seed(112)
+db <- dplyr::slice_sample(db, n=75)
 
 # Create model using only silent mutations and ignore multiple mutations
 sub_model <- createSubstitutionMatrix(db, model="s", sequenceColumn="sequence_alignment",

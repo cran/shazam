@@ -75,9 +75,11 @@ using the BASELINe method.
 }
 \examples{
 \donttest{
-# Subset example data
+# Subset example data as a demo
 data(ExampleDb, package="alakazam")
 db <- subset(ExampleDb, c_call \%in\% c("IGHM", "IGHG"))
+set.seed(112)
+db <- dplyr::slice_sample(db, n=25)
 
 # Collapse clones
 db <- collapseClones(db, cloneColumn="clone_id",
@@ -102,10 +104,7 @@ grouped <- groupBaseline(baseline, groupBy=c("sample_id", "c_call"))
 isotype_colors <- c("IGHM"="darkorchid", "IGHD"="firebrick", 
                     "IGHG"="seagreen", "IGHA"="steelblue")
 plotBaselineSummary(grouped, "sample_id", "c_call", 
-                    groupColors=isotype_colors)
-
-# Facet by group instead of region
-plotBaselineSummary(grouped, "sample_id", "c_call", facetBy="group")
+                    groupColors=isotype_colors, facetBy="region")
 }
 
 }

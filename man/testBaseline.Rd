@@ -32,9 +32,11 @@ posterior probability density functions (PDFs).
 }
 \examples{
 \donttest{
-# Subset example data
+# Subset example data as a demo
 data(ExampleDb, package="alakazam")
-db <- subset(ExampleDb, c_call \%in\% c("IGHM", "IGHG", "IGHA"))
+db <- subset(ExampleDb, c_call \%in\% c("IGHM", "IGHG"))
+set.seed(112)
+db <- dplyr::slice_sample(db, n=200)
 
 # Collapse clones
 db <- collapseClones(db, cloneColumn="clone_id",

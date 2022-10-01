@@ -50,6 +50,8 @@ fields (columns) to be present in the table:
 library(shazam)
 library(alakazam)
 data(ExampleDb, package="alakazam")
+# Subset for faster demonstration
+ExampleDb <- subset(ExampleDb, c_call %in% c("IGHA", "IGHG"))
 ```
 
 ## Preprocessing
@@ -181,7 +183,7 @@ It is not required for `observedMutation` and `expectedMutations` to be run prio
 data.frame, then `calcBaseline` will call the appropriate functions prior to 
 calculating selection scores.
 
-```{r, eval=TRUE, warning=FALSE, results="hide"}
+```{r, eval=FALSE, warning=FALSE, results="hide"}
 # Calculate selection scores from scratch
 baseline <- calcBaseline(clones, testStatistic="focused", 
                          regionDefinition=IMGT_V, nproc=1)
@@ -212,7 +214,7 @@ The default behavior of `expectedMutations` is to use the human 5-mer mutation m
 
 ```{r, eval=FALSE, warning=FALSE, results="hide"}
 # Calculate selection on charge class with the mouse 5-mer model
-baseline <- calcBaseline(clones, testStatistic="focused", 
+baseline_mk_rs5nf <- calcBaseline(clones, testStatistic="focused", 
                          regionDefinition=IMGT_V, 
                          targetingModel=MK_RS5NF,
                          mutationDefinition=CHARGE_MUTATIONS,

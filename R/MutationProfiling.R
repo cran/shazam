@@ -2399,12 +2399,10 @@ slideWindowDb <- function(db, sequenceColumn="sequence_alignment",
             #cluster <- makeCluster(nproc, type="SOCK")
             cluster <- parallel::makeCluster(nproc, type= cluster_type)
         }
-        if (cluster_type == "PSOCK") {
-            parallel::clusterExport(cluster,
+        parallel::clusterExport(cluster,
                                     list('db', 'sequenceColumn', 'germlineColumn',
                                          'mutThresh', 'windowSize','slideWindowSeq'),
                                     envir=environment() )
-        }
         registerDoParallel(cluster)
     }
 
@@ -2533,12 +2531,10 @@ slideWindowTune <- function(db, sequenceColumn="sequence_alignment",
             #cluster <- makeCluster(nproc, type="SOCK")
             cluster <- parallel::makeCluster(nproc, type= cluster_type)
         }
-        if (cluster_type == "PSOCK") {
-            parallel::clusterExport(cluster,
+        parallel::clusterExport(cluster,
                                     list('db', 'sequenceColumn', 'germlineColumn',
                                          'calcObservedMutations','slideWindowSeqHelper'),
                                     envir=environment() )
-        }
         registerDoParallel(cluster)
     }
     
@@ -2618,10 +2614,10 @@ slideWindowTune <- function(db, sequenceColumn="sequence_alignment",
 #' Visualize results from \link{slideWindowTune}
 #' 
 #' @param    tuneList            a list of logical matrices returned by \link{slideWindowTune}.
-#' @param    plotFiltered        whether to plot the number of filtered (TRUE), 
-#'                               or remaining (FALSE) sequences for each mutation threshold. 
-#'                               Use `NULL` to plot the number of sequences at each mutation
-#'                               value. Default is \code{TRUE}.
+#' @param    plotFiltered        whether to plot the number of filtered ('filtered'), 
+#'                               or remaining ('remaining') sequences for each mutation threshold. 
+#'                               Use 'per_mutation' to plot the number of sequences at each mutation
+#'                               value. Default is \code{'filtered'}.
 #' @param    percentage          whether to plot on the y-axis the percentage of filtered sequences
 #'                               (as opposed to the absolute number). Default is \code{FALSE}.                             
 #' @param    jitter.x            whether to jitter x-axis values. Default is \code{FALSE}.                               
@@ -2630,8 +2626,10 @@ slideWindowTune <- function(db, sequenceColumn="sequence_alignment",
 #' @param    jitter.y            whether to jitter y-axis values. Default is \code{FALSE}.
 #' @param    jitter.y.amt        amount of jittering to be applied on y-axis values if 
 #'                               \code{jitter.y=TRUE}. Default is 0.1.                               
-#' @param    pchs                point types to pass on to \link{plot}.
-#' @param    ltys                line types to pass on to \link{plot}.
+#' @param    pchs                point types to pass on to \link{plot}. Default is
+#'                               \code{1:length(tuneList)}.
+#' @param    ltys                line types to pass on to \link{plot}. Default is
+#'                               \code{1:length(tuneList)}.
 #' @param    cols                colors to pass on to \link{plot}.                             
 #' @param    plotLegend          whether to plot legend. Default is \code{TRUE}.
 #' @param    legendPos           position of legend to pass on to \link{legend}. Can be either a
@@ -2643,18 +2641,18 @@ slideWindowTune <- function(db, sequenceColumn="sequence_alignment",
 #' @param    returnRaw           Return a data.frame with sequence counts (TRUE) or a
 #'                               plot. Default is \code{FALSE}.
 #' 
-#' @details  For each \code{windowSize}, if \code{plotFiltered=TRUE}, the x-axis 
+#' @details  For each \code{windowSize}, if \code{plotFiltered='filtered'}, the x-axis 
 #'           represents a mutation threshold range, and the y-axis the number of
 #'           sequences that have at least that number of mutations. If 
-#'           \code{plotFiltered=TRUE}, the y-axis represents the number of sequences
+#'           \code{plotFiltered='remaining'}, the y-axis represents the number of sequences
 #'           that have less mutations than the mutation threshold range. For the same
 #'           window size, a sequence can be included in the counts for different
 #'           mutation thresholds. For example, sequence "CCACCAAAA" with germline
 #'           "AAAAAAAAA" has 4 mutations. This sequence has at least 2 mutations 
 #'           and at least 3 mutations, in a window of size 4. the sequence will
 #'           be included in the sequence count for mutation thresholds 2 and 3.
-#'           If \code{plotFiltered=TRUE}, the sequences are counted only once for
-#'           each window size, at their largest mutation threshold. The above 
+#'           If \code{plotFiltered='per_mutation'}, the sequences are counted only once 
+#'           for each window size, at their largest mutation threshold. The above 
 #'           example sequence would be included in the sequence count for 
 #'           mutation threshold 3. 
 #'           
@@ -2684,42 +2682,50 @@ slideWindowTune <- function(db, sequenceColumn="sequence_alignment",
 #'
 #' # Visualize
 #' # Plot numbers of sequences filtered without jittering y-axis values
-#' slideWindowTunePlot(tuneList, pchs=1:3, ltys=1:3, cols=1:3, 
-#'                     plotFiltered=TRUE, jitter.y=FALSE)
+#' plotSlideWindowTune(tuneList, pchs=1:3, ltys=1:3, cols=1:3, 
+#'                     plotFiltered='filtered', jitter.y=FALSE)
 #'                     
 #' # Notice that some of the lines overlap
 #' # Jittering could help
-#' slideWindowTunePlot(tuneList, pchs=1:3, ltys=1:3, cols=1:3,
-#'                     plotFiltered=TRUE, jitter.y=TRUE)
+#' plotSlideWindowTune(tuneList, pchs=1:3, ltys=1:3, cols=1:3,
+#'                     plotFiltered='filtered', jitter.y=TRUE)
 #'                     
 #' # Plot numbers of sequences remaining instead of filtered
-#' slideWindowTunePlot(tuneList, pchs=1:3, ltys=1:3, cols=1:3, 
-#'                     plotFiltered=FALSE, jitter.y=TRUE, 
+#' plotSlideWindowTune(tuneList, pchs=1:3, ltys=1:3, cols=1:3, 
+#'                     plotFiltered='remaining', jitter.y=TRUE, 
 #'                     legendPos="bottomright")
 #'                     
 #' # Plot percentages of sequences filtered with a tiny amount of jittering
-#' slideWindowTunePlot(tuneList, pchs=1:3, ltys=1:3, cols=1:3,
-#'                     plotFiltered=TRUE, percentage=TRUE, 
+#' plotSlideWindowTune(tuneList, pchs=1:3, ltys=1:3, cols=1:3,
+#'                     plotFiltered='filtered', percentage=TRUE, 
 #'                     jitter.y=TRUE, jitter.y.amt=0.01)
 #' @export
-slideWindowTunePlot <- function(tuneList, plotFiltered = TRUE, percentage = FALSE,
+plotSlideWindowTune <- function(tuneList, 
+                               plotFiltered = c('filtered','remaining','per_mutation'), 
+                               percentage = FALSE,
                                jitter.x = FALSE, jitter.x.amt = 0.1,
                                jitter.y = FALSE, jitter.y.amt = 0.1,
-                               pchs = 1, ltys = 2, cols = 1,
+                               pchs = 1:length(tuneList), ltys = 1:length(tuneList), cols = 1,
                                plotLegend = TRUE, legendPos = "topright", 
                                legendHoriz = FALSE, legendCex = 1, title=NULL,
                                returnRaw=FALSE){
+    # collapse parameter if no user input then first item is selected
+    plotFiltered <- match.arg(plotFiltered)
     
-    if (!is.null(plotFiltered)) {
-        # invert (!) tuneList if plotting retained sequences
-        ylab.part.2 <- "filtered"
+    if (plotFiltered == 'filtered') {
         xlab <- "Threshold on number of mutations"
-        if (!plotFiltered) {
-            tuneList <- lapply(tuneList, function(x){!x})
-            ylab.part.2 <- "remaining"}
-    } else {
+        ylab.part.2 <- "filtered"
+    } else if (plotFiltered == 'remaining') {
+        # invert (!) tuneList if plotting retained sequences
+        tuneList <- lapply(tuneList, function(x){!x})
+        xlab <- "Threshold on number of mutations"
+        ylab.part.2 <- "remaining"
+    } else if (plotFiltered == 'per_mutation') {
         xlab <- "Maximum number of mutations"
-        ylab.part.2 <- NULL
+        ylab.part.2 <- 'per_mutation'
+    } else {
+        warning("plotFiltered must be in [filtered, remaining, per_mutation].\n ", 
+                plotFiltered, " received instead. \n")
     }
     
     # if number of pchs/ltys/cols provided does not match number of lines expected
@@ -2729,7 +2735,7 @@ slideWindowTunePlot <- function(tuneList, plotFiltered = TRUE, percentage = FALS
     if (length(cols)!=length(tuneList)) {cols <- rep(cols, length.out=length(tuneList))}
     
     # tabulate tuneList (and if applicable convert to percentage)
-    if (is.null(plotFiltered)) {
+    if (plotFiltered == 'per_mutation') {
         # preprocess tuneList to count each sequence once,
         # considering the largest number of mutations in the window
         plotList.tmp <- lapply(tuneList, function(window_df) {
@@ -2891,7 +2897,8 @@ slideWindowTunePlot <- function(tuneList, plotFiltered = TRUE, percentage = FALS
 #' # Subset example data
 #' data(ExampleDb, package="alakazam")
 #' db <- subset(ExampleDb, c_call %in% c("IGHA", "IGHG") & sample_id == "+7d")
-#'
+#' set.seed(112)
+#' db <- dplyr::slice_sample(db, n=100)
 #' # Calculate expected mutations over V region
 #' db_exp <- expectedMutations(db,
 #'                             sequenceColumn="sequence_alignment",
@@ -2908,7 +2915,6 @@ slideWindowTunePlot <- function(tuneList, plotFiltered = TRUE, percentage = FALS
 #'                            nproc=1)
 #'
 #' @export
-#'
 expectedMutations <- function(db,sequenceColumn = "sequence_alignment", 
                                germlineColumn = "germline_alignment", 
                                targetingModel = HH_S5F, 

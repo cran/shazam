@@ -35,7 +35,8 @@ At a given threshold value of \code{minNumSeqMutations}, for a given 5-mer,
 # Subset example data to one isotype and sample as a demo
 data(ExampleDb, package="alakazam")
 db <- subset(ExampleDb, c_call == "IGHA" & sample_id == "-1h")
-
+set.seed(112)
+db <- dplyr::slice_sample(db, n=75)
 # Create model using only silent mutations
 sub <- createSubstitutionMatrix(db, sequenceColumn="sequence_alignment",
                                 germlineColumn="germline_alignment_d_mask",

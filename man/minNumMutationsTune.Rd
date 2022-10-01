@@ -51,7 +51,7 @@ subCount <- createSubstitutionMatrix(db, sequenceColumn="sequence_alignment",
                                      returnModel="5mer", numMutationsOnly=TRUE)
 
 # Tune minNumMutations
-minNumMutationsTune(subCount, seq(from=10, to=100, by=10))
+minNumMutationsTune(subCount, seq(from=10, to=80, by=10))
                                       
 }
 \references{

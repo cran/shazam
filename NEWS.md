@@ -1,3 +1,21 @@
+Version 1.1.2: September 26, 2022
+-------------------------------------------------------------------------------
+
+Mutation Profiling:
+
++ Bug fix in parallelization set up for functions `slideWindowTune` 
+  and `slideWindowDb`.
+  
++ `plotSlideWindowTune` (`slideWindowTunePlot`). Updated the possible
+   values of the parameter `plotFiltered`, for easier usage. The new values 
+   (and their equivalent values in `slideWindowTunePlot`) are `filtered` (`TRUE`), 
+   `remaining` (`FALSE`), and `per_mutation` (`NULL`). 
+  
+Deprecated:
+
+  + Deprecated `slideWindowTunePlot` in favor of `plotSlideWindowTune`, for naming
+  consistency.
+
 Version 1.1.1: May 23, 2022
 -------------------------------------------------------------------------------
 

@@ -74,9 +74,11 @@ For \code{tuneMtx} produced by \link{minNumMutationsTune}, for each sample, depe
 }
 \examples{
 \donttest{
-# Subset example data to one isotype and sample as demos
+# Subset example data to one isotype and 200 sequences
 data(ExampleDb, package="alakazam")
 db <- subset(ExampleDb, c_call == "IGHA")
+set.seed(112)
+db <- dplyr::slice_sample(db, n=50)
 
 tuneMtx = list()
 for (i in 1:length(unique(db$sample_id))) {
@@ -103,7 +105,7 @@ names(tuneMtx) = unique(db[["sample_id"]])
 # plot with legend for both samples for a subset of minNumMutations values
 plotTune(tuneMtx, thresh=c(5, 15, 25, 40), criterion="3mer",
          pchs=16:17, ltys=1:2, cols=2:3, 
-         plotLegend=TRUE, legendPos=c(5, 100))
+         plotLegend=TRUE, legendPos=c(25, 30))
 
 # plot for only 1 sample for all the minNumMutations values (no legend)
 plotTune(tuneMtx[[1]], thresh=seq(from=5, to=50, by=5), criterion="3mer")
