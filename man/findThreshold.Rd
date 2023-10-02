@@ -60,7 +60,7 @@ Applies only when \code{method="gmm"}.}
 }
 }
 \description{
-\code{findThreshold} automtically determines an optimal threshold for clonal assignment of
+\code{findThreshold} automatically determines an optimal threshold for clonal assignment of
 Ig sequences using a vector of nearest neighbor distances. It provides two alternative methods 
 using either a Gamma/Gaussian Mixture Model fit (\code{method="gmm"}) or kernel density 
 fit (\code{method="density"}).

@@ -1,4 +1,5 @@
-## ---- eval=TRUE, warning=FALSE, message=FALSE---------------------------------
+## ----eval=TRUE, warning=FALSE, message=FALSE----------------------------------
+# Import required packages
 library(shazam)
 
 # Input sequence
@@ -13,10 +14,11 @@ shmulateSeq(sequence, numMutations=0.2, frequency=TRUE)
 # Simulate introduction of 4 mutations using the MK_RS5NF targeting model
 shmulateSeq(sequence, numMutations=4, targetingModel=MK_RS5NF)
 
-## ---- eval=TRUE, warning=FALSE, message=FALSE---------------------------------
+## ----eval=TRUE, warning=FALSE, message=FALSE----------------------------------
+# Import required packages
 library(alakazam)
-library(shazam)
 library(igraph)
+library(shazam)
 
 # Load example lineage
 data(ExampleTrees, package="alakazam")
@@ -28,7 +30,7 @@ sequence <- "NGATCTGACGACACGGCCGTGTATTACTGTGCGAGAGATAGTTTA"
 # Simulate using the default HH_S5F targeting model
 shmulateTree(sequence, graph)
 
-## ---- eval=TRUE, warning=FALSE------------------------------------------------
+## ----eval=TRUE, warning=FALSE-------------------------------------------------
 # The annotation field called "sample_id"
 vertex_attr(graph)$sample_id
 
@@ -42,7 +44,7 @@ plot(graph, layout=layout_as_tree, edge.arrow.mode=0, vertex.label.cex=0.75)
 # In this case, "GN5SHBT07JDYW5" is then taken to be the MRCA
 shmulateTree(sequence, graph, field="sample_id", exclude=NA)
 
-## ---- eval=TRUE, warning=FALSE------------------------------------------------
+## ----eval=TRUE, warning=FALSE-------------------------------------------------
 # The "Inferred1" node is taken to be the MRCA and has 2 immediate offsprings
 par(mar=c(0, 0, 0, 0) + 0.1)
 plot(graph, layout=layout_as_tree, edge.arrow.mode=0, vertex.label.cex=0.75)

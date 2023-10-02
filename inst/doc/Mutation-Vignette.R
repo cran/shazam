@@ -1,15 +1,15 @@
-## ---- eval=TRUE, warning=FALSE, message=FALSE---------------------------------
+## ----eval=TRUE, warning=FALSE, message=FALSE----------------------------------
 # Import required packages
 library(alakazam)
-library(shazam)
 library(dplyr)
 library(ggplot2)
+library(shazam)
 
 # Load and subset example data
 data(ExampleDb, package="alakazam")
 db <- subset(ExampleDb, c_call %in% c("IGHA", "IGHG") & sample_id == "+7d")
 
-## ---- eval=TRUE---------------------------------------------------------------
+## ----eval=TRUE----------------------------------------------------------------
 # Calculate R and S mutation counts
 db_obs <- observedMutations(db, sequenceColumn="sequence_alignment",
                             germlineColumn="germline_alignment_d_mask",
@@ -32,7 +32,7 @@ db_obs %>%
     select(sequence_id, starts_with("mu_freq_")) %>%
     head(n=4)
 
-## ---- eval=TRUE---------------------------------------------------------------
+## ----eval=TRUE----------------------------------------------------------------
 # Calculate combined R and S mutation frequencies
 db_obs <- observedMutations(db, sequenceColumn="sequence_alignment",
                             germlineColumn="germline_alignment_d_mask",
@@ -42,18 +42,19 @@ db_obs <- observedMutations(db, sequenceColumn="sequence_alignment",
                             nproc=1)
 # Show new mutation frequency columns
 db_obs %>% 
-    select(sequence_id, starts_with("mu_freq_")) %>%
+    select(sequence_id, starts_with("mu_freq")) %>%
     head(n=4)
 
-## ---- eval=TRUE, warning=FALSE------------------------------------------------
+## ----eval=TRUE, warning=FALSE-------------------------------------------------
 g1 <- ggplot(db_obs, aes(x=c_call, y=mu_freq, fill=c_call)) +
-    theme_bw() + ggtitle("Total mutations") +
-    xlab("Isotype") + ylab("Mutation frequency") +
-    scale_fill_manual(name="Isotype", values=IG_COLORS) +
-    geom_boxplot()
+        geom_boxplot() + 
+        labs(title = "Total mutations", 
+             x = "Isotype", y = "Mutation frequency") +
+        scale_fill_manual(name="Isotype", values=IG_COLORS, limits=force) +
+        theme_bw() 
 plot(g1)
 
-## ---- eval=TRUE---------------------------------------------------------------
+## ----eval=TRUE----------------------------------------------------------------
 # Calculate R and S mutation counts for individual CDRs and FWRs
 db_obs_v <- observedMutations(db, sequenceColumn="sequence_alignment",
                               germlineColumn="germline_alignment_d_mask",
@@ -76,20 +77,22 @@ db_obs_v %>%
     select(sequence_id, starts_with("mu_freq_")) %>%
     head(n=4)
 
-## ---- eval=TRUE, warning=FALSE------------------------------------------------
+## ----eval=TRUE, warning=FALSE-------------------------------------------------
 g2 <- ggplot(db_obs_v, aes(x=c_call, y=mu_freq_cdr_s, fill=c_call)) +
-    theme_bw() + ggtitle("CDR silent mutations") +
-    xlab("Isotype") + ylab("Mutation frequency") +
-    scale_fill_manual(name="Isotype", values=IG_COLORS) +
-    geom_boxplot()
+        geom_boxplot() + 
+        labs(title = "CDR silent mutations", 
+             x = "Isotype", y = "Mutation frequency") +
+        scale_fill_manual(name="Isotype", values=IG_COLORS, limits=force) +
+        theme_bw()
 g3 <- ggplot(db_obs_v, aes(x=c_call, y=mu_freq_cdr_r, fill=c_call)) +
-    theme_bw() + ggtitle("CDR replacement mutations") +
-    xlab("Isotype") + ylab("Mutation frequency") +
-    scale_fill_manual(name="Isotype", values=IG_COLORS) +
-    geom_boxplot()
+        geom_boxplot() + 
+        labs(title = "CDR replacement mutations", 
+           x = "Isotype", y = "Mutation frequency") +
+        scale_fill_manual(name="Isotype", values=IG_COLORS, limits=force) +
+        theme_bw()
 alakazam::gridPlot(g2, g3, ncol=2)
 
-## ---- eval=TRUE---------------------------------------------------------------
+## ----eval=TRUE----------------------------------------------------------------
 # Calculate charge mutation frequency for the full sequence
 db_obs_ch <- observedMutations(db, sequenceColumn="sequence_alignment",
                                germlineColumn="germline_alignment_d_mask",
@@ -102,11 +105,12 @@ db_obs_ch %>%
     select(sequence_id, starts_with("mu_freq_")) %>%
     head(n=4)
 
-## ---- eval=TRUE, warning=FALSE------------------------------------------------
+## ----eval=TRUE, warning=FALSE-------------------------------------------------
 g4 <- ggplot(db_obs_ch, aes(x=c_call, y=mu_freq_seq_r, fill=c_call)) +
-    theme_bw() + ggtitle("Charge replacement mutations") +
-    xlab("Isotype") + ylab("Mutation frequency") +
-    scale_fill_manual(name="Isotype", values=IG_COLORS) +
-    geom_boxplot()
+        geom_boxplot() + 
+        labs(title="Charge replacement mutations", 
+             x="Isotype", y="Mutation frequency") +
+        scale_fill_manual(name="Isotype", values=IG_COLORS, limits=force) + 
+        theme_bw()
 plot(g4)
 

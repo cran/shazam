@@ -23,6 +23,7 @@ distToNearest(
   progress = FALSE,
   cellIdColumn = NULL,
   locusColumn = "locus",
+  locusValues = c("IGH"),
   onlyHeavy = TRUE,
   keepVJLgroup = TRUE
 )
@@ -89,10 +90,11 @@ with the behavior governed by the \code{locusColumn} and
 bulk sequencing data is assumed.}
 
 \item{locusColumn}{name of the column containing locus information. 
-Only applicable to single-cell data.
-Ignored if \code{cellIdColumn=NULL}. Valid loci values
+Valid loci values
 are "IGH", "IGI", "IGK", "IGL", "TRA", "TRB", 
 "TRD", and "TRG".}
+
+\item{locusValues}{Loci values to focus the analysis on.}
 
 \item{onlyHeavy}{use only the IGH (BCR) or TRB/TRD (TCR) sequences 
 for grouping. Only applicable to single-cell data.
@@ -226,5 +228,6 @@ plot(p1)
 See \link{calcTargetingDistance} for generating nucleotide distance matrices 
           from a \link{TargetingModel} object. See \link{HH_S5F}, \link{HH_S1F}, 
           \link{MK_RS1NF}, \link[alakazam]{getDNAMatrix}, and \link[alakazam]{getAAMatrix}
-          for individual model details.
+          for individual model details. \link[alakazam]{getLocus} to get locus
+          values based on allele calls.
 }

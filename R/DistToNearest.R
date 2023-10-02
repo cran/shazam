@@ -694,10 +694,10 @@ nearestDist <- function(sequences, model=c("ham", "aa", "hh_s1f", "hh_s5f", "mk_
 #'                           \code{onlyHeavy} arguments. If set to \code{NULL} then the 
 #'                           bulk sequencing data is assumed.
 #' @param    locusColumn     name of the column containing locus information. 
-#'                           Only applicable to single-cell data.
-#'                           Ignored if \code{cellIdColumn=NULL}. Valid loci values
+#'                           Valid loci values
 #'                           are "IGH", "IGI", "IGK", "IGL", "TRA", "TRB", 
 #'                           "TRD", and "TRG".
+#' @param    locusValues     Loci values to focus the analysis on.
 #' @param    onlyHeavy       use only the IGH (BCR) or TRB/TRD (TCR) sequences 
 #'                           for grouping. Only applicable to single-cell data.
 #'                           Ignored if \code{cellIdColumn=NULL}. 
@@ -798,7 +798,8 @@ nearestDist <- function(sequences, model=c("ham", "aa", "hh_s1f", "hh_s5f", "mk_
 #' @seealso  See \link{calcTargetingDistance} for generating nucleotide distance matrices 
 #'           from a \link{TargetingModel} object. See \link{HH_S5F}, \link{HH_S1F}, 
 #'           \link{MK_RS1NF}, \link[alakazam]{getDNAMatrix}, and \link[alakazam]{getAAMatrix}
-#'           for individual model details.
+#'           for individual model details. \link[alakazam]{getLocus} to get locus
+#'           values based on allele calls.
 #' 
 #' @examples
 #' # Subset example data to one sample as a demo
@@ -827,7 +828,7 @@ distToNearest <- function(db, sequenceColumn="junction", vCallColumn="v_call", j
                           normalize=c("len", "none"), symmetry=c("avg", "min"),
                           first=TRUE, VJthenLen=TRUE, nproc=1, fields=NULL, cross=NULL, 
                           mst=FALSE, subsample=NULL, progress=FALSE,
-                          cellIdColumn=NULL, locusColumn="locus", 
+                          cellIdColumn=NULL, locusColumn="locus", locusValues=c("IGH"),
                           onlyHeavy=TRUE, keepVJLgroup=TRUE) {
     # Hack for visibility of foreach index variables
     i <- NULL
@@ -837,14 +838,20 @@ distToNearest <- function(db, sequenceColumn="junction", vCallColumn="v_call", j
     normalize <- match.arg(normalize)
     symmetry <- match.arg(symmetry)
     if (!is.data.frame(db)) { stop('Must submit a data frame') }
-
+    
     # Check base input
     check <- checkColumns(db, c(sequenceColumn, vCallColumn, jCallColumn, fields, cross))
     if (check != TRUE) { stop(check) }
     
+    # Check locusColumn
+    # message locusColumn is required
+    check <- checkColumns(db, locusColumn)
+    if (check != TRUE) { stop(check, ". `locusColumn`, with default value 'locus', is now a required parameter.") }
+    if (is.null(locusColumn)) { stop("`locusColumn`, is now a required parameter.") }
+    
     # Check single-cell input
     if (!is.null(cellIdColumn)) {
-        check <- checkColumns(db, c(cellIdColumn, locusColumn))
+        check <- checkColumns(db, c(cellIdColumn))
         if (check != TRUE) { stop(check) }
     }
     
@@ -857,21 +864,41 @@ distToNearest <- function(db, sequenceColumn="junction", vCallColumn="v_call", j
     # Convert sequence columns to uppercase
     db <- toupperColumns(db, c(sequenceColumn)) 
     
+    # Create new column for distance to nearest neighbor
+    db$TMP_DIST_NEAREST <- rep(NA, nrow(db))
+    db$DTN_ROW_ID <- 1:nrow(db)
+    
+    # Check valid loci
+    if (any(is.na(db[[locusColumn]]))) {
+        stop("The locus column contains NA loci annotations.")
+    }
+    
+    # check locus column contains valid values
+    # We could use the airr schema: valid_loci <- airr::RearrangementSchema['locus'][['enum']]
+    valid_loci <- c("IGH", "IGI", "IGK", "IGL", "TRA", "TRB", "TRD", "TRG") 
+    
+    seen_loci <- unique(db[[locusColumn]])
+    check <- !all(seen_loci %in% valid_loci)
+    if (check) {
+        not_valid <- paste("'",setdiff(seen_loci,valid_loci),"'", sep="",collapse=",")
+        stop("The locus column contains invalid loci annotations: ",not_valid,".")
+    }
+    
+    invalid_locus_values <- locusValues[locusValues %in% valid_loci == F]
+    if (length(invalid_locus_values)>0) {
+        stop("`locusValues` contains invalid loci annotations: ",paste(invalid_locus_values,collapse=", "),".")
+    }
+    
     # Single-cell mode?
-    if (!is.null(cellIdColumn) & !is.null(locusColumn)) {
+    if (!is.null(cellIdColumn)) {
         singleCell <- TRUE
-        
-        # check locus column
-        valid_loci <- c("IGH", "IGI", "IGK", "IGL", "TRA", "TRB", "TRD", "TRG")
-        check <- !all(unique(db[[locusColumn]]) %in% valid_loci)
-        if (check) {
-            stop("The locus column contains invalid loci annotations.")
-        }
     } else {
         singleCell <- FALSE
     } 
     
     # Disallow multiple heavy chains per cell
+    # sequences with cell_id==NA are not considered, table's default 
+    # is useNA="no"
     if (singleCell) {
         # check multiple heavy chains
         x <- sum(table(db[[cellIdColumn]][db[[locusColumn]] == "IGH"]) > 1)
@@ -891,7 +918,6 @@ distToNearest <- function(db, sequenceColumn="junction", vCallColumn="v_call", j
     }
     
     # Check for invalid characters
-    # heavy
     valid_seq <- sapply(db[[sequenceColumn]], allValidChars, getCharsInModel(model)) 
     not_valid_seq <- which(!valid_seq)
     if (length(not_valid_seq) > 0) {
@@ -904,14 +930,23 @@ distToNearest <- function(db, sequenceColumn="junction", vCallColumn="v_call", j
     junc_len <- "JUNC_LEN"
     db[[junc_len]] <- stri_length(db[[sequenceColumn]])
     
+    # fields groups
+    db$DTN_TMP_FIELD <- db %>%
+        group_by(!!!rlang::syms(fields)) %>%
+        group_indices()
+    
     # create V+J grouping, or V+J+L grouping
     if (VJthenLen) {
         # 2-stage partitioning using first V+J and then L
         # V+J only first
         # creates $vj_group
-        db <- groupGenes(db, v_call=vCallColumn, j_call=jCallColumn, junc_len=NULL,
+        db <- db %>%
+            ungroup() %>%
+            group_by(!!rlang::sym("DTN_TMP_FIELD")) %>%
+            do(groupGenes(.data, v_call=vCallColumn, j_call=jCallColumn, junc_len=NULL,
                          cell_id=cellIdColumn, locus=locusColumn, only_heavy=onlyHeavy,
-                         first=first)
+                         first=first)) %>%
+            ungroup()
         # L (later)  
         group_cols <- c("vj_group", junc_len)
         
@@ -919,16 +954,27 @@ distToNearest <- function(db, sequenceColumn="junction", vCallColumn="v_call", j
         # 1-stage partitioning using V+J+L simultaneously
         # creates $vj_group
         # note that despite the name (VJ), this is based on V+J+L
-        db <- groupGenes(db, v_call=vCallColumn, j_call=jCallColumn, junc_len=junc_len,
-                         cell_id=cellIdColumn, locus=locusColumn, only_heavy=onlyHeavy,
-                         first=first)
+        db <- db %>%
+            ungroup() %>%
+            group_by(!!rlang::sym("DTN_TMP_FIELD")) %>%
+            do(groupGenes(.data, v_call=vCallColumn, j_call=jCallColumn, junc_len=junc_len,
+                          cell_id=cellIdColumn, locus=locusColumn, only_heavy=onlyHeavy,
+                          first=first)) %>%
+            ungroup()
         group_cols <- c("vj_group")
     }
     
     # groups to use
     if (!is.null(fields)) {
         group_cols <- append(group_cols,fields)
+        # make vj_group unique across fields by pasting field group
+        db <- db %>%
+            dplyr::rowwise() %>%
+            mutate(vj_group=paste("F",!!rlang::sym("DTN_TMP_FIELD"),"_",!!rlang::sym("vj_group"), sep="", collapse = "")) %>%
+            ungroup() 
     }
+    db[['DTN_TMP_FIELD']] <- NULL
+    
     # unique groups
     # not necessary but good practice to force as df and assign colnames
     # (in case group_cols has length 1; which can happen in groupBaseline)
@@ -955,10 +1001,6 @@ distToNearest <- function(db, sequenceColumn="junction", vCallColumn="v_call", j
         stopifnot( max(curIdx) <= nrow(db) )
         return(curIdx)
     }, simplify=FALSE)
-
-    # Create new column for distance to nearest neighbor
-    db$TMP_DIST_NEAREST <- rep(NA, nrow(db))
-    db$ROW_ID <- 1:nrow(db)
     
     # Create cluster of nproc size and export namespaces
     # If user wants to paralellize this function and specifies nproc > 1, then
@@ -970,13 +1012,19 @@ distToNearest <- function(db, sequenceColumn="junction", vCallColumn="v_call", j
         registerDoSEQ()
     } else if( nproc > 1 ) {
         cluster <- parallel::makeCluster(nproc, type="PSOCK")
-        registerDoParallel(cluster)
+        registerDoParallel(cluster,cores=nproc)
     } else {
         stop('Nproc must be positive.')
     }
     
     # Export groups to the clusters
     if (nproc > 1) { 
+        # This subsetting improves performance
+        required_cols <- unique(c(group_cols,cross,locusColumn,sequenceColumn,"TMP_DIST_NEAREST"))
+        db_notused_cols <- db %>%
+            select(c(!!rlang::sym("DTN_ROW_ID"), !any_of(required_cols)))
+        db <- db %>%
+            select(c(!!rlang::sym("DTN_ROW_ID"),  any_of(required_cols)))
         export_functions <- list("db",
                                  "uniqueGroupsIdx", 
                                  "cross",
@@ -998,7 +1046,8 @@ distToNearest <- function(db, sequenceColumn="junction", vCallColumn="v_call", j
                                  "pairwise5MerDist",
                                  "nonsquare5MerDist",
                                  "singleCell",
-                                 "locusColumn")
+                                 "locusColumn",
+                                 "locusValues")
         parallel::clusterExport(cluster, export_functions, envir=environment())
     }
     
@@ -1012,13 +1061,17 @@ distToNearest <- function(db, sequenceColumn="junction", vCallColumn="v_call", j
         # wrt db
         idx <- uniqueGroupsIdx[[i]]
         
-        if (singleCell) {
-            # only use IGH, TRB, TRD
-            # wrt idx
-            idxBool <- db[[locusColumn]][idx] %in% c("IGH", "TRB", "TRD")
-        } else {
-            idxBool <- rep(TRUE, length(idx))
-        }
+        # if (singleCell) {
+        #     # only use IGH, TRB, TRD
+        #     # wrt idx
+        #     idxBool <- db[[locusColumn]][idx] %in% c("IGH", "TRB", "TRD")
+        # } else {
+        #     idxBool <- rep(TRUE, length(idx))
+        # }
+        
+        # for the distance calculation use only
+        # sequences with locus values specified in `locusValues`
+        idxBool <- toupper(db[[locusColumn]][idx]) %in% locusValues
         
         db_group <- db[idx, ]
         
@@ -1052,10 +1105,15 @@ distToNearest <- function(db, sequenceColumn="junction", vCallColumn="v_call", j
     
     # Convert list from foreach into a db data.frame
     db <- do.call(rbind, list_db)
-    db <- db[order(db$ROW_ID), ]
+
+    # Stop the cluster and add back not used colums
+    if (nproc > 1) { 
+        parallel::stopCluster(cluster)
+        db <- db %>%
+            left_join(db_notused_cols, by= "DTN_ROW_ID")
+    }
     
-    # Stop the cluster
-    if (nproc > 1) { parallel::stopCluster(cluster) }
+    db <- db[order(db$DTN_ROW_ID), ]
     
     if (!is.null(cross)) {
         db$cross_dist_nearest <- db$TMP_DIST_NEAREST
@@ -1067,7 +1125,7 @@ distToNearest <- function(db, sequenceColumn="junction", vCallColumn="v_call", j
     if ((!VJthenLen) && keepVJLgroup) {
         db$vjl_group <- db[["vj_group"]]
     }
-    db <- db[, !(names(db) %in% c(junc_len, "vj_group", "ROW_ID", "V1", "J1","TMP_DIST_NEAREST"))]
+    db <- db[, !(names(db) %in% c(junc_len, "vj_group", "DTN_ROW_ID", "V1", "J1","TMP_DIST_NEAREST"))]
     
     return(db)
 }
@@ -1077,7 +1135,7 @@ distToNearest <- function(db, sequenceColumn="junction", vCallColumn="v_call", j
 
 #' Find distance threshold
 #'
-#' \code{findThreshold} automtically determines an optimal threshold for clonal assignment of
+#' \code{findThreshold} automatically determines an optimal threshold for clonal assignment of
 #' Ig sequences using a vector of nearest neighbor distances. It provides two alternative methods 
 #' using either a Gamma/Gaussian Mixture Model fit (\code{method="gmm"}) or kernel density 
 #' fit (\code{method="density"}).
@@ -1251,12 +1309,17 @@ findThreshold <- function (distances, method=c("density", "gmm"),
  smoothValley <- function(distances) {
     # Remove NA, NaN, and infinite distances
     distances <- distances[!is.na(distances) & !is.nan(distances) & !is.infinite(distances)]
-
+    unique_distances <- unique(distances)
     # Gaussian distribution bandwidth scale parameter
     # gaussian_scaling <- (1/(4 * pi))^(1/10)
     
     # Ideal bandwidth
-    bandwidth <- h.ucv(unique(distances), 4)$h
+    if (length(unique_distances) < 3 ) {
+        stop("The `smoothValley` funcion used by the density method requires ", 
+             "at least 3 unique distance values.\n",
+             "Found distance values: ", paste(unique_distances, collapse=", "))
+    }
+    bandwidth <- h.ucv(unique_distances, 4)$h
     #bandwidth <- kedd::h.ucv(distances, 4)$h
     #bandwidth <- ks::hucv(unique(distances), deriv.order=4)
     
@@ -1943,21 +2006,25 @@ plotGmmThreshold <- function(data, cross=NULL, xmin=NULL, xmax=NULL, breaks=NULL
     if (is.null(xmax)) { xmax <- NA }
     
     # Plot distToNearest distribution plus Gaussian fits
-    p <- ggplot(xdf, aes_string(x="x")) +
+    p <- ggplot(xdf, aes(x=!!rlang::sym("x"))) +
         baseTheme() + 
         xlab("Distance") + 
         ylab("Density") +
-        geom_histogram(aes_string(y="..density.."), binwidth=binwidth, 
+        geom_histogram(aes(y=after_stat(!!str2lang("density"))), binwidth=binwidth, 
                        fill="gray40", color="white") +
-        geom_line(data=fit1, aes_string(x="x", y="y"), color="darkslateblue", size=size) +
-        geom_line(data=fit2, aes_string(x="x", y="y"), color="darkslateblue", size=size) +
+        geom_line(data=fit1, aes(x=!!rlang::sym("x"), y=!!rlang::sym("y")), 
+                  color="darkslateblue", linewidth=size) +
+        geom_line(data=fit2, aes(x=!!rlang::sym("x"), y=!!rlang::sym("y")), 
+                  color="darkslateblue", linewidth=size) +
         geom_vline(xintercept=data@threshold, color="firebrick", 
-                   linetype="longdash", size=size)
+                   linetype="longdash", linewidth=size)
     
     # Add cross histogram
     if (!is.null(cross)) {
         cdf <- data.frame(x=cross[is.finite(cross)])
-        p <- p + geom_histogram(data=cdf, aes_q(x=~x, y=~-(..density..)), binwidth=binwidth, 
+        p <- p + geom_histogram(data=cdf, 
+                                aes(x=!!rlang::sym("x"), 
+                                    y=-after_stat(!!str2lang("density"))), binwidth=binwidth, 
                                 fill="gray40", color="white", position="identity") +
             scale_y_continuous(labels=abs)
     }
@@ -2052,21 +2119,26 @@ plotDensityThreshold <- function(data, cross=NULL, xmin=NULL, xmax=NULL, breaks=
     if (is.null(xmax)) { xmax <- NA }
     
     # Plot distToNearest distribution plus Gaussian fits
-    p <- ggplot(xdf, aes_string(x="x")) +
+    p <- ggplot(xdf, aes(x=!!rlang::sym("x"))) +
         baseTheme() +
         xlab("Distance") + 
         ylab("Density") +
-        geom_histogram(aes_string(y="..density.."), binwidth=binwidth, 
+        geom_histogram(aes(y=after_stat(!!str2lang("density"))), binwidth=binwidth, 
                        fill="gray40", color="white") +
-        geom_line(data=ddf, aes_string(x="x", y="y"), 
-                  color="darkslateblue", size=size) +
+        geom_line(data=ddf, 
+                  aes(x=!!rlang::sym("x"), 
+                      y=!!rlang::sym("y")), 
+                  color="darkslateblue", linewidth=size) +
         geom_vline(xintercept=data@threshold, 
-                   color="firebrick", linetype="longdash", size=size)
+                   color="firebrick", linetype="longdash", linewidth=size)
     
     # Add cross histogram
     if (!is.null(cross)) {
         cdf <- data.frame(x=cross[is.finite(cross)])
-        p <- p + geom_histogram(data=cdf, aes_q(x=~x, y=~-(..density..)), binwidth=binwidth, 
+        p <- p + geom_histogram(data=cdf, 
+                                aes(x=!!rlang::sym("x"), 
+                                    y=-after_stat(!!str2lang("density"))), 
+                                binwidth=binwidth, 
                                 fill="gray40", color="white", position="identity") +
              scale_y_continuous(labels=abs)
     }
@@ -2095,4 +2167,3 @@ plotDensityThreshold <- function(data, cross=NULL, xmin=NULL, xmax=NULL, breaks=
         return(p)
     }
 }
-
