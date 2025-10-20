@@ -18,8 +18,8 @@ db_obs <- observedMutations(db, sequenceColumn="sequence_alignment",
                             nproc=1)
 # Show new mutation count columns
 db_obs %>% 
-    select(sequence_id, starts_with("mu_count_")) %>%
-    head(n=4)
+  select(sequence_id, starts_with("mu_count_")) %>%
+  head(n=4)
 
 # Calculate R and S mutation frequencies
 db_obs <- observedMutations(db_obs, sequenceColumn="sequence_alignment",
@@ -29,8 +29,8 @@ db_obs <- observedMutations(db_obs, sequenceColumn="sequence_alignment",
                             nproc=1)
 # Show new mutation frequency columns
 db_obs %>% 
-    select(sequence_id, starts_with("mu_freq_")) %>%
-    head(n=4)
+  select(sequence_id, starts_with("mu_freq_")) %>%
+  head(n=4)
 
 ## ----eval=TRUE----------------------------------------------------------------
 # Calculate combined R and S mutation frequencies
@@ -42,14 +42,14 @@ db_obs <- observedMutations(db, sequenceColumn="sequence_alignment",
                             nproc=1)
 # Show new mutation frequency columns
 db_obs %>% 
-    select(sequence_id, starts_with("mu_freq")) %>%
-    head(n=4)
+  select(sequence_id, starts_with("mu_freq")) %>%
+  head(n=4)
 
 ## ----eval=TRUE, warning=FALSE-------------------------------------------------
 g1 <- ggplot(db_obs, aes(x=c_call, y=mu_freq, fill=c_call)) +
         geom_boxplot() + 
-        labs(title = "Total mutations", 
-             x = "Isotype", y = "Mutation frequency") +
+        labs(title="Total mutations", 
+             x="Isotype", y="Mutation frequency") +
         scale_fill_manual(name="Isotype", values=IG_COLORS, limits=force) +
         theme_bw() 
 plot(g1)
@@ -63,8 +63,8 @@ db_obs_v <- observedMutations(db, sequenceColumn="sequence_alignment",
                               nproc=1)
 # Show new FWR mutation columns
 db_obs_v %>% 
-    select(sequence_id, starts_with("mu_count_fwr")) %>%
-    head(n=4)
+  select(sequence_id, starts_with("mu_count_fwr")) %>%
+  head(n=4)
 
 # Calculate aggregate CDR and FWR V-segment R and S mutation frequencies
 db_obs_v <- observedMutations(db_obs_v, sequenceColumn="sequence_alignment",
@@ -74,22 +74,23 @@ db_obs_v <- observedMutations(db_obs_v, sequenceColumn="sequence_alignment",
                               nproc=1)
 # Show new CDR and FWR mutation frequency columns
 db_obs_v %>% 
-    select(sequence_id, starts_with("mu_freq_")) %>%
-    head(n=4)
+  select(sequence_id, starts_with("mu_freq_")) %>%
+  head(n=4)
 
 ## ----eval=TRUE, warning=FALSE-------------------------------------------------
 g2 <- ggplot(db_obs_v, aes(x=c_call, y=mu_freq_cdr_s, fill=c_call)) +
         geom_boxplot() + 
-        labs(title = "CDR silent mutations", 
-             x = "Isotype", y = "Mutation frequency") +
+        labs(title="CDR silent mutations", 
+             x="Isotype", y="Mutation frequency") +
         scale_fill_manual(name="Isotype", values=IG_COLORS, limits=force) +
         theme_bw()
 g3 <- ggplot(db_obs_v, aes(x=c_call, y=mu_freq_cdr_r, fill=c_call)) +
         geom_boxplot() + 
-        labs(title = "CDR replacement mutations", 
-           x = "Isotype", y = "Mutation frequency") +
+        labs(title="CDR replacement mutations",
+             x="Isotype", y="Mutation frequency") +
         scale_fill_manual(name="Isotype", values=IG_COLORS, limits=force) +
         theme_bw()
+
 alakazam::gridPlot(g2, g3, ncol=2)
 
 ## ----eval=TRUE----------------------------------------------------------------
@@ -102,8 +103,8 @@ db_obs_ch <- observedMutations(db, sequenceColumn="sequence_alignment",
                                nproc=1)
 # Show new charge mutation frequency columns
 db_obs_ch %>% 
-    select(sequence_id, starts_with("mu_freq_")) %>%
-    head(n=4)
+  select(sequence_id, starts_with("mu_freq_")) %>%
+  head(n=4)
 
 ## ----eval=TRUE, warning=FALSE-------------------------------------------------
 g4 <- ggplot(db_obs_ch, aes(x=c_call, y=mu_freq_seq_r, fill=c_call)) +
@@ -112,5 +113,6 @@ g4 <- ggplot(db_obs_ch, aes(x=c_call, y=mu_freq_seq_r, fill=c_call)) +
              x="Isotype", y="Mutation frequency") +
         scale_fill_manual(name="Isotype", values=IG_COLORS, limits=force) + 
         theme_bw()
+
 plot(g4)
 

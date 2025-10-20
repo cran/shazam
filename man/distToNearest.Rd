@@ -96,9 +96,9 @@ are "IGH", "IGI", "IGK", "IGL", "TRA", "TRB",
 
 \item{locusValues}{Loci values to focus the analysis on.}
 
-\item{onlyHeavy}{use only the IGH (BCR) or TRB/TRD (TCR) sequences 
+\item{onlyHeavy}{This is deprecated. Only IGH (BCR) or TRB/TRD (TCR) sequences will be used
 for grouping. Only applicable to single-cell data.
-Ignored if \code{cellIdColumn=NULL}. 
+Ignored if \code{cellIdColumn=NULL}.
 See \link[alakazam]{groupGenes} for further details.}
 
 \item{keepVJLgroup}{logical value specifying whether to keep in the output the the column 
@@ -140,10 +140,9 @@ error message and stops.
 
 For single-cell mode, the input format is the same as that for \link[alakazam]{groupGenes}. 
 Namely, each row represents a sequence/chain. Sequences/chains from the same cell are linked
-by a cell ID in the \code{cellIdColumn} field. In this mode, there is a choice of whether 
-grouping should be done by (a) using IGH (BCR) or TRB/TRD (TCR) sequences only or
-(b) using IGH plus IGK/IGL (BCR) or TRB/TRD plus TRA/TRG (TCR). 
-This is governed by the \code{onlyHeavy} argument.
+by a cell ID in the \code{cellIdColumn} field. Groupin will be done by using IGH (BCR) or 
+TRB/TRD (TCR) sequences only. The argument that allowed to include light chains, 
+\code{onlyHeavy}, is deprecated.
 
 Note, \code{distToNearest} required that each cell (each unique value in \code{cellIdColumn})
 correspond to only a single \code{IGH} (BCR) or \code{TRB/TRD} (TCR) sequence.
@@ -160,7 +159,7 @@ The following distance measures are accepted by the \code{model} parameter.
   \item \code{"aa"}:           Single amino acid Hamming distance matrix from \link[alakazam]{getAAMatrix}.
   \item \code{"hh_s1f"}:       Human single nucleotide distance matrix derived from \link{HH_S1F} with 
                                \link{calcTargetingDistance}.
-  \item \code{"hh_s5f"}:       Human 5-mer nucleotide context distance matix derived from \link{HH_S5F} with 
+  \item \code{"hh_s5f"}:       Human 5-mer nucleotide context distance matrix derived from \link{HH_S5F} with 
                                \link{calcTargetingDistance}.
   \item \code{"mk_rs1nf"}:     Mouse single nucleotide distance matrix derived from \link{MK_RS1NF} with 
                                \link{calcTargetingDistance}.
@@ -168,14 +167,14 @@ The following distance measures are accepted by the \code{model} parameter.
                                \link{calcTargetingDistance}.
   \item \code{"hs1f_compat"}:  Backwards compatible human single nucleotide distance matrix used in 
                                SHazaM v0.1.4 and Change-O v0.3.3.
-  \item \code{"m1n_compat"}:   Backwards compatibley mouse single nucleotide distance matrix used in 
+  \item \code{"m1n_compat"}:   Backwards compatibility mouse single nucleotide distance matrix used in 
                                SHazaM v0.1.4 and Change-O v0.3.3.
 }
 
 Note on \code{NA}s: if, for a given combination of V gene, J gene, and junction length,
 there is only 1  heavy chain sequence (as defined by \code{sequenceColumn}), \code{NA} is 
 returned instead of a distance (since it has no heavy/long chain neighbor). If for a given combination 
-there are multiple heavy/long chain sequences but only 1 unique one, (in which case every heavy/long cahin 
+there are multiple heavy/long chain sequences but only 1 unique one, (in which case every heavy/long chain 
 sequence in this group is the de facto nearest neighbor to each other, thus giving rise to distances 
 of 0), \code{NA}s are returned instead of zero-distances.
 

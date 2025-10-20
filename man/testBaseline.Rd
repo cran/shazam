@@ -18,7 +18,7 @@ A data.frame with test results containing the following columns:
           \itemize{
             \item  \code{region}:  sequence region, such as \code{cdr} and \code{fwr}.
             \item  \code{test}:    string defining the groups be compared. The
-                                   string is formated as the conclusion associated with the
+                                   string is formatted as the conclusion associated with the
                                    p-value in the form \code{GROUP1 != GROUP2}. Meaning,
                                    the p-value for rejection of the null hypothesis that 
                                    GROUP1 and GROUP2 have equivalent distributions.
@@ -27,7 +27,7 @@ A data.frame with test results containing the following columns:
           }
 }
 \description{
-\code{testBaseline} performs a two-sample signifance test of BASELINe 
+\code{testBaseline} performs a two-sample significance test of BASELINe 
 posterior probability density functions (PDFs).
 }
 \examples{
@@ -69,7 +69,7 @@ testBaseline(grouped, groupBy="c_call")
   \item  Yaari G, et al. Quantifying selection in high-throughput immunoglobulin 
            sequencing data sets. 
            Nucleic Acids Res. 2012 40(17):e134. 
-           (Corretions at http://selection.med.yale.edu/baseline/correction/)
+           (Corrections at http://selection.med.yale.edu/baseline/correction/)
  }
 }
 \seealso{

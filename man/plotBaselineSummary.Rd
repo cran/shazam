@@ -38,7 +38,7 @@ being colors. Also controls the order in which groups appear on the
 plot. If \code{NULL} alphabetical ordering and a default color palette 
 will be used. Has no effect if \code{facetBy="group"}.}
 
-\item{subsetRegions}{character vector defining a subset of regions to plot, correspoding 
+\item{subsetRegions}{character vector defining a subset of regions to plot, corresponding 
 to the regions for which the \code{baseline} data was calculated. If
 \code{NULL} all regions in \code{baseline} are plotted.}
 

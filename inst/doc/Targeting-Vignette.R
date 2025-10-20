@@ -9,35 +9,35 @@ data(ExampleDb, package="alakazam")
 db <- subset(ExampleDb, c_call == "IGHG")
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  # Create substitution model using silent mutations
-#  sub_model <- createSubstitutionMatrix(db, model="s",
-#                                        sequenceColumn="sequence_alignment",
-#                                        germlineColumn="germline_alignment_d_mask",
-#                                        vCallColumn="v_call")
+# # Create substitution model using silent mutations
+# sub_model <- createSubstitutionMatrix(db, model="s",
+#                                       sequenceColumn="sequence_alignment",
+#                                       germlineColumn="germline_alignment_d_mask",
+#                                       vCallColumn="v_call")
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  # Create mutability model using silent mutations
-#  mut_model <- createMutabilityMatrix(db, sub_model, model="s",
-#                                      sequenceColumn="sequence_alignment",
-#                                      germlineColumn="germline_alignment_d_mask",
-#                                      vCallColumn="v_call")
+# # Create mutability model using silent mutations
+# mut_model <- createMutabilityMatrix(db, sub_model, model="s",
+#                                     sequenceColumn="sequence_alignment",
+#                                     germlineColumn="germline_alignment_d_mask",
+#                                     vCallColumn="v_call")
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  # Number of silent mutations used for estimating 5-mer mutabilities
-#  mut_model@numMutS
-#  # Number of replacement mutations used for estimating 5-mer mutabilities
-#  mut_model@numMutR
-#  # Mutability and source as a data.frame
-#  head(as.data.frame(mut_model))
+# # Number of silent mutations used for estimating 5-mer mutabilities
+# mut_model@numMutS
+# # Number of replacement mutations used for estimating 5-mer mutabilities
+# mut_model@numMutR
+# # Mutability and source as a data.frame
+# head(as.data.frame(mut_model))
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  # Extend models to include ambiguous 5-mers
-#  sub_model <- extendSubstitutionMatrix(sub_model)
-#  mut_model <- extendMutabilityMatrix(mut_model)
+# # Extend models to include ambiguous 5-mers
+# sub_model <- extendSubstitutionMatrix(sub_model)
+# mut_model <- extendMutabilityMatrix(mut_model)
 
 ## ----eval=FALSE---------------------------------------------------------------
-#  # Create targeting model matrix from substitution and mutability models
-#  tar_matrix <- createTargetingMatrix(sub_model, mut_model)
+# # Create targeting model matrix from substitution and mutability models
+# tar_matrix <- createTargetingMatrix(sub_model, mut_model)
 
 ## ----eval=TRUE, warning=FALSE-------------------------------------------------
 # Collapse sequences into clonal consensus

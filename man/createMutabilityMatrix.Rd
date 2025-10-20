@@ -37,9 +37,9 @@ non-functional sequence data sets.}
 
 \item{vCallColumn}{name of the column containing the V-segment allele call.}
 
-\item{multipleMutation}{string specifying how to handle multiple mutations occuring 
+\item{multipleMutation}{string specifying how to handle multiple mutations occurring 
 within the same 5-mer. If \code{"independent"} then multiple 
-mutations within the same 5-mer are counted indepedently. 
+mutations within the same 5-mer are counted independently. 
 If \code{"ignore"} then 5-mers with multiple mutations are 
 excluded from the total mutation tally.}
 
@@ -66,7 +66,7 @@ When \code{numSeqMutationsOnly} is \code{FALSE}, a \code{MutabilityModel} contai
 }
 \description{
 \code{createMutabilityMatrix} builds a 5-mer nucleotide mutability model by counting 
-the number of mutations occuring in the center position for all 5-mer motifs.
+the number of mutations occurring in the center position for all 5-mer motifs.
 }
 \details{
 \strong{Caution: The targeting model functions do NOT support ambiguous 

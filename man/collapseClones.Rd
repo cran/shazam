@@ -126,7 +126,7 @@ group and appends columns containing the consensus sequences to the input
                \code{"catchAll"} methods:
          
                The length of the consensus sequences is determined by the longest possible
-               consensus sequence (baesd on \code{inputSeq} and \code{germlineSeq}) and 
+               consensus sequence (based on \code{inputSeq} and \code{germlineSeq}) and 
                \code{regionDefinition@seqLength} (if supplied), whichever is shorter.
 
                Given a set of sequences of potentially varying lengths, the longest possible 
@@ -179,7 +179,7 @@ group and appends columns containing the consensus sequences to the input
                               characters. See "Choosing ambiguous characters" for how 
                               ambiguous characters are chosen.
                         \item With \code{breakTiesStochastic=TRUE}, ties are resolved 
-                              stochastically by randomly picking a character amongst the 
+                              stochastically by randomly picking a character among the 
                               ties.
                         \item When both \code{TRUE}, \code{includeAmbiguous} takes 
                               precedence over \code{breakTiesStochastic}.
@@ -260,7 +260,7 @@ group and appends columns containing the consensus sequences to the input
                    These methods return the most/least mutated sequence as the consensus 
                    sequence. 
                    
-                   When there are ties (multple sequences have the maximal/minimal mutation
+                   When there are ties (multiple sequences have the maximal/minimal mutation
                    frequency), this method can be deterministic or stochastic, depending on 
                    additional parameters.
                    
@@ -280,7 +280,7 @@ group and appends columns containing the consensus sequences to the input
                               \code{breakTiesByColumns}.
                         \item When \code{breakTiesStochastic=FALSE} and 
                               \code{breakTiesByColumns} is not supplied (i.e. \code{NULL}), 
-                              the sequence that appears first amongst the ties is taken 
+                              the sequence that appears first among the ties is taken 
                               as the consensus.
                    }
          

@@ -1,3 +1,36 @@
+Version 1.3.0: October 20, 2025
+-------------------------------------------------------------------------------
+
+General:
+
++ Development of `shazam` has moved to GitHub: https://github.com/immcantation/shazam
++ Updated dependencies: alakazam >= 1.4.1.
+
+Mutation simulation:
+
++ `shmulateSeq` now samples mutations from a binomial distribution with provided
+  probability instead of taking the floor from the number of sequences.
+
+Distance Profiling:
+
++ Updated `distToNearest` code, documentation and tests to match changes introduced
+  in `alakazam::groupGenes` in `alakazam 1.4.1` to handle mixed data (single-cell
+  and non single-cell, with heavy and/or light chain sequences).
++ Fixed a model mismatch. When `model="mk_rs5nf"` was specified in `distToNearest`, 
+  the function would incorrectly use character validation from the non-existing `MK_RS1NF@targeting` targeting model instead of the correct `MK_RS5NF@targeting`.
+
+Documentation:
+
++ Updated installation instructions to add BiocManager installation option.
++ Added a Contributing section.
+
+Version 1.2.1: August 1, 2024
+-------------------------------------------------------------------------------
+
+Documentation:
+
++ This is a documentation-only update to address changes in Read the Docs.
+
 Version 1.2.0: October 10, 2023
 -------------------------------------------------------------------------------
 
@@ -21,6 +54,11 @@ Distance Profiling:
   of the samples. Now, data is separated by `fields`(sample_id in this example)
   before creating the groups of genes, and ambiguities in other samples are not 
   considered.
+
+Mutation simulation:
+
++ ShmulateSeq sample mutations from a binomial distribution with provided
+probability instead of taking the floor from the number of sequences.
 
 Version 1.1.2: September 26, 2022
 -------------------------------------------------------------------------------
@@ -251,7 +289,7 @@ General:
 Distance Calculation:
 
 + Changed default `findThreshold` method to `density`.
-+ Significantly reduced run time of the `density` method by retuning the 
++ Significantly reduced run time of the `density` method by returning the 
   bandwidth detection process. The `density` method should now also yield more 
   consistent thresholds, on average.
 + The `subsample` argument to `findThreshold` now applies to both the 
@@ -388,7 +426,7 @@ Selection Analysis:
 + Fixed a bug in p-value calculation in `summarizeBaseline()`. The returned 
   p-value can now be either positive or negative. Its magnitude (without the 
   sign) should be interpreted as per normal. Its sign indicates the direction 
-  of the seLicense chalection detected. A positive p-value indicates positive selection, 
+  of the selection detected. A positive p-value indicates positive selection, 
   whereas a negative p-value indicates negative selection.
 + Added `editBaseline()` to exported functions, and a corresponding section 
   in the vignette. 
@@ -403,7 +441,7 @@ Targeting Models:
   tune for parameters `minNumMutations` and `minNumSeqMutations` in functions 
   `createSubstitutionMatrix()` and `createMutabilityMatrix()` respectively. 
   Also added function `plotTune()` which helps visualize parameter tuning using
-  the abovementioned two new functions. 
+  the above mentioned two new functions. 
 + Added human kappa and lambda light chain, silent, 5-mer, functional targeting
   model (`HKL_S5F`).
 + Renamed `HS5FModel` as `HH_S5F`, `MRS5NFModel` as `MK_RS5NF`, and `U5NModel` 
@@ -471,7 +509,7 @@ Version 0.1.4:  August 5, 2016
 
 Selection Analysis:
 
-+ Fixed a bug in calcBaseline wherein the germline column was incorrected 
++ Fixed a bug in calcBaseline wherein the germline column was incorrectly
   hardcoded, leading to erroneous mutation counts for some clonal consensus 
   sequences.
 
@@ -495,7 +533,7 @@ General:
 Distance Calculation:
 
 + Added the `cross` argument to `distToNearest()` which allows restriction of 
-  distances to only distances across samples (ie, excludes within-sample 
+  distances to only distances across samples (i.e., excludes within-sample 
   distances).
 + Added `mst` flag to `distToNearest()`, which will return all distances to 
   neighboring nodes in a minimum spanning tree.
@@ -619,7 +657,7 @@ Selection Analysis:
 Targeting Models:
 
 + Added `minNumMutations` parameter to createSubstitutionMatrix. This is the 
-  minimum number of observed 5-mers required for the substituion model. 
+  minimum number of observed 5-mers required for the substitution model. 
   The substitution rate of 5-mers with fewer number of observed mutations
   will be inferred from other 5-mers. 
 + Added `minNumSeqMutations` parameter to createMutabilityMatrix. This is the 
@@ -651,7 +689,7 @@ General:
 + Restructured the S4 class documentation.
 + Fixed bug wherein example `Influenza.tab` file did not load on Mac OS X.
 + Added citations for `citation("shazam")` command.
-+ Added dependency on data.table >= 1.9.4 to fix bug that occured with 
++ Added dependency on data.table >= 1.9.4 to fix bug that occurred with 
   earlier versions of data.table.
 
 Distance Calculation:
@@ -660,8 +698,8 @@ Distance Calculation:
   Yaari et al, 2013 data.
 + Set the `hs1f` as the default distance model for `distToNearest()`.
 + Added conversion of sequences to uppercase in `distToNearest()`.
-+ Fixed a bug wherein unrecongized (including lowercase) characters would
-  lead to silenting returning a distance of 0 to the neared neighbor. 
++ Fixed a bug wherein unrecognized (including lowercase) characters would
+  lead to silencing returning a distance of 0 to the neared neighbor. 
   Unrecognized characters will now raise an error.
 
 Mutation Profiling:

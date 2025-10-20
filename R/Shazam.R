@@ -65,7 +65,7 @@
 #'                                           between BASELINe PDFs.
 #'   \item  \link{plotBaselineDensity}:      Plot the probability density functions
 #'                                           resulting from selection analysis.
-#'   \item  \link{plotBaselineSummary}:      Plot summary stastistics resulting from 
+#'   \item  \link{plotBaselineSummary}:      Plot summary statistics resulting from 
 #'                                           selection analysis.
 #' }
 #'
@@ -85,7 +85,6 @@
 #' }
 #'
 #' @name     shazam
-#' @docType  package
 #' @references
 #' \enumerate{
 #'   \item  Hershberg U, et al. Improved methods for detecting selection by mutation 
@@ -145,7 +144,7 @@
 #' @importFrom  stats       na.omit setNames ecdf sd cor cov median mad
 #'                          approx convolve weighted.mean p.adjust
 #'                          dbeta pbeta qbeta rbeta optim optimize
-#'                          dnorm pnorm runif dgamma pgamma uniroot na.exclude
+#'                          dnorm pnorm rbinom runif dgamma pgamma uniroot na.exclude
 #'                          as.dist cutree integrate
 #' @importFrom  stringi     stri_dup stri_flatten stri_join stri_length 
 #'                          stri_sub stri_sub_replace stri_detect_regex
@@ -171,7 +170,7 @@ NULL
 # Mus musculus Ig sequence data.
 #
 # @format   A symmetric matrix of nucleotide substitution distance scores with 
-#           row names and column names definition the specific subsitution.
+#           row names and column names definition the specific substitution.
 # 
 # @references
 # \enumerate{
@@ -189,7 +188,7 @@ NULL
 # human Ig sequence data.
 #
 # @format   A symmetric matrix of nucleotide substitution distance scores with 
-#           row names and column names definition the specific subsitution.
+#           row names and column names definition the specific substitution.
 # 
 # @references
 # \enumerate{

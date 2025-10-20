@@ -32,7 +32,7 @@ characters for DNA are supported.}
 \item{regionDefinition}{\link{RegionDefinition} object defining the regions
 and boundaries of the Ig sequences. If NULL, mutations 
 are counted for entire sequence. To use regions definitions,
-sequences in \code{sequenceColum} and \code{germlineColumn}
+sequences in \code{sequenceColumn} and \code{germlineColumn}
 must be aligned, following the IMGT schema.}
 
 \item{mutationDefinition}{\link{MutationDefinition} object defining replacement
@@ -151,7 +151,7 @@ graph <- ExampleTrees[[17]]
 clone <- alakazam::makeChangeoClone(subset(ExampleDb, clone_id == graph$clone))
 gdf <- makeGraphDf(graph, clone)
 
-# Count of mutations between observed sequence and immediate ancenstor
+# Count of mutations between observed sequence and immediate ancestor
 db_obs <- observedMutations(gdf, sequenceColumn="sequence",
                             germlineColumn="parent_sequence",
                             regionDefinition=IMGT_VDJ,

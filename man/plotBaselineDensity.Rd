@@ -44,7 +44,7 @@ will be used.}
 
 \item{title}{string defining the plot title.}
 
-\item{subsetRegions}{character vector defining a subset of regions to plot, correspoding 
+\item{subsetRegions}{character vector defining a subset of regions to plot, corresponding 
 to the regions for which the \code{baseline} data was calculated. If
 \code{NULL} all regions in \code{baseline} are plotted.}
 

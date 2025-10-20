@@ -3,7 +3,6 @@
 \docType{package}
 \name{shazam-package}
 \alias{shazam-package}
-\alias{_PACKAGE}
 \title{shazam: Immunoglobulin Somatic Hypermutation Analysis}
 \description{
 Provides a computational framework for analyzing mutations in immunoglobulin (Ig) sequences. Includes methods for Bayesian estimation of antigen-driven selection pressure, mutational load quantification, building of somatic hypermutation (SHM) models, and model-dependent distance calculations. Also includes empirically derived models of SHM for both mice and humans. Citations: Gupta and Vander Heiden, et al (2015) \doi{10.1093/bioinformatics/btv359}, Yaari, et al (2012) \doi{10.1093/nar/gks457}, Yaari, et al (2013) \doi{10.3389/fimmu.2013.00358}, Cui, et al (2016) \doi{10.4049/jimmunol.1502263}.
@@ -12,7 +11,7 @@ Provides a computational framework for analyzing mutations in immunoglobulin (Ig
 Useful links:
 \itemize{
   \item \url{http://shazam.readthedocs.io}
-  \item Report bugs at \url{https://bitbucket.org/kleinstein/shazam/issues}
+  \item Report bugs at \url{https://github.com/immcantation/shazam/issues}
 }
 
 }

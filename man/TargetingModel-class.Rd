@@ -48,7 +48,7 @@ means that the mutability rates for the 1024 5-mers that
 contain no "N" at any position sums up to 1 (as opposed to 
 the entire vector summing up to 1).}
 
-\item{\code{targeting}}{Rate matrix of a given mutation ocurring, defined as 
+\item{\code{targeting}}{Rate matrix of a given mutation occurring, defined as 
 \eqn{mutability * substitution}. The targeting model 
 is stored as a 5x3125 matrix. Rows define
 the mutated nucleotide at the center of each 5-mer, one of 

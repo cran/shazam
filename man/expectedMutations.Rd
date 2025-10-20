@@ -29,7 +29,7 @@ the germline or reference sequence.}
 
 \item{regionDefinition}{\link{RegionDefinition} object defining the regions
 and boundaries of the Ig sequences. To use regions definitions,
-sequences in \code{sequenceColum} and \code{germlineColumn}
+sequences in \code{sequenceColumn} and \code{germlineColumn}
 must be aligned, following the IMGT schema.}
 
 \item{mutationDefinition}{\link{MutationDefinition} object defining replacement

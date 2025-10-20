@@ -57,7 +57,7 @@ For \code{returnRaw=FALSE}, an \code{array} with the numbers of replacement (R)
           For \code{returnRaw=TRUE}, a list containing 
           \itemize{
                \item \code{$pos}: A data frame whose columns (\code{position}, \code{r}, 
-                     \code{s}, and \code{region}) indicate, respecitively, the nucleotide 
+                     \code{s}, and \code{region}) indicate, respectively, the nucleotide 
                      position, the number of R mutations at that position, the number of S 
                      mutations at that position, and the region in which that nucleotide
                      is in.
@@ -206,7 +206,7 @@ ex3_count <- calcObservedMutations(in_seq, germ_seq, regionDefinition=IMGT_V,
 ex3_freq <- calcObservedMutations(in_seq, germ_seq, regionDefinition=IMGT_V,
                                  mutationDefinition=HYDROPATHY_MUTATIONS, 
                                  returnRaw=FALSE, frequency=TRUE)
-# Compre this with ex3_count
+# Compare this with ex3_count
 table(ex3_raw$pos$region, ex3_raw$pos$r)[, "1"]
 table(ex3_raw$pos$region, ex3_raw$pos$s)[, "1"]
 # Compare this with ex3_freq

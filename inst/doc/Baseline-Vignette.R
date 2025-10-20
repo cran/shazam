@@ -18,23 +18,23 @@ clones <- collapseClones(ExampleDb, cloneColumn="clone_id",
                          nproc=1)
 
 ## ----eval=F, warning=F, results="hide"----------------------------------------
-#  # Subset to sequences with clone_id=3170
-#  db_3170 <- subset(ExampleDb, clone_id == 3170)
-#  dim(db_3170)
-#  colnames(db_3170)
-#  
-#  # Generate a ChangeoClone object for lineage construction
-#  clone_3170 <- makeChangeoClone(db_3170, seq="sequence_alignment", germ="germline_alignment")
-#  
-#  # Run the lineage reconstruction
-#  dnapars_exec <- "/usr/local/bin/dnapars"
-#  graph_3170 <- buildPhylipLineage(clone_3170, dnapars_exec, rm_temp=TRUE)
-#  
-#  # Generating a data.frame from the lineage tree graph object,
-#  # and merge it with clone data.frame
-#  graph_3170_df <- makeGraphDf(graph_3170, clone_3170)
-#  dim(graph_3170_df)
-#  colnames(graph_3170_df)
+# # Subset to sequences with clone_id=3170
+# db_3170 <- subset(ExampleDb, clone_id == 3170)
+# dim(db_3170)
+# colnames(db_3170)
+# 
+# # Generate a ChangeoClone object for lineage construction
+# clone_3170 <- makeChangeoClone(db_3170, seq="sequence_alignment", germ="germline_alignment")
+# 
+# # Run the lineage reconstruction
+# dnapars_exec <- "/usr/local/bin/dnapars"
+# graph_3170 <- buildPhylipLineage(clone_3170, dnapars_exec, rm_temp=TRUE)
+# 
+# # Generating a data.frame from the lineage tree graph object,
+# # and merge it with clone data.frame
+# graph_3170_df <- makeGraphDf(graph_3170, clone_3170)
+# dim(graph_3170_df)
+# colnames(graph_3170_df)
 
 ## ----eval=TRUE, warning=FALSE, results="hide"---------------------------------
 # Count observed mutations and append mu_count columns to the output
@@ -42,7 +42,7 @@ observed <- observedMutations(clones,
                               sequenceColumn="clonal_sequence",
                               germlineColumn="clonal_germline",
                               regionDefinition=IMGT_V, nproc=1)
-# Count expected mutations and append mu_exptected columns to the output
+# Count expected mutations and append mu_expected columns to the output
 expected <- expectedMutations(observed, 
                               sequenceColumn="clonal_sequence",
                               germlineColumn="clonal_germline",
@@ -55,17 +55,17 @@ baseline <- calcBaseline(expected, testStatistic="focused",
                          regionDefinition=IMGT_V, nproc=1)
 
 ## ----eval=FALSE, warning=FALSE, results="hide"--------------------------------
-#  # Calculate selection scores from scratch
-#  baseline <- calcBaseline(clones, testStatistic="focused",
-#                           regionDefinition=IMGT_V, nproc=1)
+# # Calculate selection scores from scratch
+# baseline <- calcBaseline(clones, testStatistic="focused",
+#                          regionDefinition=IMGT_V, nproc=1)
 
 ## ----eval=FALSE, warning=FALSE, results="hide"--------------------------------
-#  # Calculate selection on charge class with the mouse 5-mer model
-#  baseline_mk_rs5nf <- calcBaseline(clones, testStatistic="focused",
-#                           regionDefinition=IMGT_V,
-#                           targetingModel=MK_RS5NF,
-#                           mutationDefinition=CHARGE_MUTATIONS,
-#                           nproc=1)
+# # Calculate selection on charge class with the mouse 5-mer model
+# baseline_mk_rs5nf <- calcBaseline(clones, testStatistic="focused",
+#                          regionDefinition=IMGT_V,
+#                          targetingModel=MK_RS5NF,
+#                          mutationDefinition=CHARGE_MUTATIONS,
+#                          nproc=1)
 
 ## ----eval=TRUE, warning=FALSE, results="hide"---------------------------------
 # Combine selection scores by time-point
@@ -92,11 +92,11 @@ baseline_sub <- calcBaseline(clones_sub, testStatistic="focused",
 grouped_2 <- groupBaseline(baseline_sub, groupBy=c("sample_id", "c_call"))
 
 ## ----eval=FALSE, warning=FALSE, results="hide"--------------------------------
-#  # First group by subject and status
-#  subject_grouped <- groupBaseline(baseline, groupBy=c("status", "subject"))
-#  
-#  # Then group the output by status
-#  status_grouped <- groupBaseline(subject_grouped, groupBy="status")
+# # First group by subject and status
+# subject_grouped <- groupBaseline(baseline, groupBy=c("status", "subject"))
+# 
+# # Then group the output by status
+# status_grouped <- groupBaseline(subject_grouped, groupBy="status")
 
 ## ----eval=TRUE----------------------------------------------------------------
 testBaseline(grouped_1, groupBy="sample_id")
@@ -123,22 +123,22 @@ plotBaselineDensity(grouped_2, "c_call", groupColumn="sample_id", colorElement="
                     colorValues=sample_colors, sigmaLimits=c(-1, 1))
 
 ## ----eval=FALSE, warning=FALSE, results="hide"--------------------------------
-#  # Get indices of rows corresponding to IGHA in the field "db"
-#  # These are the same indices also in the matrices in the fileds "numbOfSeqs",
-#  # "binomK", "binomN", "binomP", and "pdfs"
-#  # In this example, there is one row of IGHA for each sample
-#  dbIgMIndex <- which(grouped_2@db[["c_call"]] == "IGHG")
-#  
-#  grouped_2 <- editBaseline(grouped_2, "db", grouped_2@db[-dbIgMIndex, ])
-#  grouped_2 <- editBaseline(grouped_2, "numbOfSeqs", grouped_2@numbOfSeqs[-dbIgMIndex, ])
-#  grouped_2 <- editBaseline(grouped_2, "binomK", grouped_2@binomK[-dbIgMIndex, ])
-#  grouped_2 <- editBaseline(grouped_2, "binomN", grouped_2@binomN[-dbIgMIndex, ])
-#  grouped_2 <- editBaseline(grouped_2, "binomP", grouped_2@binomP[-dbIgMIndex, ])
-#  grouped_2 <- editBaseline(grouped_2, "pdfs",
-#                            lapply(grouped_2@pdfs, function(pdfs) {pdfs[-dbIgMIndex, ]} ))
-#  
-#  # The indices corresponding to IGHA are slightly different in the field "stats"
-#  # In this example, there is one row of IGHA for each sample and for each region
-#  grouped_2 <- editBaseline(grouped_2, "stats",
-#                            grouped_2@stats[grouped_2@stats[["c_call"]] != "IGHA", ])
+# # Get indices of rows corresponding to IGHA in the field "db"
+# # These are the same indices also in the matrices in the fields "numbOfSeqs",
+# # "binomK", "binomN", "binomP", and "pdfs"
+# # In this example, there is one row of IGHA for each sample
+# dbIgMIndex <- which(grouped_2@db[["c_call"]] == "IGHG")
+# 
+# grouped_2 <- editBaseline(grouped_2, "db", grouped_2@db[-dbIgMIndex, ])
+# grouped_2 <- editBaseline(grouped_2, "numbOfSeqs", grouped_2@numbOfSeqs[-dbIgMIndex, ])
+# grouped_2 <- editBaseline(grouped_2, "binomK", grouped_2@binomK[-dbIgMIndex, ])
+# grouped_2 <- editBaseline(grouped_2, "binomN", grouped_2@binomN[-dbIgMIndex, ])
+# grouped_2 <- editBaseline(grouped_2, "binomP", grouped_2@binomP[-dbIgMIndex, ])
+# grouped_2 <- editBaseline(grouped_2, "pdfs",
+#                           lapply(grouped_2@pdfs, function(pdfs) {pdfs[-dbIgMIndex, ]} ))
+# 
+# # The indices corresponding to IGHA are slightly different in the field "stats"
+# # In this example, there is one row of IGHA for each sample and for each region
+# grouped_2 <- editBaseline(grouped_2, "stats",
+#                           grouped_2@stats[grouped_2@stats[["c_call"]] != "IGHA", ])
 

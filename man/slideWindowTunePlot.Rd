@@ -2,7 +2,7 @@
 % Please edit documentation in R/Deprecated.R
 \name{slideWindowTunePlot}
 \alias{slideWindowTunePlot}
-\title{slideWindowTunePlot - plotSlideWindowTune backward compatability}
+\title{slideWindowTunePlot - plotSlideWindowTune backward compatibility}
 \usage{
 slideWindowTunePlot(
   tuneList,

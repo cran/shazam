@@ -59,7 +59,7 @@ of success in one binomial trial in each region, where:\cr
 
 \item{pdfs}{\code{list} of matrices containing PDFs with one item for each 
 defined region (e.g. \code{cdr} and \code{fwr}). Matrices have dimensions
-\code{r x c} dementions, where:\cr
+\code{r x c} dimensions, where:\cr
 \code{r} = number of rows = number of sequences or groups. \cr
 \code{c} = number of columns = length of the PDF (default 4001).}
 
