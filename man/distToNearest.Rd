@@ -119,20 +119,33 @@ Returns a modified \code{db} data.frame with nearest neighbor distances between 
           type \code{character} if they were type \code{factor} in the input \code{db}.
 }
 \description{
-Get non-zero distance of every heavy chain (\code{IGH}) sequence (as defined by 
-\code{sequenceColumn}) to its nearest sequence in a partition of heavy chains sharing the same 
-V gene, J gene, and junction length (V-J-length), or in a partition of single cells with heavy/long chains
-sharing the same heavy/long chain V-J-length combination, or of single cells with heavy/long and light/short chains 
-sharing the same heavy/long chain V-J-length and light/short chain V-J-length combinations.
+Calculate the non-zero distance from each sequence to its nearest neighbor
+within partitions based on shared V gene, J gene, and junction length.
 }
 \details{
+The distance to nearest neighbor can be used to estimate a threshold for assigning 
+Ig sequences to clonal groups. A histogram of the resulting vector is often bimodal, with the 
+ideal threshold being a value that separates the two modes.
+
+Refer to the details section for a more thorough description of the implementation.
+
+
+
+There are two modes of operation for \code{distToNearest}: single-cell (all sequences are 
+single-cell data), non-single-cell (all sequences are bulk sequencing data). Mixed data, 
+where both single-cell and non-single-cell sequences are present in the data, is considered 
+a case under the single-single cell mode .
+
 To invoke single-cell mode the \code{cellIdColumn} argument must be specified and \code{locusColumn} 
 must be correct. Otherwise, \code{distToNearest} will be run with bulk sequencing assumptions, 
-using all input sequences regardless of the values in the \code{locusColumn} column.
+using all input sequences regardless of the values in the \code{locusColumn} column. 
 
-Under single-cell mode, only heavy/long chain (IGH, TRB, TRD) sequences will be used for calculating 
-nearest neighbor distances. Under non-single-cell mode, all input sequences will be used for 
-calculating nearest neighbor distances, regardless of the values in the \code{locusColumn} field (if present).
+Under single-cell mode, only heavy/long chain (IGH, TRB, TRD) sequences will be 
+used for calculating nearest neighbor distances regardless of \code{locusValue} values in 
+the \code{locusColumn} field (if present). Under non-single-cell mode, 
+all input sequences with \code{locusValue} value(s) in the  \code{locusColumn} field will be 
+used for calculating nearest neighbor distances.
+
 
 Values in the \code{locusColumn} must be one of \code{c("IGH", "IGI", "IGK", "IGL")} for BCR 
 or \code{c("TRA", "TRB", "TRD", "TRG")} for TCR sequences. Otherwise, the function returns an 
@@ -140,16 +153,13 @@ error message and stops.
 
 For single-cell mode, the input format is the same as that for \link[alakazam]{groupGenes}. 
 Namely, each row represents a sequence/chain. Sequences/chains from the same cell are linked
-by a cell ID in the \code{cellIdColumn} field. Groupin will be done by using IGH (BCR) or 
+by a cell ID in the \code{cellIdColumn} field. Grouping will be done by using IGH (BCR) or 
 TRB/TRD (TCR) sequences only. The argument that allowed to include light chains, 
 \code{onlyHeavy}, is deprecated.
 
 Note, \code{distToNearest} required that each cell (each unique value in \code{cellIdColumn})
 correspond to only a single \code{IGH} (BCR) or \code{TRB/TRD} (TCR) sequence.
 
-The distance to nearest neighbor can be used to estimate a threshold for assigning 
-Ig sequences to clonal groups. A histogram of the resulting vector is often bimodal, with the 
-ideal threshold being a value that separates the two modes.
 
 The following distance measures are accepted by the \code{model} parameter.
 
@@ -163,7 +173,7 @@ The following distance measures are accepted by the \code{model} parameter.
                                \link{calcTargetingDistance}.
   \item \code{"mk_rs1nf"}:     Mouse single nucleotide distance matrix derived from \link{MK_RS1NF} with 
                                \link{calcTargetingDistance}.
-  \item \code{"mk_rs5nf"}:     Mouse 5-mer nucleotide context distance matrix derived from \link{MK_RS1NF} with 
+  \item \code{"mk_rs5nf"}:     Mouse 5-mer nucleotide context distance matrix derived from \link{MK_RS5NF} with 
                                \link{calcTargetingDistance}.
   \item \code{"hs1f_compat"}:  Backwards compatible human single nucleotide distance matrix used in 
                                SHazaM v0.1.4 and Change-O v0.3.3.
