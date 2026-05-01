@@ -391,7 +391,7 @@ allValidChars <- function(seq, validChars) {
 #                          "len" = normalize distance by length of junction.
 #                          "mut" = normalize distance by number of mutations in 
 #                          junction.
-# @param    symmetr        if model is hs5f or mrs5nf, distance between seq1 and seq2 is either the
+# @param    symmetry        if model is hs5f or mrs5nf, distance between seq1 and seq2 is either the
 #                          average (avg) of seq1->seq2 and seq2->seq1 or the minimum (min).
 # @param    crossGroups    column for grouping to calculate distances across groups 
 #                          (self vs others).
@@ -1684,16 +1684,20 @@ rocSpace <- function(ent, omega.gmm, mu.gmm, sigma.gmm, model, cutoff, sen, spc,
     
     set.seed(NULL)
     # options(warn=-1)
-    LOG_LIK<-0
+    LOG_LIK <- 0
+    fit_found <- FALSE
     
     if (progress) {
         cat("      STEP> ", "Fitting ", func, "\n", sep="")
         pb <- progressBar(15)
     }
+    # Run 15 independent fitting attempts to keep the best fit across all attempts,
+    # as measured by the highest log-likelihood.
     for (i in 1:15) {
         itr <- 1
-        max_itr <- 100
+        max_itr <- 1000
         key <- FALSE
+        # The inner loop controls how many attempts to find a single valid fit.
         while (!key && itr <= max_itr){
             # Fit mixture Functions
             MixModel <- try(suppressWarnings(MASS::fitdistr(na.exclude(ent), mixFunction, 
@@ -1729,8 +1733,11 @@ rocSpace <- function(ent, omega.gmm, mu.gmm, sigma.gmm, model, cutoff, sen, spc,
         }
         
         # Check if we failed to find a valid fit after max iterations
+        # If 100 failed attempts, move to the next outer iteration
         if (!key) {
-            stop(paste0("Failed to fit after ", max_itr, " attempts in outer iteration ", i))
+            warning(paste0("Failed to fit after ", max_itr, " attempts in outer iteration ", i,
+                           ". Skipping to next iteration."))
+            next
         }
         # print(paste0(func, " fit done. Loglik= ", round(MixModel$loglik, digits = 2)))
         # Invoke fit parameters
@@ -1738,6 +1745,7 @@ rocSpace <- function(ent, omega.gmm, mu.gmm, sigma.gmm, model, cutoff, sen, spc,
         log_lik <- round(abs(MixModel$loglik), digits = 2)
         if (log_lik > LOG_LIK){
             LOG_LIK <- log_lik
+            fit_found <- TRUE
             
             FUNC1.0 <- MixModel$estimate[[1]]
             FUNC1.1 <- MixModel$estimate[[2]] 
@@ -1760,6 +1768,15 @@ rocSpace <- function(ent, omega.gmm, mu.gmm, sigma.gmm, model, cutoff, sen, spc,
     }
     # options(warn=0)
 
+    # If all 15 outer iterations failed to produce a valid fit, stop with a
+    # informative error. Without this, the code would fail with a cryptic
+    # 'object not found' error because FUNC1.0 etc. are only assigned inside
+    # the loop when a valid fit is found.
+    if (!fit_found) {
+        stop(paste0("No valid fit found for model '", model, "' across all 15 outer iterations. ",
+                    "Try a different model or increase the data size."))
+    }
+
     # Invoke best fit parameters
     log_lik  <- LOG_LIK
     
@@ -1772,6 +1789,13 @@ rocSpace <- function(ent, omega.gmm, mu.gmm, sigma.gmm, model, cutoff, sen, spc,
     func2.2 <- FUNC2.2
     
     # order fit parameters
+    # Ensure curve 1 is the left (lower-mean) component and curve 2 is the right
+    # (higher-mean) component. MASS::fitdistr does not guarantee label ordering, so
+    # the optimizer can converge with the two components swapped. The downstream
+    # threshold search uses func1 as the lower distribution and func2 as the upper,
+    # so we swap them here if they are inverted. Only same-family pairs are checked
+    # because for mixed pairs (norm-gamma, gamma-norm) the model definition already
+    # encodes which family is expected on which side.
     if (bits[1]=="norm" & bits[2]=="norm" & func1.1>func2.1) {
         FUNC0 <- func1.0
         FUNC1 <- func1.1 

@@ -6,12 +6,15 @@ library(shazam)
 sequence <- "NGATCTGACGACACGGCCGTGTATTACTGTGCGAGAGATA.TTTA"
 
 # Simulate introduction of 6 mutations using the default HH_S5F targeting model
+set.seed(12) # for reproducibility of the example
 shmulateSeq(sequence, numMutations=6)
 
 # Simulate introduction of mutations at frequency 0.2 using the default HH_S5F targeting model
+set.seed(34) # for reproducibility of the example
 shmulateSeq(sequence, numMutations=0.2, frequency=TRUE)
 
 # Simulate introduction of 4 mutations using the MK_RS5NF targeting model
+set.seed(56) # for reproducibility of the example
 shmulateSeq(sequence, numMutations=4, targetingModel=MK_RS5NF)
 
 ## ----eval=TRUE, warning=FALSE, message=FALSE----------------------------------
@@ -28,6 +31,7 @@ graph <- ExampleTrees[[17]]
 sequence <- "NGATCTGACGACACGGCCGTGTATTACTGTGCGAGAGATAGTTTA"
 
 # Simulate using the default HH_S5F targeting model
+set.seed(321) # for reproducibility of the example
 shmulateTree(sequence, graph)
 
 ## ----eval=TRUE, warning=FALSE-------------------------------------------------
@@ -42,6 +46,7 @@ plot(graph, layout=layout_as_tree, edge.arrow.mode=0, vertex.label.cex=0.75)
 # The nodes "Germline" and "Inferred1" are thus excluded
 # As a corollary, "GN5SHBT01AKANC", the offspring of "Inferred1", is also excluded
 # In this case, "GN5SHBT07JDYW5" is then taken to be the MRCA
+set.seed(543) # for reproducibility of the example
 shmulateTree(sequence, graph, field="sample_id", exclude=NA)
 
 ## ----eval=TRUE, warning=FALSE-------------------------------------------------
@@ -50,5 +55,6 @@ par(mar=c(0, 0, 0, 0) + 0.1)
 plot(graph, layout=layout_as_tree, edge.arrow.mode=0, vertex.label.cex=0.75)
 
 # Add 20% mutation rate to the immediate offsprings of the MRCA
+set.seed(798) # for reproducibility of the example
 shmulateTree(sequence, graph, junctionWeight=0.2)
 
