@@ -510,7 +510,6 @@ collapseClones <- function(db, cloneColumn = "clone_id",
                                 germlineColumn=germlineColumn, 
                                 regionDefinition=regionDefinition,
                                 frequency=TRUE, combine=TRUE, 
-                                cloneColumn = "fields_clone_id",
                                 mutationDefinition=NULL, nproc=nproc)
         muFreqColumn <- "mu_freq"
     }
@@ -1363,7 +1362,6 @@ calcClonalConsensus <- function(db,
 #'                               cluster has already been set the call function with 
 #'                               \code{nproc} = 0 to not reset or reinitialize. Default is 
 #'                               \code{nproc} = 1.
-#' @param    cloneColumn         clone id column name in \code{db}
 #' @param    juncLengthColumn    junction length column name in \code{db}
 #' 
 #' @return   A modified \code{db} \code{data.frame} with observed mutation counts for each 
@@ -1466,7 +1464,6 @@ observedMutations <- function(db,sequenceColumn = "sequence_alignment",
                                regionDefinition=NULL, mutationDefinition = NULL, 
                                ambiguousMode = c("eitherOr", "and"), 
                                frequency = FALSE, combine = FALSE, nproc = 1,
-                               cloneColumn = "clone_id", 
                                juncLengthColumn = "junction_length") {
     
     
@@ -2463,7 +2460,7 @@ slideWindowDb <- function(db, sequenceColumn="sequence_alignment",
 #'           second call of \link{calcObservedMutations}. This could be helpful especially when 
 #'           \code{db} is large.
 #' 
-#' @seealso  \link{slideWindowDb} is called on \code{db} for tuning. See \link{slideWindowTunePlot} 
+#' @seealso  \link{slideWindowDb} is called on \code{db} for tuning. See \link{plotSlideWindowTune} 
 #'           for visualization. See \link{calcObservedMutations} for generating \code{dbMutList}.
 #'           
 #' @examples
@@ -2868,7 +2865,6 @@ plotSlideWindowTune <- function(tuneList,
 #'                               over. If the cluster has already been set the call function with 
 #'                               \code{nproc} = 0 to not reset or reinitialize. Default is 
 #'                               \code{nproc} = 1.
-#' @param    cloneColumn         clone id column name in \code{db}
 #' @param    juncLengthColumn    junction length column name in \code{db}
 #' 
 #' @return   A modified \code{db} \code{data.frame} with expected mutation frequencies 
@@ -2927,7 +2923,6 @@ expectedMutations <- function(db,sequenceColumn = "sequence_alignment",
                                targetingModel = HH_S5F, 
                                regionDefinition=NULL, mutationDefinition = NULL, 
                                nproc = 1,
-                               cloneColumn = "clone_id", 
                                juncLengthColumn = "junction_length") {
     
     # Hack for visibility of foreach index variable

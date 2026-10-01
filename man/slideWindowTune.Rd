@@ -88,6 +88,6 @@ slideWindowTune(db, dbMutList=exDbMutList,
                 mutThreshRange=2:4, windowSizeRange=2:4)
 }
 \seealso{
-\link{slideWindowDb} is called on \code{db} for tuning. See \link{slideWindowTunePlot} 
+\link{slideWindowDb} is called on \code{db} for tuning. See \link{plotSlideWindowTune} 
           for visualization. See \link{calcObservedMutations} for generating \code{dbMutList}.
 }

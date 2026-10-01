@@ -65,131 +65,153 @@ import(methods)
 import(utils)
 importFrom(KernSmooth,bkde)
 importFrom(MASS,fitdistr)
-importFrom(alakazam,IUPAC_DNA)
-importFrom(alakazam,baseTheme)
-importFrom(alakazam,buildPhylipLineage)
-importFrom(alakazam,checkColumns)
-importFrom(alakazam,cpuCount)
-importFrom(alakazam,getAAMatrix)
-importFrom(alakazam,getAllele)
-importFrom(alakazam,getDNAMatrix)
-importFrom(alakazam,getFamily)
-importFrom(alakazam,getGene)
-importFrom(alakazam,getLocus)
-importFrom(alakazam,getMRCA)
-importFrom(alakazam,getPathLengths)
-importFrom(alakazam,getSegment)
-importFrom(alakazam,gridPlot)
-importFrom(alakazam,groupGenes)
-importFrom(alakazam,isValidAASeq)
-importFrom(alakazam,makeChangeoClone)
-importFrom(alakazam,nonsquareDist)
-importFrom(alakazam,pairwiseDist)
-importFrom(alakazam,pairwiseEqual)
-importFrom(alakazam,progressBar)
-importFrom(alakazam,seqDist)
-importFrom(alakazam,seqEqual)
-importFrom(alakazam,summarizeSubtrees)
-importFrom(alakazam,tableEdges)
-importFrom(alakazam,translateStrings)
+importFrom(alakazam,
+  IUPAC_DNA,
+  baseTheme,
+  buildPhylipLineage,
+  checkColumns,
+  cpuCount,
+  getAAMatrix,
+  getAllele,
+  getDNAMatrix,
+  getFamily,
+  getGene,
+  getLocus,
+  getMRCA,
+  getPathLengths,
+  getSegment,
+  gridPlot,
+  groupGenes,
+  isValidAASeq,
+  makeChangeoClone,
+  nonsquareDist,
+  pairwiseDist,
+  pairwiseEqual,
+  progressBar,
+  seqDist,
+  seqEqual,
+  summarizeSubtrees,
+  tableEdges,
+  translateStrings
+)
 importFrom(ape,mst)
 importFrom(diptest,dip.test)
 importFrom(doParallel,registerDoParallel)
-importFrom(dplyr,"%>%")
-importFrom(dplyr,arrange)
-importFrom(dplyr,bind_cols)
-importFrom(dplyr,bind_rows)
-importFrom(dplyr,combine)
-importFrom(dplyr,desc)
-importFrom(dplyr,do)
-importFrom(dplyr,filter)
-importFrom(dplyr,group_by)
-importFrom(dplyr,group_indices)
-importFrom(dplyr,left_join)
-importFrom(dplyr,mutate)
-importFrom(dplyr,mutate_at)
-importFrom(dplyr,n)
-importFrom(dplyr,pull)
-importFrom(dplyr,recode)
-importFrom(dplyr,rename)
-importFrom(dplyr,select)
-importFrom(dplyr,summarize)
-importFrom(dplyr,summarize_at)
-importFrom(dplyr,transmute)
-importFrom(dplyr,ungroup)
-importFrom(foreach,"%dopar%")
-importFrom(foreach,foreach)
-importFrom(foreach,registerDoSEQ)
-importFrom(igraph,"V<-")
-importFrom(igraph,E)
-importFrom(igraph,V)
-importFrom(igraph,as_adjacency_matrix)
-importFrom(igraph,graph_from_data_frame)
-importFrom(igraph,layout_as_tree)
-importFrom(igraph,set_vertex_attr)
-importFrom(igraph,vertex_attr)
+importFrom(dplyr,
+  "%>%",
+  arrange,
+  bind_cols,
+  bind_rows,
+  combine,
+  desc,
+  do,
+  filter,
+  group_by,
+  group_indices,
+  left_join,
+  mutate,
+  mutate_at,
+  n,
+  pull,
+  recode,
+  rename,
+  select,
+  summarize,
+  summarize_at,
+  transmute,
+  ungroup
+)
+importFrom(foreach,
+  "%dopar%",
+  foreach,
+  registerDoSEQ
+)
+importFrom(igraph,
+  "V<-",
+  E,
+  V,
+  as_adjacency_matrix,
+  graph_from_data_frame,
+  layout_as_tree,
+  set_vertex_attr,
+  vertex_attr
+)
 importFrom(iterators,icount)
 importFrom(lazyeval,interp)
 importFrom(progress,progress_bar)
-importFrom(rlang,.data)
-importFrom(rlang,sym)
-importFrom(rlang,syms)
-importFrom(scales,log10_trans)
-importFrom(scales,log2_trans)
-importFrom(scales,math_format)
-importFrom(scales,percent)
-importFrom(scales,pretty_breaks)
-importFrom(scales,scientific)
-importFrom(scales,trans_breaks)
-importFrom(scales,trans_format)
-importFrom(seqinr,c2s)
-importFrom(seqinr,s2c)
-importFrom(seqinr,translate)
-importFrom(seqinr,words)
-importFrom(stats,approx)
-importFrom(stats,as.dist)
-importFrom(stats,convolve)
-importFrom(stats,cor)
-importFrom(stats,cov)
-importFrom(stats,cutree)
-importFrom(stats,dbeta)
-importFrom(stats,dgamma)
-importFrom(stats,dnorm)
-importFrom(stats,ecdf)
-importFrom(stats,integrate)
-importFrom(stats,mad)
-importFrom(stats,median)
-importFrom(stats,na.exclude)
-importFrom(stats,na.omit)
-importFrom(stats,optim)
-importFrom(stats,optimize)
-importFrom(stats,p.adjust)
-importFrom(stats,pbeta)
-importFrom(stats,pgamma)
-importFrom(stats,pnorm)
-importFrom(stats,qbeta)
-importFrom(stats,rbeta)
-importFrom(stats,rbinom)
-importFrom(stats,runif)
-importFrom(stats,sd)
-importFrom(stats,setNames)
-importFrom(stats,uniroot)
-importFrom(stats,weighted.mean)
-importFrom(stringi,stri_count_boundaries)
-importFrom(stringi,stri_count_regex)
-importFrom(stringi,stri_detect_regex)
-importFrom(stringi,stri_dup)
-importFrom(stringi,stri_extract_all_regex)
-importFrom(stringi,stri_extract_first_regex)
-importFrom(stringi,stri_flatten)
-importFrom(stringi,stri_join)
-importFrom(stringi,stri_length)
-importFrom(stringi,stri_replace_all_regex)
-importFrom(stringi,stri_replace_first_regex)
-importFrom(stringi,stri_sub)
-importFrom(stringi,stri_sub_replace)
-importFrom(tidyr,gather)
-importFrom(tidyr,pivot_wider)
-importFrom(tidyr,spread)
-importFrom(tidyselect,all_of)
-importFrom(tidyselect,any_of)
+importFrom(rlang,
+  .data,
+  sym,
+  syms
+)
+importFrom(scales,
+  log10_trans,
+  log2_trans,
+  math_format,
+  percent,
+  pretty_breaks,
+  scientific,
+  trans_breaks,
+  trans_format
+)
+importFrom(seqinr,
+  c2s,
+  s2c,
+  translate,
+  words
+)
+importFrom(stats,
+  approx,
+  as.dist,
+  convolve,
+  cor,
+  cov,
+  cutree,
+  dbeta,
+  dgamma,
+  dnorm,
+  ecdf,
+  integrate,
+  mad,
+  median,
+  na.exclude,
+  na.omit,
+  optim,
+  optimize,
+  p.adjust,
+  pbeta,
+  pgamma,
+  pnorm,
+  qbeta,
+  rbeta,
+  rbinom,
+  runif,
+  sd,
+  setNames,
+  uniroot,
+  weighted.mean
+)
+importFrom(stringi,
+  stri_count_boundaries,
+  stri_count_regex,
+  stri_detect_regex,
+  stri_dup,
+  stri_extract_all_regex,
+  stri_extract_first_regex,
+  stri_flatten,
+  stri_join,
+  stri_length,
+  stri_replace_all_regex,
+  stri_replace_first_regex,
+  stri_sub,
+  stri_sub_replace
+)
+importFrom(tidyr,
+  gather,
+  pivot_wider,
+  spread
+)
+importFrom(tidyselect,
+  all_of,
+  any_of
+)

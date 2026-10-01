@@ -12,7 +12,6 @@ expectedMutations(
   regionDefinition = NULL,
   mutationDefinition = NULL,
   nproc = 1,
-  cloneColumn = "clone_id",
   juncLengthColumn = "junction_length"
 )
 }
@@ -41,8 +40,6 @@ amino acid identity.}
 over. If the cluster has already been set the call function with 
 \code{nproc} = 0 to not reset or reinitialize. Default is 
 \code{nproc} = 1.}
-
-\item{cloneColumn}{clone id column name in \code{db}}
 
 \item{juncLengthColumn}{junction length column name in \code{db}}
 }

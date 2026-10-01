@@ -429,7 +429,7 @@ calcBaselineBinomialPdf <- function (x=3,
 #'   \item  Yaari G, et al. Quantifying selection in high-throughput immunoglobulin 
 #'            sequencing data sets. 
 #'            Nucleic Acids Res. 2012 40(17):e134. 
-#'            (Corrections at http://selection.med.yale.edu/baseline/correction/)
+#'            (Corrections at https://selection.med.yale.edu/baseline/correction/)
 #'  }
 #' 
 #' @examples  
@@ -928,7 +928,7 @@ summarizeBaseline <- function(baseline, returnType=c("baseline", "df"), nproc=1)
 #'   \item  Yaari G, et al. Quantifying selection in high-throughput immunoglobulin 
 #'            sequencing data sets. 
 #'            Nucleic Acids Res. 2012 40(17):e134. 
-#'            (Corrections at http://selection.med.yale.edu/baseline/correction/)
+#'            (Corrections at https://selection.med.yale.edu/baseline/correction/)
 #'  }
 #' 
 #' @examples
@@ -1754,10 +1754,6 @@ fastConv<-function(cons, max_sigma=20, length_sigma=4001){
 #' @param   nproc               number of cores to distribute the operation over. If 
 #'                              \code{nproc=0} then the \code{cluster} has already been
 #'                              set and will not be reset.
-#' @param   cloneColumn         \code{character} name of the column in \code{db} 
-#'                              containing clonal identifiers. Relevant only for 
-#'                              when regionDefinition includes CDR and FWR4 (else
-#'                              this value can be \code{NULL})
 #' @param   juncLengthColumn          \code{character} name of the column in \code{db} 
 #'                              containing the junction length. Relevant only for 
 #'                              when regionDefinition includes CDR and FWR4 (else
@@ -1845,7 +1841,6 @@ calcBaseline <- function(db,
                          calcStats = FALSE, 
                          nproc = 1,
                          # following are relevant only when regionDefinition includes CDR3 and FWR4:
-                         cloneColumn = NULL,
                          juncLengthColumn = NULL) {
     
     # Hack for visibility of foreach index variable
@@ -1896,7 +1891,7 @@ calcBaseline <- function(db,
         cluster <- parallel::makeCluster(nproc, type="PSOCK")
         parallel::clusterExport(cluster, list('db',
                                               'sequenceColumn', 'germlineColumn', 
-                                              'cloneColumn', 'juncLengthColumn', 'setRegionBoundaries',
+                                              'juncLengthColumn', 'setRegionBoundaries',
                                               'testStatistic', 'regionDefinition',
                                               'targetingModel', 'mutationDefinition','calcStats',
                                               'break2chunks', 'PowersOfTwo', 
@@ -1961,7 +1956,6 @@ calcBaseline <- function(db,
                                 mutationDefinition=mutationDefinition,
                                 frequency=FALSE, combine=FALSE,
                                 nproc=0,
-                                cloneColumn=cloneColumn,
                                 juncLengthColumn=juncLengthColumn)
         
         # Calculate the expected frequencies of mutations
@@ -1972,7 +1966,6 @@ calcBaseline <- function(db,
                                 targetingModel=targetingModel,
                                 mutationDefinition=mutationDefinition,
                                 nproc=0,
-                                cloneColumn=cloneColumn,
                                 juncLengthColumn=juncLengthColumn)
     } else {
         message(paste0("calcBaseline will use existing observed and expected mutations, in the fields: ",

@@ -14,7 +14,6 @@ calcBaseline(
   mutationDefinition = NULL,
   calcStats = FALSE,
   nproc = 1,
-  cloneColumn = NULL,
   juncLengthColumn = NULL
 )
 }
@@ -51,11 +50,6 @@ summary statistics \code{data.frame} stored in the
 \item{nproc}{number of cores to distribute the operation over. If 
 \code{nproc=0} then the \code{cluster} has already been
 set and will not be reset.}
-
-\item{cloneColumn}{\code{character} name of the column in \code{db} 
-containing clonal identifiers. Relevant only for 
-when regionDefinition includes CDR and FWR4 (else
-this value can be \code{NULL})}
 
 \item{juncLengthColumn}{\code{character} name of the column in \code{db} 
 containing the junction length. Relevant only for 

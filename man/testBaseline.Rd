@@ -69,7 +69,7 @@ testBaseline(grouped, groupBy="c_call")
   \item  Yaari G, et al. Quantifying selection in high-throughput immunoglobulin 
            sequencing data sets. 
            Nucleic Acids Res. 2012 40(17):e134. 
-           (Corrections at http://selection.med.yale.edu/baseline/correction/)
+           (Corrections at https://selection.med.yale.edu/baseline/correction/)
  }
 }
 \seealso{

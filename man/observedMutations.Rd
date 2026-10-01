@@ -14,7 +14,6 @@ observedMutations(
   frequency = FALSE,
   combine = FALSE,
   nproc = 1,
-  cloneColumn = "clone_id",
   juncLengthColumn = "junction_length"
 )
 }
@@ -60,8 +59,6 @@ multiple values. Default is \code{FALSE}.}
 cluster has already been set the call function with 
 \code{nproc} = 0 to not reset or reinitialize. Default is 
 \code{nproc} = 1.}
-
-\item{cloneColumn}{clone id column name in \code{db}}
 
 \item{juncLengthColumn}{junction length column name in \code{db}}
 }

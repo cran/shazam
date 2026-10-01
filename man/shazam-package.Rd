@@ -10,7 +10,7 @@ Provides a computational framework for analyzing mutations in immunoglobulin (Ig
 \seealso{
 Useful links:
 \itemize{
-  \item \url{http://shazam.readthedocs.io}
+  \item \url{https://shazam.readthedocs.io}
   \item Report bugs at \url{https://github.com/immcantation/shazam/issues}
 }
 
@@ -20,6 +20,7 @@ Useful links:
 
 Authors:
 \itemize{
+  \item Susanna Marquez \email{susanna.marquez@yale.edu}
   \item Mohamed Uduman \email{mohamed.uduman@yale.edu}
   \item Namita Gupta \email{namita.gupta@yale.edu}
   \item Julian Zhou \email{julian.zhou@yale.edu}
